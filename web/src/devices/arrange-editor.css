@@ -1,0 +1,136 @@
+/* Arrange displays — the precise lens. Chrome is the DS `.modal-shell`
+   (+ `.ds-backdrop`); only the stage and its rectangles live here.
+   Deliberately plain: this is the screen where a few pixels matter, so nothing
+   competes with the edges. The photoreal desk is the other lens. */
+
+.arrange-modal .modal-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.ae-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gutter);
+}
+.ae-hint {
+  margin: 0;
+  max-width: 52ch;
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+.ae-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  flex: 0 0 auto;
+}
+
+/* Same grid stage as the hero map, so the two lenses read as one desk seen
+   twice rather than two unrelated screens. */
+.ae-stage {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(90% 70% at 50% 40%, var(--surface-light) 0%, transparent 70%),
+    linear-gradient(var(--border-light) 1px, transparent 1px) 0 0 / 100% 32px,
+    linear-gradient(90deg, var(--border-light) 1px, transparent 1px) 0 0 / 32px 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.ae-tile {
+  position: absolute;
+  /* The snap math works in the size logicalTile() returns, so the painted box
+     has to be exactly that — with content-box the 1px border made every tile
+     2px wider than the number being snapped, and edges landed 2px out. On the
+     one screen whose whole job is "are these two flush", that is the bug. */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xxs, 2px);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius-sm);
+  /* One step up from the stage, not var(--surface): 0.04 white on the dark grid
+     read as "dark box on dark background" (Cindy) — the rectangles are the
+     entire content of this screen, so they get the strongest neutral step. */
+  background: var(--surface-active);
+  cursor: grab;
+  user-select: none;
+  /* No shadow and no gradient: a raised edge makes it harder to see whether two
+     rectangles are actually touching, which is the only question here. */
+  transition: border-color var(--dur-fast) ease;
+}
+.ae-tile:active {
+  cursor: grabbing;
+  z-index: 4;
+  border-color: var(--accent-color);
+}
+.ae-stage.mirror .ae-tile {
+  cursor: default;
+}
+/* Selection = the same ring vocabulary as the view hero (2px accent + soft
+   accent-dim halo), NOT a full accent fill — a solid blue slab made selection
+   the loudest thing on a screen whose subject is edges, and it said the same
+   thing the "This display" label already says (Cindy: "선택은 또 네모 전체고"). */
+.ae-tile.current {
+  border-color: var(--accent-color);
+  box-shadow:
+    0 0 0 2px var(--accent-color),
+    0 0 0 6px var(--accent-dim);
+}
+
+.ae-num {
+  font-family: var(--font-mono);
+  font-size: var(--text-title);
+  color: var(--text-primary);
+  opacity: 0.85;
+  line-height: 1;
+}
+.ae-tile-name {
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 var(--gutter-xxs, 2px);
+}
+.ae-tile.current .ae-tile-name {
+  color: var(--accent-color);
+}
+.ae-tile-here {
+  font-size: var(--text-nano);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-color);
+  opacity: 0.85;
+}
+.ae-stage.identify .ae-num {
+  font-size: var(--text-hero, 40px);
+  transition: font-size var(--dur-normal) ease;
+}
+
+.ae-mirror-note {
+  position: absolute;
+  inset: auto auto var(--gutter-sm) 50%;
+  transform: translateX(-50%);
+  padding: var(--gutter-xxs, 2px) var(--gutter-xs);
+  border-radius: var(--radius-sm);
+  background: var(--accent-dim);
+  color: var(--accent-color);
+  font-size: var(--text-micro);
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.ae-foot {
+  margin: 0;
+  font-size: var(--text-nano);
+  color: var(--text-muted);
+}

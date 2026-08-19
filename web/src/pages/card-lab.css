@@ -1,0 +1,277 @@
+/* Card & Modal Lab — living specimens of docs/card-modal-scalability-report.md.
+   Page-local glue only; every value is a token. Specimens compose existing
+   components; .clab-* classes are annotation chrome, not new DS surfaces. */
+
+.clab-plate {
+  margin-top: var(--gutter-lg, 32px);
+  display: grid;
+  gap: var(--gutter-sm);
+}
+.clab-cap {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  max-width: 72ch;
+  margin: 0;
+}
+.clab-cap b { color: var(--text-primary); font-weight: 600; }
+.clab-ref {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+.clab-row {
+  display: flex;
+  gap: var(--gutter);
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/* ── Specimen card base (diagram chrome, not a DS fork) ── */
+.clab-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  padding: var(--gutter-sm);
+  display: grid;
+  gap: var(--gutter-xs);
+}
+
+/* ── P1 anatomy: labeled slot zones ── */
+.clab-anatomy { width: min(420px, 100%); }
+.clab-slot {
+  position: relative;
+  border: 1px dashed var(--accent-dim);
+  border-radius: var(--radius-sm);
+  padding: var(--gutter-xs);
+}
+.clab-slot::after {
+  content: attr(data-slot);
+  position: absolute;
+  top: calc(-1 * var(--gutter-xs));
+  right: var(--gutter-xs);
+  background: var(--bg-base);
+  color: var(--accent-color);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  padding: 0 var(--gutter-xxs);
+  letter-spacing: 0.04em;
+}
+.clab-slot-row { display: flex; align-items: center; gap: var(--gutter-xs); }
+
+/* ── P2 interaction archetypes ── */
+.clab-mini {
+  width: 200px;
+  min-height: 118px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  padding: var(--gutter-xs) var(--gutter-sm);
+  display: grid;
+  gap: var(--gutter-xxs);
+  align-content: start;
+  text-align: left;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+}
+button.clab-mini { cursor: pointer; }
+.clab-mini.inert { cursor: text; user-select: text; }
+.clab-mini.navigate:hover,
+.clab-mini.launcher:hover,
+.clab-mini:is(.navigate, .launcher):focus-visible {
+  border-color: var(--accent-dim);
+  background: var(--surface-hover);
+}
+.clab-mini.console { cursor: default; }
+.clab-arch-tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.clab-mini-glyph { margin-left: auto; color: var(--text-subtle); }
+.clab-seam {
+  border-top: 1px solid var(--border-light);
+  margin: var(--gutter-xxs) calc(-1 * var(--gutter-sm));
+}
+.clab-hybrid-head {
+  margin: calc(-1 * var(--gutter-xs)) calc(-1 * var(--gutter-sm)) 0;
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.clab-hybrid-head:hover { background: var(--surface-hover); }
+.clab-arch-note {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+/* ── P3 label grammar ── */
+.clab-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  background: var(--purple-dim);
+  border: 1px solid var(--purple);
+  border-radius: var(--radius-sm);
+  padding: var(--gutter-xxs) var(--gutter-xs);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}
+.clab-strip .spacer { flex: 1; }
+.clab-scrim-host { position: relative; overflow: hidden; }
+.clab-scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg-base), transparent 30%);
+  display: grid;
+  place-content: center;
+  gap: var(--gutter-xs);
+  justify-items: center;
+  border-radius: var(--radius-card);
+}
+.clab-meta {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+/* ── P4 states: identical footprints ── */
+.clab-state {
+  width: 190px;
+  height: 150px;
+  overflow: hidden;
+  align-content: start;
+}
+.clab-skel {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  height: 12px;
+}
+.clab-dim { opacity: 0.45; }
+.clab-ghost { border-style: dashed; opacity: 0.8; }
+.clab-error-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  font-size: var(--text-micro);
+  color: var(--red);
+}
+
+/* ── P5 size ladder ── */
+.clab-size { align-content: start; }
+.clab-size.s { width: 96px; height: 96px; }
+.clab-size.m { width: 190px; height: 96px; }
+.clab-size.l { width: 260px; height: 150px; }
+.clab-size.xl { width: 420px; height: 190px; }
+.clab-size-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin-top: var(--gutter-xxs);
+}
+.clab-health-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--orange);
+  flex-shrink: 0;
+}
+.clab-ai-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--purple);
+  flex-shrink: 0;
+}
+.clab-corner { position: absolute; top: var(--gutter-xs); right: var(--gutter-xs); display: flex; gap: var(--gutter-xxs); }
+.clab-size .clab-rel { position: relative; }
+
+/* ── P6 commit footers ── */
+.clab-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: var(--gutter-xs) var(--gutter-sm);
+}
+.clab-footer .clab-footer-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  width: 132px;
+  flex-shrink: 0;
+}
+.clab-footer .clab-footer-note {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  flex: 1;
+  min-width: 0;
+}
+.clab-footer .clab-footer-actions { display: flex; gap: var(--gutter-xs); margin-left: auto; }
+.clab-footers { display: grid; gap: var(--gutter-xs); max-width: 720px; }
+
+/* ── P7 modal schematics ── */
+.clab-modal {
+  width: min(360px, 100%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  display: grid;
+}
+.clab-modal-hero {
+  background: var(--surface);
+  padding: var(--gutter-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+.clab-modal-body { padding: var(--gutter-sm); display: grid; gap: var(--gutter-xs); }
+.clab-modal-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xxs) 0;
+  border-top: 1px solid var(--border-light);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}
+.clab-modal-row:first-child { border-top: none; }
+.clab-detail { grid-template-columns: 140px 1fr; }
+.clab-detail-left {
+  background: var(--surface-light);
+  border-right: 1px solid var(--border-light);
+  padding: var(--gutter-sm);
+  display: grid;
+  gap: var(--gutter-xs);
+  align-content: start;
+}
+.clab-vitals {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  display: grid;
+  gap: var(--gutter-xxxs, 2px);
+}
+.clab-consider {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  border-left: 2px solid var(--purple);
+  padding-left: var(--gutter-xs);
+}
+
+@media (max-width: 1024px) {
+  .clab-size.xl { width: min(420px, 100%); }
+}

@@ -1,0 +1,497 @@
+/* Full-canvas mouse device modal (Figma Keys-Buttons 7026:56711).
+   Device-scoped (.dc-*), token-only — no global DS changes. Reuses
+   .ds-ng3-*, .ds-list-item, .ds-input, .ds-btn, and design tokens. */
+
+.dc-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 51; /* above .ds-backdrop (50) */
+  display: flex;
+  flex-direction: column;
+  background: var(--ksg-b60);
+  overflow: hidden;
+  backdrop-filter: blur(24px);
+  /* The immersive background stays full-bleed behind the translucent top nav
+     (z-index 55), but the interactive content clears the nav bar. */
+  padding: calc(var(--nav-full-h) + var(--gutter)) var(--gutter) var(--gutter);
+}
+
+/* ── Status chips (top-left) ─────────────────────────── */
+.dc-status {
+  position: absolute;
+  top: calc(var(--nav-full-h) + var(--gutter));
+  left: var(--gutter);
+  display: flex;
+  gap: var(--gutter-xs);
+  z-index: 2;
+}
+.dc-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 24px;
+  background: var(--ksg-b20);
+  border: 1px solid var(--ksg-w20);
+  backdrop-filter: blur(4px);
+  box-shadow: var(--shadow-lv-2, 0 1px 8px rgba(0, 0, 0, 0.3));
+  color: var(--text-primary);
+}
+.dc-chip-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.dc-chip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red, #e0383e);
+}
+/* Connected (green) status dot — plain .dc-chip-dot is the alert/disconnected
+   red. Never the only signal: the chip text says the state in words. */
+.dc-chip-dot-on {
+  background: var(--green, #3ecf8e);
+}
+
+/* ── Close (top-right) ───────────────────────────────── */
+.dc-close {
+  position: absolute;
+  top: calc(var(--nav-full-h) + var(--gutter));
+  right: var(--gutter);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--ksg-w20);
+  border-radius: 50%;
+  background: var(--ksg-b20);
+  backdrop-filter: blur(4px);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-default);
+}
+.dc-close:hover {
+  background: var(--ksg-b40, rgba(0, 0, 0, 0.4));
+}
+
+/* ── Hero ────────────────────────────────────────────── */
+.dc-hero {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px var(--gutter) var(--gutter);
+}
+.dc-hero img {
+  max-height: 100%;
+  max-width: min(60%, 560px);
+  object-fit: contain;
+  filter: drop-shadow(0 24px 40px var(--ksg-b55));
+  user-select: none;
+  pointer-events: none;
+}
+/* Shrink-wrapped figure — the callouts' positioning context is the rendered
+   image box, so anchor percentages track the photo at any hero size. */
+.dc-hero-fig {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 100%;
+  max-width: min(60%, 560px);
+}
+.dc-hero-fig img {
+  max-width: 100%;
+}
+
+/* ── Button callouts on the hero (Figma Keys-Buttons 4631:41576) ── */
+/* Anchored at the dot: default rows extend the label rightward, .flip rows
+   leftward. The DS .ds-callout inside is static — the wrapper positions. */
+.dc-co {
+  position: absolute;
+  transform: translate(-5px, -50%);
+  /* Wrap boxes of neighbouring slots can overlap as labels grow — only the
+     callout button itself may take clicks and drag drops, or a wrap painted
+     on top steals its neighbour's hits (elementFromPoint included). */
+  pointer-events: none;
+}
+.dc-co.flip {
+  transform: translate(calc(-100% + 5px), -50%);
+}
+.dc-co .ds-tooltip-wrap {
+  pointer-events: none;
+}
+.dc-co .ds-callout {
+  position: static;
+  pointer-events: auto;
+}
+/* Per-slot leader length — centre anchors (wheel, DPI) need longer lines to
+   carry their labels clear of the mouse body. */
+.dc-co .ds-callout-line {
+  width: var(--co-line, 20px);
+}
+.dc-co .ds-callout-value {
+  white-space: nowrap;
+}
+
+/* Chip drag ghost — the picked-up key under the cursor */
+.dc-drag-ghost {
+  position: fixed;
+  z-index: 80;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: var(--shadow-lv-3);
+}
+
+/* Callout context menu (Reset / Disable) */
+.dc-cmenu {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: var(--gutter-xxs);
+  background: var(--ksg-n900);
+  border: 1px solid var(--ksg-w20);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lv-3);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+.dc-cmenu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xs) var(--gutter-mobile);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  cursor: pointer;
+  text-align: left;
+}
+.dc-cmenu-item:hover {
+  background: var(--ksg-w10);
+}
+.dc-cmenu-item:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+.dc-cmenu-item .ds-icon {
+  color: var(--text-dim);
+}
+
+/* ── Bottom Ng3 product panel ────────────────────────── */
+.dc-panel-wrap {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 var(--gutter) var(--gutter);
+  flex: 0 0 auto;
+}
+.dc-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 266px;
+  color: var(--text-muted);
+  font-size: var(--text-body);
+}
+
+/* ── BUTTONS tab — two columns ───────────────────────── */
+/* Tab bodies ride the shared .ds-ng3-grid / .ds-ng3-section primitives —
+   only fixed heights and column bases live here. */
+.dc-buttons {
+  height: 266px;
+}
+
+/* Left — Assignments rail */
+.dc-rail {
+  flex: 0 0 184px;
+}
+.dc-rail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dc-rail-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+/* Shared control bits used across the headset/monitor/mic canvases */
+.dc-slider-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+.dc-slider-row .ds-rail,
+.dc-slider-row .ds-slider {
+  flex: 1;
+  min-width: 0;
+}
+/* Bordered square mute button trailing a slider */
+.dc-mute {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-default), border-color var(--dur-fast) var(--ease-default);
+}
+.dc-mute:hover {
+  color: var(--text-primary);
+}
+.dc-mute:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+.dc-mute.active {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+/* Mono readout value (row trailing: 80%, Enabled, …) */
+.dc-mono-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+.dc-btns {
+  display: flex;
+  gap: var(--gutter-xs);
+  flex-wrap: wrap;
+}
+.dc-divider {
+  height: 1px;
+  width: 100%;
+  background: var(--ksg-w10);
+  border-radius: 2px;
+}
+.dc-reset {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Right — Keys / Buttons list */
+.dc-keys {
+  flex: 1;
+}
+.dc-keys .ds-input-group {
+  max-width: 345px;
+}
+.dc-keys-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  overflow-y: auto;
+}
+.dc-keygroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  padding-bottom: var(--gutter-sm);
+}
+.dc-keygroup-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+.dc-keygroup-head:hover {
+  background: var(--ksg-w5);
+}
+.dc-keygroup-label {
+  flex: 1;
+  min-width: 0;
+}
+.dc-keygroup-head > .ds-icon:last-child {
+  color: var(--text-muted);
+}
+
+/* Key chips */
+.dc-keychips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+}
+.dc-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 46px;
+  height: 46px;
+  padding: 8px 2px;
+  border-radius: 6px;
+  background: var(--ksg-n800);
+  border: 1px solid var(--ksg-w40);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  text-align: center;
+  /* chips are buttons now: click assigns, drag drops onto a callout */
+  cursor: grab;
+  touch-action: none;
+  transition:
+    border-color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+.dc-key:hover {
+  border-color: var(--ksg-w60);
+}
+.dc-key:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+/* Picked as the next assignment — accent outline, mirrors an armed callout. */
+.dc-key.armed {
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--ksg-n800));
+}
+.dc-key-top,
+.dc-key-bot {
+  display: block;
+}
+
+/* ── SENSOR tab — two columns ────────────────────────── */
+/* Taller than the Buttons tab: the right column stacks five controls (matches
+   the Figma sensor panel, which is taller than the compact buttons panel). */
+.dc-sensor {
+  height: 312px;
+}
+/* Left — Sensitivity (presets + DPI slider) */
+.dc-sensor-main {
+  flex: 1;
+}
+/* Right — polling / lift-off / motion sync / angle */
+.dc-sensor-side {
+  flex: 0 0 258px;
+  justify-content: space-between;
+}
+
+/* preset cards */
+.dc-sensor-presets {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--gutter-xs);
+}
+/* Card chrome over the DS radio (label.ds-radio) — the grid puts the
+   .ds-radio-mark + preset number on the top row and lets the DPI value span
+   flush-left beneath it (Figma Sensor 8686:12783). `display: contents` on the
+   radio's label wrapper promotes both spans to grid items. */
+.dc-sensor-preset {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: var(--gutter-xs);
+  row-gap: var(--gutter-tablet);
+  padding: var(--gutter-mobile) var(--gutter-tablet);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--ksg-w10);
+  background: var(--ksg-n800);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--dur-fast) var(--ease-default), background var(--dur-fast) var(--ease-default);
+}
+.dc-sensor-preset .ds-radio-label {
+  display: contents;
+}
+.dc-sensor-preset:hover {
+  border-color: var(--ksg-w40);
+}
+.dc-sensor-preset.selected {
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 8%, var(--ksg-n800));
+}
+.dc-sensor-preset-num {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.dc-sensor-preset-val {
+  grid-column: 1 / -1; /* full card width, flush under the mark */
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}
+.dc-sensor-preset-val span {
+  color: var(--text-muted);
+}
+
+/* DPI slider row — sits directly under the presets (divider above it) */
+.dc-sensor-dpi-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gutter-sm);
+}
+.dc-sensor-dpi-key {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 8px;
+}
+.dc-sensor-dpi-input {
+  width: 78px;
+  flex: 0 0 auto;
+}
+.dc-sensor-dpi-slider {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+.dc-sensor-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2px;
+  color: var(--text-muted);
+}
+
+/* right-column fields (rows/fields come from .ds-ng3-row / .ds-ng3-field) */
+.dc-sensor-side .ds-dropdown,
+.dc-sensor-side .ds-dropdown-trigger {
+  width: 100%;
+}
+.dc-sensor-notes {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}

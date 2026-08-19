@@ -1,0 +1,36 @@
+/* PerformanceCard (mode-first L2) — additions over the .power-mode-* base
+   styles in power-thermal.css: the horizontal 4-up preset row, the Unleash
+   (red) active variant, and the per-mode contextual area. */
+
+.power-modes.pm-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gutter-xxs);
+}
+
+.power-mode-btn.active.unleash-mode {
+  background: rgba(239, 68, 68, 0.07);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.power-mode-btn.active.unleash-mode .power-mode-dot {
+  background: var(--red);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
+/* Per-mode contextual area beneath the presets */
+.mode-context {
+  display: grid;
+  gap: var(--gutter-xs);
+  margin-top: var(--gutter-xs);
+}
+.mode-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+}
+.mode-setting-label {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}

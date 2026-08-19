@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl http://localhost:*)",
+      "WebFetch(domain:localhost)"
+    ]
+  }
+}

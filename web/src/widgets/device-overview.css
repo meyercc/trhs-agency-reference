@@ -1,0 +1,125 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Device Overview (Perform section) — adaptive Map/Tile, v3 KVM scenario.
+   Self-ported from the approved Treehouse-monitor design (device-overview.html,
+   v3 2026-07-09 + adaptive states 2026-07-14) onto the real token set.
+
+   ⚠ All classes are `dov-` prefixed on purpose: the approved mockup borrowed
+   DisplayArrange's `.dsa-*` names, but Chris's real display-arrange.css already
+   owns `.dsa-stage/.dsa-disp/.dsa-screen` app-wide — reusing them would collide.
+   Token remaps only: --accent → --accent-color · --r-card → --radius.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.dov { color: var(--text-primary); }
+
+/* State visibility (default = direct · is-kvm = KVM · single handled in JSX). */
+.dov:not(.is-kvm) .dov-only-kvm { display: none !important; }
+.dov.is-kvm .dov-only-direct { display: none !important; }
+
+/* ── toolbar (Map/Tile toggle lives here; label is the SectionHeader) ── */
+.dov-toolbar { display: flex; justify-content: flex-end; margin-bottom: var(--gutter-sm); }
+
+/* ── prototype chrome (NOT product UI) — stands in for detection so the three
+   confirmed states are reviewable. Remove when real computer-count detection
+   + once-only auto Map switch land. ── */
+.dov-proto { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: var(--gutter-sm); }
+.dov-proto-lbl { font-size: 9px; font-weight: 700; letter-spacing: 1.3px; color: var(--text-subtle); text-transform: uppercase; }
+.dov-proto-btn { background: var(--bg-elevated); border: 1px solid var(--border-med); color: var(--text-muted); font-family: inherit; font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast); }
+.dov-proto-btn.on { background: var(--accent-color); border-color: var(--accent-color); color: var(--text-on-accent); }
+
+/* ── STAGE (DisplayArrange visual language: grid + radial glow, no lines) ── */
+.dov-stage {
+  position: relative; width: 672px; max-width: 100%; height: 248px; margin: 0 auto;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(90% 70% at 50% 40%, var(--surface-light) 0%, transparent 70%),
+    linear-gradient(var(--border-light) 1px, transparent 1px) 0 0 / 100% 32px,
+    linear-gradient(90deg, var(--border-light) 1px, transparent 1px) 0 0 / 32px 100%;
+  overflow: hidden;
+}
+.dov-disp { position: absolute; display: flex; flex-direction: column; align-items: center; z-index: 2; }
+.dov-screen {
+  position: relative; border: 2px solid var(--border-med); border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--surface-active) 0%, var(--surface) 70%); /* neutral by default (v3) */
+  box-shadow: var(--shadow-lv-3); display: flex; align-items: center; justify-content: center;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.dov-monitor .dov-screen { width: 144px; height: 82px; }
+.dov-laptop .dov-screen { width: 112px; height: 70px; }
+.dov-monitor .dov-base { width: 48px; height: 11px; margin-top: -1px; border: 2px solid var(--border-med); border-top: 0; border-radius: 0 0 var(--radius-sm) var(--radius-sm); background: var(--surface); }
+.dov-laptop .dov-base { width: 136px; height: 9px; margin-top: -1px; border: 2px solid var(--border-med); border-radius: 0 0 var(--radius) var(--radius); background: var(--surface-active); clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%); }
+
+/* Clamshell slab — screenless dark slab (video-connected computer, lid closed) */
+.dov-slab {
+  width: 112px; height: 24px; border: 2px solid var(--border-med); border-radius: 6px;
+  background: var(--surface); box-shadow: var(--shadow-lv-3);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.dov-slab svg { width: 13px; height: 13px; color: var(--text-muted); }
+
+.dov-name { margin-top: var(--gutter-xs); font-size: 10px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }
+.dov-tag { margin-top: 5px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .5px; color: var(--text-muted); border: 1px solid var(--border-med); border-radius: var(--radius-sm); padding: 2px 8px; white-space: nowrap; }
+
+/* ── ACCENT HIERARCHY (single hue + neutrals) ──
+   strong = active computer · subtle = its screens · neutral = inactive side */
+/* DIRECT: MacBook active; OMEN 27 + Treehouse 32 are its screens */
+.dov:not(.is-kvm) .d-mac .dov-screen { border-color: var(--accent-color); box-shadow: 0 0 0 2px var(--accent-dim), var(--shadow-lv-3); background: linear-gradient(135deg, var(--accent-dim) 0%, var(--surface) 70%); }
+.dov:not(.is-kvm) .d-mac .dov-name { color: var(--accent-color); }
+.dov:not(.is-kvm) .d-omen .dov-screen,
+.dov:not(.is-kvm) .d-tree .dov-screen { border-color: var(--accent-dim); background: linear-gradient(135deg, var(--accent-dimmer) 0%, var(--surface) 70%); }
+/* KVM: Gaming Laptop slab active; Treehouse 32 is its screen */
+.dov.is-kvm .d-slab .dov-slab { border-color: var(--accent-color); box-shadow: 0 0 0 2px var(--accent-dim), var(--shadow-lv-3); }
+.dov.is-kvm .d-slab .dov-slab svg { color: var(--accent-color); }
+.dov.is-kvm .d-slab .dov-name { color: var(--accent-color); }
+.dov.is-kvm .d-tree .dov-screen { border-color: var(--accent-dim); background: linear-gradient(135deg, var(--accent-dimmer) 0%, var(--surface) 70%); }
+
+/* ── kb/mouse pill = physical input location (neutral chrome + anchor stub) ── */
+.dov-io-pill {
+  position: absolute; top: -32px; left: 50%; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 999px;
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  color: var(--text-dim); z-index: 3;
+}
+.dov-io-pill svg { width: 12px; height: 12px; }
+.dov-io-pill::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 1.5px; height: 8px; background: var(--border); }
+
+/* ── KVM marks inside the Treehouse 32 screen ── */
+.dov-kvm-slot { /* direct: empty dashed slot */
+  border: 1.5px dashed var(--border); border-radius: 6px; padding: 4px 10px;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.2px; color: var(--text-muted);
+}
+.dov-kvm-chip { /* connected: accent outline pill */
+  border: 1.5px solid var(--accent-color); border-radius: 6px; padding: 4px 10px;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .8px; color: var(--accent-color); white-space: nowrap;
+}
+
+/* ── State 0 caption ── */
+.dov-note { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .6px; color: var(--text-subtle); text-transform: uppercase; margin-top: var(--gutter-sm); }
+
+/* ── STATUS STRIP (direct state only — one action nudge) ── */
+.dov-foot { margin-top: var(--gutter); }
+.dov-strip { display: flex; align-items: flex-start; gap: 8px; background: var(--surface); border: 1px solid var(--border-light); border-radius: 6px; padding: 9px 12px; font-size: 11px; line-height: 1.5; color: var(--text-dim); }
+.dov-strip .dov-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-color); flex-shrink: 0; margin-top: 5px; }
+.dov-strip b { font-weight: 600; color: var(--text-primary); }
+
+/* ── VIEW / ARRANGE (one schematic, two verbs — chris-sync #2 decision C) ──
+   View = read + activate a computer · Arrange = move a display. Gating by mode
+   is what keeps click and drag off the same tile. Cursor, lift and dim appear
+   only in Arrange (07-27 review: the read state must not look editable).
+   These are affordances on map tiles, not controls — the DS Toggle/segmented
+   components stay the vocabulary for anything the user flips. */
+.dov-stage { touch-action: none; }
+.dov:not(.is-arrange) .dov-disp.is-activate { cursor: pointer; }
+.dov.is-arrange .dov-disp.is-draggable { cursor: grab; }
+.dov.is-arrange .dov-disp.is-draggable:active { cursor: grabbing; z-index: 4; filter: brightness(1.05); }
+/* Not a display: the closed laptop can't take part in an OS arrangement, so it
+   steps back while arranging instead of offering a drag that does nothing. */
+.dov.is-arrange .dov-disp.is-static { opacity: .4; }
+.dov.is-arrange .dov-foot { display: flex; flex-direction: column; gap: 2px; }
+/* Mirror stacks the displays on one spot, so the per-tile names would pile up —
+   the badge states it once instead. The clamshell sits outside the stack and
+   keeps its label. */
+.dov-stage.is-mirror .dov-disp:not(.d-slab) .dov-name,
+.dov-stage.is-mirror .dov-disp .dov-tag { display: none; }
+.dov-hint-aside { color: var(--text-subtle); }

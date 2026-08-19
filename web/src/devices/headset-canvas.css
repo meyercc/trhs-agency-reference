@@ -1,0 +1,241 @@
+/* Headset canvas — the NGENUITY Audio panel body (Figma Audio 8931:20990) on
+   the shared device-canvas chrome. Canvas, chips, hero and panel shell come
+   from device-canvas.css; sections/labels/rows/gaps come from the shared
+   .ds-ng3-* primitives. Only headset-specific layout lives here. */
+
+/* Audio tab: Volume/Mic · Equalizer · Mic Presets/Effects columns.
+   Gap stays sourced from .ds-ng3-grid — only the column template is ours. */
+.hc-audio {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1fr;
+  align-items: start;
+}
+
+/* Equalizer preset list */
+.hc-eq-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+}
+.hc-eq-curve {
+  width: 40px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-dim);
+}
+.ds-list-item.selected .hc-eq-curve,
+.ds-list-item:hover .hc-eq-curve {
+  color: var(--accent-color);
+}
+
+/* Mic effects checkbox stack */
+.hc-fx-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+
+/* Settings uses fewer, wider columns */
+.hc-settings {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ── Spatial Audio tab (Figma Audio 14725:221255) ──
+   The surround stage beside the model parameters. Double class so the column
+   template survives the width-based .hc-audio overrides below. */
+.hc-audio.hc-spatial {
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+}
+.hc-stage-section {
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-sm);
+}
+
+/* The stage — listener centred, channel ring around them. Geometry (198px
+   stage, ring radius) is component data, like the keyboard layout. */
+.hc-stage {
+  position: relative;
+  width: 198px;
+  height: 198px;
+}
+.hc-stage-disc {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: var(--ksg-b30);
+  border: 1px solid var(--ksg-w10);
+}
+/* faint concentric ring + the lighter compass disc */
+.hc-stage-disc::before {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--ksg-w5);
+}
+.hc-stage-disc::after {
+  content: '';
+  position: absolute;
+  inset: 35px;
+  border-radius: var(--radius-full);
+  background: var(--ksg-w5);
+  border: 1px solid var(--ksg-w10);
+}
+.hc-compass {
+  position: absolute;
+  inset: 35px;
+}
+.hc-compass span {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: var(--text-nano);
+  font-weight: var(--font-semibold);
+  color: var(--text-dim);
+}
+.hc-compass-n { top: var(--gutter-xxs); left: 50%; transform: translateX(-50%); }
+.hc-compass-s { bottom: var(--gutter-xxs); left: 50%; transform: translateX(-50%); }
+.hc-compass-w { left: var(--gutter-xs); top: 50%; transform: translateY(-50%); }
+.hc-compass-e { right: var(--gutter-xs); top: 50%; transform: translateY(-50%); }
+
+.hc-listener {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-full);
+  background: var(--ksg-b80);
+  border: 1px solid var(--ksg-w20);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lv-2);
+}
+
+/* Channel nodes — buttons: click to test the channel. Accent = synthesised by
+   the spatial engine; neutral = carried through. 24px targets (WCAG 2.5.8),
+   never color alone: each carries its channel name as the accessible label. */
+.hc-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: var(--radius-full);
+  background: var(--ksg-b60);
+  border: 1px solid var(--ksg-w20);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default);
+}
+.hc-node:hover {
+  color: var(--text-primary);
+  border-color: var(--ksg-w40);
+}
+.hc-node:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+.hc-node.virtual {
+  background: var(--accent-color);
+  color: var(--text-on-accent-light);
+}
+/* test ripple — a ring expanding out of the node */
+.hc-node.testing::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--accent-color);
+  animation: hc-ping var(--dur-xslow) var(--ease-out) forwards;
+}
+@keyframes hc-ping {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(2.4); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the animation event (it clears the testing state) but not the motion. */
+  .hc-node.testing::after {
+    animation-duration: var(--dur-instant);
+  }
+}
+/* the .1 — subwoofer, off the ring */
+.hc-node.hc-sub {
+  left: auto;
+  top: auto;
+  bottom: var(--gutter-xxs);
+  inset-inline-start: 0;
+  width: 32px;
+  height: 32px;
+}
+
+/* Auto input detection strip */
+.hc-io {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  width: 198px;
+  padding: var(--gutter-mobile);
+  background: var(--ksg-b20);
+  border: 1px solid var(--ksg-w20);
+  border-radius: var(--radius-sm);
+}
+.hc-io-cell {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hc-io-key { color: var(--text-primary); }
+.hc-io-val { color: var(--text-dim); }
+.hc-io-rule {
+  width: 1px;
+  align-self: stretch;
+  background: var(--ksg-w10);
+  border-radius: var(--radius-full);
+}
+
+/* Parameters column — sliders up top, Advanced Settings pinned to the foot */
+.hc-params {
+  gap: var(--gutter);
+}
+.hc-scale {
+  display: flex;
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  font-weight: var(--font-semibold);
+  color: var(--text-dim);
+}
+.hc-scale span { flex: 1 1 0; text-align: center; }
+.hc-scale span:first-child { text-align: left; }
+.hc-scale span:last-child { text-align: right; }
+.hc-advanced {
+  margin-top: auto;
+  align-self: stretch;
+  justify-content: center;
+}
+@media (max-width: 1024px) {
+  .hc-audio {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .hc-audio,
+  .hc-audio.hc-spatial,
+  .hc-settings {
+    grid-template-columns: 1fr;
+  }
+}

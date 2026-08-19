@@ -1,0 +1,56 @@
+/* Reorderable page sections — vertical list with a gutter grip handle. */
+.rs-group {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gutter) * 1.5);
+}
+.rs-section {
+  position: relative;
+}
+/* Grip lives in the left gutter, fading in on section hover / focus. The whole
+   section drags from it (Reorder.Item dragListener=false). */
+.rs-grip {
+  position: absolute;
+  top: 20px;
+  left: -26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  cursor: grab;
+  opacity: 0;
+  touch-action: none;
+  transition:
+    opacity var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default);
+}
+.rs-section:hover .rs-grip,
+.rs-grip:focus-visible {
+  opacity: 1;
+}
+.rs-grip:hover {
+  color: var(--text-primary);
+}
+.rs-grip:active {
+  cursor: grabbing;
+}
+
+/* While a section is being dragged, lift it above the rest. */
+.rs-group [data-dragging='true'],
+.rs-section:active {
+  cursor: grabbing;
+}
+
+/* Narrow viewports: tuck the grip just inside the section instead of the gutter. */
+@media (max-width: 1180px) {
+  .rs-grip {
+    left: 0;
+    background: var(--surface);
+  }
+}

@@ -1,0 +1,50 @@
+/* ── JY's Work index (#/jy) ── self-contained; only .jyw-* selectors, so it
+   collides with nothing in the base app. Uses the shared KINTSUGI tokens. */
+
+.jyw-root { max-width: 1100px; margin: 0 auto; padding: 8px 0 64px; }
+
+.jyw-hero { padding: 12px 0 8px; }
+.jyw-eyebrow { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-subtle); margin: 0 0 6px; }
+.jyw-title { font-size: 34px; line-height: 1.1; color: var(--text-primary); margin: 0 0 10px; }
+.jyw-sub { max-width: 62ch; font-size: var(--text-body); color: var(--text-muted); margin: 0; }
+
+.jyw-section { margin-top: 40px; }
+.jyw-section-title { font-family: var(--font-mono); font-size: var(--text-caption); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle); margin: 0 0 var(--gutter); padding-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+
+.jyw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--gutter); }
+
+.jyw-card {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: var(--gutter); border-radius: var(--radius);
+  background: var(--surface-1, rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border-light);
+  text-decoration: none; cursor: pointer;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease, transform var(--dur-fast) ease;
+}
+.jyw-card:hover { border-color: var(--border); background: var(--surface-hover); transform: translateY(-2px); }
+.jyw-card:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+/* the final stab reads as the featured tile */
+.jyw-card--final { border-color: color-mix(in srgb, var(--accent-color), transparent 55%); background: var(--accent-dimmest); grid-column: 1 / -1; }
+
+.jyw-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter-sm); }
+.jyw-card-title { font-size: var(--text-title); font-weight: 600; color: var(--text-primary); }
+.jyw-card--final .jyw-card-title { font-size: 22px; }
+
+.jyw-tag { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.jyw-tag--final { background: var(--accent-color); color: var(--text-on-accent, #fff); }
+.jyw-tag--variant { background: rgba(255, 255, 255, 0.06); color: var(--text-dim); }
+.jyw-tag--lab { background: color-mix(in srgb, var(--purple), transparent 82%); color: var(--purple); }
+
+.jyw-card-blurb { font-size: var(--text-caption); color: var(--text-muted); margin: 0; line-height: 1.5; }
+.jyw-card-go { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--accent-color); margin-top: auto; }
+
+.jyw-docs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.jyw-doc { display: grid; grid-template-columns: minmax(240px, 300px) 1fr; gap: var(--gutter); align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.jyw-doc:last-child { border-bottom: none; }
+.jyw-doc-path { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--text-dim); background: rgba(255, 255, 255, 0.04); padding: 2px 6px; border-radius: var(--radius-sm); word-break: break-all; }
+.jyw-doc-blurb { font-size: var(--text-caption); color: var(--text-muted); }
+
+@media (max-width: 640px) {
+  .jyw-doc { grid-template-columns: 1fr; gap: 4px; }
+  .jyw-title { font-size: 28px; }
+}

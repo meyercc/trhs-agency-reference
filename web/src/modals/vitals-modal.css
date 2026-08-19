@@ -1,0 +1,396 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   VITALS MODAL — full-width tabbed system monitor (React port of vanilla .vm-*).
+   Reuses shared .ds-badge / .ds-spark-cell/val/lbl / .ds-prog-track/fill and the
+   widget .gauge-* / .vital-label classes. Scoped under .vm-shell (the ModalShell).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* The vitals modal owns its whole body — no left/right split, no scroll padding
+   (the panels scroll themselves). */
+.vm-shell .modal-body {
+  grid-template-columns: 1fr;
+}
+.vm-shell .modal-right {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+}
+
+.vitals-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Tab bar ── */
+.vm-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.vm-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-weight: var(--font-bold);
+  color: var(--text-muted);
+  padding: var(--gutter-tablet) 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition:
+    color var(--dur-fast),
+    border-color var(--dur-fast);
+}
+.vm-tab:hover {
+  color: var(--text-primary);
+}
+.vm-tab.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+}
+.vm-tab-spacer {
+  flex: 1;
+}
+
+.vm-conn-status {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  font-size: var(--text-micro);
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+.vm-conn-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+}
+
+/* ── Panels ── */
+.vm-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* ── Overview grid ── */
+.vm-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gutter);
+}
+.vm-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: var(--gutter);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast),
+    background var(--dur-fast);
+}
+.vm-card:hover {
+  border-color: var(--accent-dim);
+  background: var(--surface-hover);
+}
+.vm-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--gutter);
+}
+.vm-card-title {
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+}
+
+.vm-card-gauge-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter);
+}
+/* Shared Gauge sized down for the modal (base .gauge-wrap is 100px). */
+.vm-gauge {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+.vm-gauge .gauge-n {
+  font-size: 15px;
+}
+.vm-gauge-lg {
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+.vm-gauge-lg .gauge-n {
+  font-size: 19px;
+}
+
+.vm-card-spark {
+  flex: 1;
+  height: 40px;
+  min-width: 0;
+}
+
+.vm-card-model {
+  margin-top: var(--gutter);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Overview network card ── */
+.vm-card-net {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  margin-bottom: var(--gutter-sm);
+}
+.vm-card-net-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.vm-card-net-val {
+  font-family: var(--font-cond);
+  font-size: var(--text-sm-title);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.vm-card-net-unit {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+/* ── Detail header (CPU/GPU/RAM tabs) ── */
+.vm-detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter);
+  margin-bottom: var(--gutter);
+  padding-bottom: var(--gutter);
+  border-bottom: 1px solid var(--border-light);
+}
+.vm-detail-info {
+  flex: 1;
+  min-width: 0;
+}
+.vm-detail-name {
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--gutter-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vm-detail-stats {
+  display: flex;
+  gap: var(--gutter);
+  flex-wrap: wrap;
+}
+
+/* ── Charts ── */
+.vm-chart-section {
+  margin-bottom: var(--gutter);
+}
+.vm-chart-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--gutter-sm);
+}
+.vm-chart {
+  height: 140px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+}
+/* uPlot fills its host; the host fills .vm-chart / .vm-card-spark. */
+.vm-uplot,
+.vm-uplot .uplot,
+.vm-uplot .u-wrap {
+  width: 100% !important;
+  height: 100% !important;
+}
+.vm-chart .vm-uplot {
+  height: 140px;
+}
+.vm-card-spark .vm-uplot {
+  height: 40px;
+}
+.vm-chart-legend {
+  display: flex;
+  gap: var(--gutter);
+  margin-top: var(--gutter-sm);
+}
+.vm-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+.vm-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ── Per-core grid ── */
+.vm-core-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: var(--gutter-sm);
+}
+.vm-core-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-sm) var(--gutter-xs);
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+}
+.vm-core-cell .ds-prog-track {
+  width: 100%;
+}
+.vm-core-cell .ds-prog-fill {
+  background: var(--cyan);
+}
+.vm-core-pct {
+  font-family: var(--font-cond);
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.vm-core-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ── VRAM bar ── */
+.vm-vram-bar-wrap {
+  max-width: 400px;
+}
+.vm-vram-bar-wrap .ds-prog-track {
+  height: 8px;
+  border-radius: var(--radius-sm);
+}
+.vm-vram-bar-wrap .ds-prog-fill {
+  background: var(--purple);
+  border-radius: var(--radius-sm);
+}
+.vm-vram-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--gutter-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+/* ── Network detail ── */
+.vm-net-header {
+  flex-wrap: wrap;
+}
+.vm-net-stat-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.vm-net-big-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gutter-sm);
+}
+.vm-net-big-val {
+  font-family: var(--font-cond);
+  font-size: var(--text-title);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.vm-net-big-unit {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+/* ── Storage tab ── */
+.vm-storage-drives {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+}
+.vm-drive-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: var(--gutter);
+}
+.vm-drive-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--gutter-sm);
+}
+.vm-drive-name {
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.vm-drive-card .ds-prog-track {
+  height: 8px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--gutter-sm);
+}
+.vm-drive-card .ds-prog-fill {
+  border-radius: var(--radius-sm);
+}
+.vm-drive-stats {
+  display: flex;
+  gap: var(--gutter);
+  flex-wrap: wrap;
+}
+
+/* Light theme overrides */
+html.light .vm-card,
+html.light .vm-chart,
+html.light .vm-core-cell,
+html.light .vm-drive-card {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+html.light .vm-card:hover {
+  background: rgba(0, 0, 0, 0.05);
+}

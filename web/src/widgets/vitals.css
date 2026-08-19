@@ -1,0 +1,284 @@
+/* System Vitals widget — arc gauges + network panel. Ported from the vanilla
+   `.wv-*` / `.gauge-*` / `.net-*` (which were prototype-only, not in shared). */
+
+/* The card is a size container so the content can compact when the widget is
+   resized down to 1 row (~160px) instead of clipping (full layout at 2+ rows).
+   Scoped to `wvw` so it never touches the Perform monitoring bar's gauges. */
+.wv-widget {
+  container-type: size;
+  container-name: wvw;
+}
+
+.wv-gauges {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  flex: 1;
+  margin-top: var(--gutter-xs);
+}
+.wv-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--gutter-xs) var(--gutter-sm) var(--gutter-sm);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+.wv-cell:last-child {
+  border-right: none;
+}
+
+/* Arc gauge */
+.gauge-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 6px;
+}
+.gauge-ec {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.gauge-val {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 56%;
+  transform: translateY(-50%);
+  text-align: center;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+.gauge-n {
+  font-size: 20px;
+  font-weight: 700;
+  color: #e4e8f0;
+}
+.gauge-u {
+  font-size: 8px;
+  color: rgba(228, 232, 240, 0.38);
+  margin-left: 1px;
+}
+
+.vital-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+/* Temp / usage badge */
+.gauge-temp-badge {
+  margin-top: var(--gutter-sm);
+  padding: 2px var(--gutter-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-align: center;
+}
+.gauge-temp-badge.green {
+  background: var(--green-dim);
+  border-color: color-mix(in srgb, var(--green), transparent 72%);
+  color: var(--green);
+}
+.gauge-temp-badge.orange {
+  background: var(--orange-dim);
+  border-color: color-mix(in srgb, var(--orange), transparent 72%);
+  color: var(--orange);
+}
+.gauge-temp-badge.ram {
+  background: rgba(12, 31, 41, 1);
+  border-color: rgba(0, 84, 94, 1);
+  color: rgba(0, 204, 218, 1);
+}
+
+/* Network panel (4th cell) */
+.wv-net {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--gutter-sm);
+  flex: 1;
+  padding: var(--gutter-xs) 0 0;
+  width: 100%;
+}
+.wv-net-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.wv-net-label {
+  margin-top: auto;
+  padding-top: 10px;
+}
+.net-speed {
+  font-family: var(--font-mono);
+  font-size: var(--text-title);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.net-unit {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: var(--font-light);
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+.net-minibar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.net-minibar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* ── Compact 1-row layout ──
+   When the vitals card is short (resized to 1 row), shrink the gauges, drop the
+   temp/GB badges, and tighten spacing so nothing clips. Full arc-gauge layout
+   returns at 2+ rows. Only applies inside the `wvw` container (this widget). */
+@container wvw (max-height: 220px) {
+  .wv-gauges {
+    margin-top: 0;
+  }
+  .wv-cell {
+    padding: 0 var(--gutter-xs);
+    justify-content: center;
+    gap: 2px;
+  }
+  .gauge-wrap {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 0;
+  }
+  .gauge-n {
+    font-size: 15px;
+  }
+  .gauge-temp-badge {
+    display: none;
+  }
+  .vital-label {
+    font-size: var(--text-caption);
+  }
+  .wv-net {
+    gap: 2px;
+    padding-top: 0;
+  }
+  .net-speed {
+    font-size: var(--text-section);
+  }
+  .net-unit {
+    font-size: var(--text-micro);
+  }
+  .wv-net-label {
+    padding-top: 4px;
+  }
+}
+
+/* ── Monitoring bar (.perf-vitals-bar) — full-width 5-panel monitor on Perform.
+   Reuses .gauge-*, .vital-label, .gauge-temp-badge, .net-* above. ── */
+.perf-vitals-bar {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 1.1fr 1.1fr;
+  overflow: hidden;
+}
+.pvital-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter) 18px;
+  border-right: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background var(--dur-fast) ease;
+}
+.pvital-cell:last-child {
+  border-right: none;
+}
+.pvital-cell:hover {
+  background: var(--surface-hover);
+}
+/* The gauge cells stack gauge → label → badge (no fill); net/storage center. */
+.perf-vitals-bar .gauge-wrap {
+  margin-bottom: 6px;
+}
+
+/* Network + Storage panels: a full-width stack with the label pinned bottom-right */
+.pvital-net-stack,
+.pvital-storage-stack {
+  width: 100%;
+}
+.pvital-net-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.pvital-net-row + .pvital-net-row {
+  margin-top: 5px;
+}
+.pvital-storage-item + .pvital-storage-item {
+  margin-top: var(--gutter-sm);
+}
+/* One label convention across all five cells: centered, like the gauge
+   cells. (The vanilla bar had Network/Storage labels inlined bottom-right —
+   unified here per the title-consistency pass.) */
+.pvital-corner-label {
+  align-self: center;
+  margin-top: 8px;
+}
+
+/* Storage drive rows */
+.storage-drive-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--gutter-xs);
+}
+.storage-drive-name {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+.storage-drive-pct {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.storage-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.storage-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width var(--dur-xslow) ease;
+}
+
+/* Narrow: wrap into a 3-col, 2-row layout (gauges on top, net/storage below) */
+@media (max-width: 768px) {
+  .perf-vitals-bar {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .perf-vitals-bar .pvital-cell:nth-child(3) {
+    border-right: none;
+  }
+  .perf-vitals-bar .pvital-net {
+    border-right: 1px solid var(--border-light);
+  }
+}

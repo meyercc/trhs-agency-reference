@@ -1,0 +1,105 @@
+/* Booster modal — scoped styles ported from css/prototype.css.
+   Kept under .booster-modal so nothing leaks into the global design system. */
+
+/* ── Left hero icon (hex + lightning bolt, pulsing glow) ── */
+.booster-modal .booster-hero-icon {
+  width: 100px;
+  height: 100px;
+  margin: var(--gutter-sm) 0 24px;
+  position: relative;
+  flex-shrink: 0;
+}
+.booster-modal .booster-hero-icon::before,
+.booster-modal .booster-hero-icon::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.booster-modal .booster-hero-icon::before {
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.18) 0%, transparent 70%);
+  animation: booster-pulse 2.8s ease-in-out infinite;
+}
+.booster-modal .booster-hero-icon::after {
+  width: 70px;
+  height: 70px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.12) 0%, transparent 70%);
+}
+@keyframes booster-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: 1;
+  }
+}
+.booster-modal .booster-icon-svg {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ── Left action buttons ── */
+.booster-modal .modal-actions {
+  display: flex;
+  gap: var(--gutter-sm);
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+/* Scan/defrag stat grid tweaks (were inline in vanilla) */
+.booster-modal .bst-stat-grid {
+  margin-bottom: var(--gutter);
+  flex-shrink: 0;
+}
+.booster-modal .bst-stat-cell {
+  padding: 10px 12px;
+}
+
+/* ── Right panel: group header "Select All" link + always-on badge ── */
+.booster-modal .opt-edit-link {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--cyan);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity var(--dur-fast) ease;
+}
+.booster-modal .opt-edit-link:hover {
+  opacity: 0.7;
+}
+.booster-modal .always-on-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  background: rgba(0, 200, 215, 0.08);
+  border: 1px solid rgba(0, 200, 215, 0.2);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  flex-shrink: 0;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* Row label variants */
+.booster-modal .bst-muted {
+  font-style: italic;
+  color: var(--text-subtle);
+}
+.booster-modal .bst-warn {
+  color: rgba(255, 107, 43, 0.6);
+}

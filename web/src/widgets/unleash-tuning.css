@@ -1,0 +1,357 @@
+/* Unleashed — advanced tuning, inline on the Performance card (spec:
+   unleash_v7). Under the Unleashed mode: activation banner, SPG toggle, then
+   the five domains as collapsible sections (headers + mono summaries always
+   visible; L4 — Per-Core, Advanced Power — behind an extra disclosure); the
+   L4 electrical-limits banner lives in Advanced Power. Composes with .ds-*
+   library components — only .ut-* is defined here. Visual vocabulary carried
+   over from the V2 modal, PowerThermal (slider rows, fan curve) and
+   DeviceCanvas (collapse heads). */
+
+.ut-groups {
+  display: grid;
+  gap: var(--gutter);
+}
+
+.ut-group {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: var(--gutter-tablet) var(--gutter);
+  display: grid;
+  gap: var(--gutter-xs);
+}
+.ut-group-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+  min-height: 36px;
+}
+.ut-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ut-row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}
+.ut-row-meta {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+}
+.ut-row-control {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  flex-shrink: 0;
+}
+
+/* ── Warning banners (Unleashed activation = red · L4 electrical = amber) ── */
+.ut-banner {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: var(--radius);
+  padding: var(--gutter-xs) var(--gutter);
+  display: grid;
+  gap: 4px;
+}
+.ut-banner-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ut-banner-copy {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+.ut-banner.warn {
+  border-color: rgba(234, 179, 8, 0.3);
+  background: rgba(234, 179, 8, 0.06);
+}
+
+/* ── Full-width pill group (fan mode, GPU OC mode, LLC steps) ── */
+.ut-tabs {
+  display: flex;
+  width: 100%;
+}
+.ut-tabs .ds-toggle-group-btn {
+  flex: 1;
+  white-space: nowrap;
+}
+
+/* ── Full-width slider rows (mirrors PowerThermal's .uv-slider-row) ── */
+.ut-srow {
+  display: grid;
+  gap: 6px;
+}
+.ut-srow-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gutter);
+}
+.ut-srow-range {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+}
+.ut-srow-note {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+  line-height: 1.55;
+}
+
+/* ── Collapse panels (disclosure pattern from DeviceCanvas key groups) ── */
+.ut-collapse {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.ut-collapse.open {
+  background: var(--surface-light);
+}
+.ut-collapse-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-xs) var(--gutter);
+  min-height: 44px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.ut-collapse-head:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -2px;
+}
+.ut-collapse-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+.ut-collapse-summary {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+.ut-collapse-chevron {
+  margin-left: auto;
+  color: var(--text-subtle);
+  font-size: var(--text-micro);
+  transition: transform 0.2s ease;
+}
+.ut-collapse.open .ut-collapse-chevron {
+  transform: rotate(180deg);
+}
+.ut-collapse-body {
+  padding: var(--gutter-xs) var(--gutter) var(--gutter);
+  border-top: 1px solid var(--border-light);
+}
+.ut-collapse-stack {
+  display: grid;
+  gap: var(--gutter);
+}
+.ut-subsection {
+  display: grid;
+  gap: var(--gutter-xs);
+}
+
+/* Per-core grid — 8 mini slider rows, two columns */
+.ut-cores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gutter-xs) var(--gutter);
+  margin-top: var(--gutter-xs);
+}
+
+/* ── Memory tiles (selectable tiles on the .power-mode-btn base) ── */
+.ut-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gutter-xs);
+}
+.power-mode-btn.ut-tile {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: var(--gutter) var(--gutter-sm);
+  height: auto;
+}
+.ut-tile-speed {
+  font-family: var(--font-mono);
+  font-size: var(--text-section);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.ut-tile-warn {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--yellow);
+}
+
+/* ── Benchmark ── */
+.ut-bench-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.ut-bench-bar i {
+  display: block;
+  height: 100%;
+  width: 55%;
+  border-radius: 2px;
+  background: var(--accent-color);
+}
+.ut-bench-score {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm-title);
+  font-weight: 700;
+  color: var(--accent-color);
+}
+.ut-bench-score span {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  font-weight: 400;
+  color: var(--text-subtle);
+}
+
+/* ── Fan curve editor (PowerThermal fan-curve visual language) ── */
+.ut-fc {
+  display: grid;
+  gap: var(--gutter-xs);
+}
+.ut-fc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+  flex-wrap: wrap;
+}
+.ut-fc-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.ut-fc-live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+}
+.ut-fc-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
+}
+.ut-fc-live-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  color: var(--cyan);
+}
+.ut-fc-plot {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.ut-fc-svg {
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+.ut-fc-grid {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 0.5;
+}
+.ut-fc-tick {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--text-subtle);
+}
+.ut-fc-axis {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  fill: var(--text-muted);
+}
+.ut-fc-area {
+  fill: rgba(0, 200, 215, 0.07);
+}
+.ut-fc-line {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.ut-fc-point {
+  fill: var(--bg-elevated);
+  stroke: var(--cyan);
+  stroke-width: 2;
+}
+.ut-fc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+}
+.ut-fc-foot .ut-srow-note {
+  max-width: 70%;
+}
+.ut-rpm-row {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--gutter-xs) var(--gutter);
+  min-height: 0;
+}
+
+/* ── Modal footer ── */
+.ut-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gutter-xs);
+  padding-top: var(--gutter-xxs);
+}

@@ -1,0 +1,85 @@
+/* Page-level chrome shared by the five pages. Token-only. */
+
+/* section header: label + divider + optional count/action */
+.pg-section {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  margin: var(--gutter) 0;
+}
+.pg-section:first-child {
+  margin-top: var(--gutter);
+}
+.pg-section-label {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.pg-section-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.pg-section-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-subtle);
+}
+
+/* (The old Play featured-hero styles were replaced by the full-bleed slideshow
+   hero in play.css / PlayHero.tsx.) */
+
+/* grids */
+.pg-grid {
+  display: grid;
+  gap: var(--gutter);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.pg-grid-wide {
+  grid-template-columns: auto;
+}
+/* Two equal half-width cards side by side (collapses to one on narrow widths). */
+.pg-pair {
+  display: grid;
+  gap: var(--gutter);
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+}
+@media (max-width: 640px) {
+  .pg-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* settings rows (Personalize) */
+.pg-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+  padding: var(--gutter) 0;
+  border-bottom: 1px solid var(--border);
+}
+.pg-setting-label {
+  color: var(--text-primary);
+}
+.pg-setting-sub {
+  color: var(--text-muted);
+}
+
+/* Home hero carousel spacing above the widget board. */
+.home-carousel {
+  margin-bottom: var(--gutter);
+}
+/* The hero aura bleeds up under the (transparent) sticky nav to the very top of
+   the app window, so the nav blends into the content (matches the vanilla). The
+   wrap goes position:static so the aura anchors to `.shell` (the app root) rather
+   than the carousel box; it's then tall enough to span nav → carousel → below. */
+.ds-carousel-wrap.home-carousel {
+  position: static;
+}
+.home-carousel .ds-carousel-aura {
+  height: 740px;
+}
+.home-carousel .ds-carousel {
+  height: 420px;
+}

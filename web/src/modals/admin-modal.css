@@ -1,0 +1,97 @@
+/* ── Admin modal (.admin-modal) ─────────────────────────────
+   Admin & testing tools. Starts with an empty state; testing controls
+   drop in as .admin-group blocks below it as they're added.
+   ────────────────────────────────────────── */
+.admin-modal {
+  width: min(560px, 92vw);
+}
+
+/* Empty state — centered glyph + copy while there are no tools yet. */
+.admin-modal .admin-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--gutter-xs);
+  padding: calc(var(--gutter) * 2) var(--gutter);
+  color: var(--text-subtle);
+}
+.admin-modal .admin-empty svg {
+  color: var(--text-muted);
+}
+.admin-modal .admin-empty-title {
+  font-size: var(--text-body);
+  font-weight: var(--font-medium);
+  color: var(--text-dim);
+}
+.admin-modal .admin-empty-sub {
+  max-width: 42ch;
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: 1.5;
+  color: var(--text-subtle);
+}
+
+/* Tool groups + rows */
+.admin-modal .admin-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.admin-modal .admin-group-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.admin-modal .admin-tool {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-sm);
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-mid);
+}
+.admin-modal .admin-tool-ic {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-dimmer);
+  color: var(--accent-color);
+  flex: 0 0 auto;
+}
+.admin-modal .admin-tool-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.admin-modal .admin-tool-name {
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  font-size: var(--text-body);
+}
+.admin-modal .admin-tool-desc {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  line-height: 1.45;
+  margin-top: 3px;
+}
+.admin-modal .admin-tool-status {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+.admin-modal .admin-tool-status b {
+  color: var(--accent-color);
+  font-weight: var(--font-medium);
+}
+.admin-modal .admin-tool-actions {
+  display: flex;
+  gap: var(--gutter-xs);
+  flex: 0 0 auto;
+}

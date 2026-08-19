@@ -1,0 +1,116 @@
+/* Deal tile (.ds-deal) — wide 16:9 store-deal promo card. Sibling of .ds-tile
+   (GameTile). Structure from the Figma deal tile; styled with our tokens,
+   Badge, and Button. The outer .ds-deal carries the bleeding hover glow
+   (::before), the inner .ds-deal-card clips the art + info bar + overlay. */
+.ds-deal {
+  position: relative;
+  isolation: isolate; /* stacking context so the ::before glow stays behind */
+}
+
+/* Hover glow (opt-in via .glow) — a blurred, art-sourced bleed behind the card. */
+.ds-deal.glow::before {
+  content: '';
+  position: absolute;
+  inset: -2% -3% -4% -3%;
+  border-radius: 18px;
+  background: var(--_deal-bg) center / cover no-repeat;
+  filter: blur(24px) saturate(2) brightness(1.6);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-default);
+  z-index: 0;
+  pointer-events: none;
+}
+.ds-deal.glow:hover::before,
+.ds-deal:focus-within.glow::before {
+  opacity: 0.4;
+}
+.ds-deal.force-glow::before {
+  opacity: 0.55;
+}
+
+/* The visible card — clips the rounded corners + acrylic bars. */
+.ds-deal-card {
+  position: relative;
+  z-index: 1;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-lv-1, 0 2px 4px rgba(0, 0, 0, 0.14));
+  cursor: pointer;
+}
+.ds-deal-card:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.ds-deal-art {
+  position: absolute;
+  inset: 0;
+}
+.ds-deal-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+}
+
+/* Bottom info bar — platform glyph (left) · badge + price (right). */
+.ds-deal-info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  height: 32px;
+  padding: 0 12px;
+  background: var(--ksg-b60);
+  backdrop-filter: blur(30px);
+}
+.ds-deal-plat {
+  flex: 0 0 auto;
+  color: var(--text-primary);
+}
+.ds-deal-meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.ds-deal-price {
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+/* Hover overlay — sits above the art, clears the 32px info bar. */
+.ds-deal-hover {
+  position: absolute;
+  inset: 0 0 32px 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-sm) var(--gutter);
+  text-align: center;
+  background: var(--ksg-b65, rgba(0, 0, 0, 0.64));
+  backdrop-filter: blur(30px);
+  opacity: 0;
+  transition: opacity var(--dur, 0.2s) var(--ease-default);
+}
+.ds-deal-card:hover .ds-deal-hover,
+.ds-deal-card:focus-within .ds-deal-hover,
+.ds-deal.force-glow .ds-deal-hover {
+  opacity: 1;
+}
+.ds-deal-desc {
+  margin: 0;
+  max-width: 34ch;
+  color: var(--text-primary);
+}

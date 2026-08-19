@@ -1,0 +1,190 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   X-Ray Port View — card + full-screen overlay (monitor section concept).
+   Self-ported from the approved Treehouse-monitor design (index.html, Cindy
+   mechanism v2 2026-07-13) onto the real token set. Only token-name remaps:
+   --accent → --accent-color · --r-card → --radius · --r-chip → --radius-sm.
+   Class names kept from the approved design (xr-/xray-/php/xhot/xtip/xd-);
+   generic ones prefixed (xr-chip, xr-pm, xr-badges) to avoid app collisions.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── card = NATIVE section, no box (matches the other modal tabs, Cindy 2026-07-23).
+   Chrome uses Chris's .dm-* classes in the TSX (.dm-field-label header, .dm-row
+   rows, .dm-note text) on the --gutter grid; only the render/callout/port-map
+   are bespoke. No border, no bg panel, no hand-rolled padding box. */
+.xr{margin-bottom:var(--gutter);}
+.xr-head{margin-bottom:var(--gutter-sm);}
+.xr-actions{display:flex;align-items:center;gap:var(--gutter-xs);}
+.xr-tipable{background:none;border:0;padding:0;color:var(--text-muted);cursor:help;display:flex;position:relative;}
+.xrb{position:relative;display:flex;justify-content:center;margin-bottom:var(--gutter-sm);}
+.xrb-wrap{position:relative;height:300px;}
+.xrb-wrap img{height:300px;width:auto;display:block;object-fit:contain;filter:drop-shadow(0 10px 26px rgba(0,0,0,.6));}
+/* rear-ports dashed callout — WHITE, no text label (Cindy 2026-07-23: text was
+   confusing; blue was my error). Hover it → an arrow bobs down + the port map
+   below lights up, tying the render's port region to the detailed map.
+   Uses DS motion tokens (dur / ease). */
+.port-hl{position:absolute;left:50%;top:60.5%;transform:translateX(-50%);width:35.5%;height:6%;border:1.5px dashed rgba(255,255,255,.6);border-radius:var(--radius-sm);cursor:pointer;transition:border-color var(--dur-fast) var(--ease-default);}
+.port-hl:hover{border-color:rgba(255,255,255,.95);}
+/* pointer arrow lives DOWN by the port map (not under the cursor, where it was
+   hard to see) — shows while the callout is hovered. Pure CSS via :has(), no JS
+   state (React-synthetic hover proved fragile to verify). Gap above the plate =
+   --gutter (DS spacing token, 24px) — not a hand-picked px. */
+.pm-arrow{position:absolute;left:50%;top:calc(18.987% - var(--gutter));transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:8px solid rgba(255,255,255,.95);opacity:0;transition:opacity var(--dur-normal) var(--ease-default);z-index:3;pointer-events:none;}
+:is(.xr,.xr-hero):has(.port-hl:hover) .pm-arrow{opacity:1;animation:xr-point-bob 1.5s ease-in-out infinite;}
+@keyframes xr-point-bob{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(3px);}}
+/* port map glows white while the callout is hovered — "here's the detail".
+   Glow lives on a separate .pm::before layer at the plate's rect: the basewrap's
+   edge-fade mask clips its own box-shadow (mask eats shadows — 2026-07-23 bug,
+   "glow disappeared" after the fade was added). */
+.pm::before{content:'';position:absolute;left:5.742%;top:18.987%;width:88.517%;height:64.135%;border-radius:var(--radius);box-shadow:0 0 0 1px rgba(255,255,255,.35),0 0 26px rgba(255,255,255,.14);opacity:0;transition:opacity var(--dur-normal) var(--ease-default);pointer-events:none;}
+:is(.xr,.xr-hero):has(.port-hl:hover) .pm::before{opacity:1;}
+@media (prefers-reduced-motion: reduce){:is(.xr,.xr-hero):has(.port-hl:hover) .pm-arrow{animation:none;transform:translateX(-50%) translateY(3px);}}
+.xr-pm{margin-bottom:var(--gutter-sm);}
+/* ── card port map — Cindy's Figma design 434:18718, values verbatim ──
+   Frame 836×237, base plate at (48,45) 740×152. Port components: stroke 2px /
+   radius 4px (USB-A) / 20px pill (USB-C) / glow = 4px blur 4px — all scaled
+   with cqw so the map keeps Figma proportions at any card width (2px@836 =
+   0.239cqw). Colors = var(--accent-color) + 80% fill (tokenized 2026-08-02 —
+   Figma authored them as UI/PHI Blue #346ED1, a hardcode that would not have
+   followed a cyan→blue accent swap, chris-sync B-2) ·
+   empty outline rgba(255,255,255,.75). State model (Cindy variants): empty =
+   white outline · empty hover = blue outline · plugged = blue outline + fill ·
+   plugged hover = + glow · Limited-off = dimmed, no hover blue. */
+.pm{position:relative;width:100%;aspect-ratio:836/237;container-type:inline-size;margin-bottom:var(--gutter-sm);}
+/* Figma image fill: crop box + oversized inner image (verbatim offsets) */
+/* image window = LIBRARY pattern (.ds-tile-art): border-radius var(--radius) +
+   overflow hidden. (Edge-fade mask removed 2026-07-23 — my invention, not a DS
+   image pattern; Cindy: use existing library UI patterns.)
+   Image fills the window's FULL WIDTH (no L/R crop — matches the dashed
+   callout's framing with side margins; crop top/bottom only, Cindy 2026-07-23). */
+.pm-basewrap{position:absolute;left:5.742%;top:18.987%;width:88.517%;height:64.135%;overflow:hidden;border-radius:var(--radius);pointer-events:none;}
+.pm-base{position:absolute;left:0;top:-32.9%;width:100%;height:auto;max-width:none;display:block;}
+.pmport{position:absolute;cursor:pointer;}
+.pmp-stroke{position:absolute;inset:0;border:0.239cqw solid rgba(255,255,255,.75);transition:border-color .12s;}
+.pm-usba .pmp-stroke{border-radius:0.478cqw;}
+.pm-usbc .pmp-stroke{border-radius:2.392cqw;}
+.pm-audio .pmp-stroke{border-radius:50%;inset:5.3%;}
+.pmport.plug .pmp-stroke,.pmport:hover .pmp-stroke{border-color:var(--accent-color);}
+.pmp-fill{position:absolute;inset:0.478cqw;background:color-mix(in srgb,var(--accent-color) 80%,transparent);border-radius:0.478cqw;}
+.pm-usbc .pmp-fill{border-radius:2.392cqw;}
+.pmp-glow{display:none;position:absolute;inset:0;border:0.478cqw solid var(--accent-color);filter:blur(0.478cqw);}
+.pm-usba .pmp-glow{border-radius:0.478cqw;}
+.pm-usbc .pmp-glow{border-radius:2.392cqw;}
+.pm-audio .pmp-glow{border-radius:50%;inset:5.3%;}
+.pmport.plug:hover .pmp-glow{display:block;}
+/* HDMI / DP = Cindy silhouette SVG assets (default ↔ hover-glow swap).
+   Hover asset bleeds outside the port box by the Figma glow insets. */
+.pmp-img-default{position:absolute;inset:0;width:100%;height:100%;display:block;}
+.pmp-img-hover{display:none;position:absolute;max-width:none;}
+.pm-hdmi .pmp-img-hover{left:-39.13%;right:-39.13%;top:-17.65%;bottom:-17.65%;width:auto;height:auto;}
+.pm-dp .pmp-img-hover{left:-37.5%;right:-37.5%;top:-15.79%;bottom:-15.79%;width:auto;height:auto;}
+.pmport:hover .pmp-img-default{display:none;}
+.pmport:hover .pmp-img-hover{display:block;}
+/* Limited power mode = USB hub port off */
+.pmport.off{cursor:default;}
+.pmport.off .pmp-stroke{opacity:.45;}
+.pmport.off:hover .pmp-stroke{border-color:rgba(255,255,255,.75);}
+/* tooltip (ours, carried over from the approved card) */
+.pmport::before{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#000;color:var(--text-primary);font-size:10px;font-weight:500;padding:4px 8px;border-radius:5px;border:1px solid var(--border-med);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s;z-index:5;}
+.pmport:hover::before{opacity:1;}
+/* per-port silhouette glyph — still used by the full-screen overlay hotspots */
+.pg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible;}
+.pg-shape{fill:transparent;stroke:transparent;stroke-width:1.5;transition:fill .12s,stroke .12s;}
+/* foot = native .dm-row: connection summary (.dm-note) + status badges */
+.xr-foot{flex-wrap:wrap;gap:var(--gutter-sm);}
+.xr-foot .dm-note strong{color:var(--text-primary);}
+.xr-badges{display:flex;gap:var(--gutter-xs);flex-wrap:wrap;}
+
+/* ── full-screen view — approved mechanism v2 (2026-07-13) ──
+   ① one render laid over the screen 1:1 — no zoom ("plug it in with your eyes
+     closed" positional accuracy is the goal)
+   ② ports = the real ports in the image only (no vector redraw), hover = card
+   ③ only the image's port-strip region stays fixed regardless of Transparency
+   ④ mirrored render (flipped HP logo = approved original design) */
+.xray-ov{position:fixed;inset:0;z-index:100;font-family:"Segoe UI",system-ui,sans-serif;color:var(--text-primary);overflow:hidden;}
+/* layer 0: Windows desktop (demo backdrop) */
+.xray-desk{position:absolute;inset:0;background:radial-gradient(ellipse 90% 120% at 28% 18%,#3f6ad8 0%,#274091 34%,#101c4e 62%,#0a1030 100%);}
+.xd-swirl{position:absolute;inset:0;background:radial-gradient(ellipse 40% 90% at 22% 40%,rgba(190,215,255,.5),transparent 60%),radial-gradient(ellipse 55% 70% at 62% 78%,rgba(25,42,110,.85),transparent 72%);filter:blur(2px);}
+.xd-task{position:absolute;left:0;right:0;bottom:0;height:40px;background:rgba(16,20,32,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;padding:0 14px;gap:10px;z-index:6;}
+.xd-wx{display:flex;align-items:center;gap:7px;font-size:11px;color:rgba(255,255,255,.75);line-height:1.3;white-space:nowrap;}
+.xd-wx::before{content:'';width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe58a,#f5b62e);}
+.xd-search{width:190px;height:26px;border-radius:13px;background:rgba(255,255,255,.12);display:flex;align-items:center;padding:0 12px;font-size:11px;color:rgba(255,255,255,.55);margin-left:8px;}
+.xd-task .ti{width:22px;height:22px;border-radius:5px;background:var(--surface-hover);}
+.xd-task .ti.c1{background:linear-gradient(135deg,#3b82f6,#22d3ee);}
+.xd-task .ti.c2{background:linear-gradient(135deg,#f59e0b,#ef4444);}
+.xd-task .ti.c3{background:linear-gradient(135deg,#22c55e,#84cc16);}
+.xd-clock{margin-left:auto;text-align:right;font-size:10.5px;line-height:1.35;color:rgba(255,255,255,.78);}
+/* layer 1: rear panel 1:1 — panel height = screen height. Stand column shows
+   inside the screen; neck/base below get cropped by the viewport naturally */
+.xray-back{position:absolute;inset:0;overflow:hidden;opacity:.7;}
+/* LOCKED-START — approved 2026-07-13 (Cindy), do not "improve".
+   1:1 "through the screen": panel height ≈ screen height, ports at the bottom.
+   The neck + stand base sit BELOW the screen, so the viewport naturally crops
+   them off — only the stand COLUMN inside the screen shows, fading with
+   Transparency. Do NOT shrink to fit the whole monitor in the viewport.
+   Changes here require Cindy approval (design-craft-guard hard-block). */
+.xr-img{position:absolute;left:50%;transform:translateX(-50%);height:145.3vh;width:auto;max-width:none;top:-13.6vh;}
+/* layer 1.5: same image, port-strip region only, clipped + fixed (pixel-identical → no double image) */
+.xray-fix{position:absolute;left:0;right:0;top:81vh;height:8.8vh;overflow:hidden;z-index:4;}
+.xray-fix .xr-img{top:-94.6vh;}
+/* hotspot layer: image coordinate space (%) — congruent with .xr-img (aspect 4096/3259) */
+.xhots{position:absolute;left:50%;transform:translateX(-50%);width:182.7vh;height:145.3vh;top:-13.6vh;z-index:5;}
+/* LOCKED-END */
+.xhot{position:absolute;transform:translate(-50%,-50%);cursor:pointer;}
+/* same per-port silhouette glyph as the card (.pg/.pg-shape defined above) */
+.xhot:hover .pg-shape{stroke:var(--border-med);}
+.xhot.on .pg-shape{fill:color-mix(in srgb,var(--accent-color),transparent 42%);}
+.xhot.on:hover .pg-shape{stroke:var(--accent-color);}
+/* port hover info card (structured — title/warn/Use for/Speed/Status) */
+.xtip{position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);width:250px;background:color-mix(in srgb,var(--bg-elevated) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:none;z-index:5;box-shadow:0 8px 16px rgba(0,0,0,.4);text-align:left;cursor:default;}
+.xhot:hover .xtip{display:block;}
+.xtip-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:6px;}
+.xtip-warn{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--orange);margin-bottom:6px;}
+.xtip-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:2px 0;}
+.xtip-row span:first-child{color:var(--text-muted);}
+.xtip-row span:last-child{color:var(--text-dim);text-align:right;}
+/* layer 2: chrome — always visible regardless of transparency.
+   (3-class selector: outranks the button base rule `html:root .ds-btn`
+   (0,2,1) that sets position:relative) */
+.xray-ov .ds-btn.xray-close{position:absolute;top:22px;right:26px;left:auto;z-index:10;}
+/* slider = bottom right, below the strip · above the taskbar (approved position) */
+.xray-tr{position:absolute;right:26px;bottom:48px;z-index:10;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:8px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.xray-tr label{font-size:14px;color:var(--text-dim);white-space:nowrap;}
+.xray-tr .ds-slider{width:200px;}
+.xray-tr .ds-slider input{margin:0;}
+.xr-tr-val{font-family:var(--font-mono);font-size:12px;color:var(--text-primary);min-width:30px;text-align:right;}
+/* generic hover tooltip (ⓘ button) */
+.xr-tipable{position:relative;}
+.xr-tipable::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);right:0;width:max-content;max-width:280px;white-space:normal;background:#000;color:var(--text-primary);font-family:"Segoe UI",system-ui,sans-serif;font-size:12px;font-weight:400;text-transform:none;letter-spacing:0;line-height:1.5;padding:8px 10px;border-radius:6px;border:1px solid var(--border-med);opacity:0;pointer-events:none;transition:opacity .12s;z-index:40;text-align:left;}
+.xr-tipable:hover::after{opacity:1;}
+
+/* ── Connectivity hero (XrayHero) ─────────────────────────────────────────────
+   The rear render as that tab's hero. Sizing is the canvas's own `.dc-hero-fig`
+   (shrink-wrapped figure — percentage overlays track the rendered image at any
+   hero height), so nothing is re-done here: only the callout's button chrome,
+   since in the hero it is a real button that opens the full-screen X-ray. Its
+   dashed border and hover stay in `.port-hl` above. */
+/* Hero column (2026-08-02): render on top, Cindy's port map (Figma 434:18718)
+   re-mounted beneath it — same vertical render→map relationship as the approved
+   card, so the callout's down-arrow still points at the map. The column fills
+   the hero band; the figure takes the leftover height (flex:1 + min-height:0),
+   and because the image keeps width:auto the figure still hugs it, so the
+   callout's percentages stay on the render. `align-self:center` replaces the
+   old `stretch` — that was written when the figure sat in the band's ROW
+   flexbox (stretch = vertical); in this COLUMN it would stretch width and
+   un-hug the overlays. */
+.xr-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--gutter-sm); height: 100%; min-height: 0; width: 100%; }
+.xr-hero .dc-hero-fig { align-self: center; flex: 1 1 auto; min-height: 0; }
+.xr-hero .dc-hero-fig img { height: 100%; width: auto; max-width: 100%; }
+/* map width: the render is the hero's subject, so it keeps the height budget —
+   the map trades width for it (440px ≈ 125px tall at the 836/237 frame ratio,
+   leaving the render ~170px in a ~300px band). % floor so the map shrinks with
+   the modal instead of clipping. */
+.xr-hero-pm { width: min(440px, 55%); flex: 0 0 auto; margin-bottom: 0; }
+/* the canvas's blanket `.dc-hero img` rule (max-width:min(60%,560px),
+   max-height:100%, drop-shadow) now reaches the map's images too and squashed
+   the base plate off its hotspots — the map sizes its own images (Figma-verbatim
+   % offsets), so undo all three for anything inside the map */
+.xr-hero .pm img { max-width: none; max-height: none; filter: none; }
+.xr-hero .pm .pmp-img-default { max-width: 100%; }
+button.port-hl { background: transparent; padding: 0; appearance: none; }
+button.port-hl:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }

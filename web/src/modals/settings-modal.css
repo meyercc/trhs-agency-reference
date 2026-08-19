@@ -1,0 +1,61 @@
+/* App preferences modal (?modal=settings). Sectioned modal on the shared
+   .modal-shell chrome: .ds-modal-nav in the left slot, one settings group per
+   section on the right — same pattern as the Module Browser. */
+.settings-modal .modal-body {
+  grid-template-columns: 230px 1fr;
+}
+.settings-modal .modal-left {
+  padding: var(--gutter-sm);
+}
+.settings-modal .modal-right {
+  padding: var(--gutter-sm) var(--gutter);
+}
+
+/* Non-interactive group header (settings are always expanded here). */
+.settings-modal .ds-settings-group-header.stx-static {
+  cursor: default;
+  padding: var(--gutter-sm) var(--gutter) var(--gutter-xs);
+}
+.settings-modal .ds-settings-group-header.stx-static:hover {
+  background: transparent;
+}
+.settings-modal .stx-group-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.settings-modal .ds-settings-group-items {
+  padding: 0 var(--gutter) var(--gutter-sm);
+}
+
+/* Shared mono kicker for inline blocks (nav preview, wallpaper). */
+.settings-modal .stx-preview-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Live nav preview under the toggles. */
+.settings-modal .stx-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-sm) 0;
+}
+.settings-modal .stx-preview .ds-menu {
+  align-self: flex-start;
+}
+
+/* Wallpaper block — thumbs + effect sliders (classes from widgets.css). */
+.settings-modal .stx-wallpaper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-sm) 0;
+  max-width: 560px;
+}

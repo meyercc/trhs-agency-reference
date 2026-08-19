@@ -1,0 +1,76 @@
+/* Shared chrome for feature modals (OMEN AI, Booster, …) — the left-panel
+   benefits/considerations cards and scroll behaviour. Add the `feature-modal`
+   class to the ModalShell alongside the modal-specific class.
+   Ported from css/prototype.css (.uv-info-*). */
+
+/* The left panel scrolls when tall — keep its children at natural height so
+   flex-shrink doesn't collapse the stat grid / cards. */
+.feature-modal .modal-left > * {
+  flex-shrink: 0;
+}
+
+/* Benefits / considerations cards */
+.feature-modal .uv-info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gutter-sm);
+}
+.feature-modal .uv-info-card {
+  border-radius: var(--radius-sm);
+  padding: var(--gutter-mobile) var(--gutter-tablet);
+}
+.feature-modal .uv-info-card.benefits {
+  background: rgba(34, 197, 94, 0.05);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+.feature-modal .uv-info-card.risks {
+  background: rgba(255, 107, 43, 0.05);
+  border: 1px solid rgba(255, 107, 43, 0.15);
+}
+.feature-modal .uv-info-card-title {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.feature-modal .uv-info-card.benefits .uv-info-card-title {
+  color: rgba(34, 197, 94, 0.8);
+}
+.feature-modal .uv-info-card.risks .uv-info-card-title {
+  color: rgba(255, 107, 43, 0.8);
+}
+.feature-modal .uv-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: 300;
+  line-height: 1.4;
+  margin-bottom: var(--gutter-xs);
+}
+.feature-modal .uv-info-item:last-child {
+  margin-bottom: 0;
+}
+.feature-modal .uv-info-item::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.feature-modal .uv-info-card.benefits .uv-info-item {
+  color: rgba(34, 197, 94, 0.75);
+}
+.feature-modal .uv-info-card.benefits .uv-info-item::before {
+  background: rgba(34, 197, 94, 0.6);
+}
+.feature-modal .uv-info-card.risks .uv-info-item {
+  color: rgba(255, 107, 43, 0.75);
+}
+.feature-modal .uv-info-card.risks .uv-info-item::before {
+  background: rgba(255, 107, 43, 0.6);
+}

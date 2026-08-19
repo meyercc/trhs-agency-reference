@@ -1,0 +1,40 @@
+/* Generic spec-sheet canvas — the long-tail device types (webcam, trackpad,
+   notebook audio/IO/display, desktop components) on the shared device-canvas
+   chrome + .ds-ng3-* primitives. Only what the schema-driven body adds. */
+
+/* Sections split the panel width evenly, like the mic/monitor tab bodies. */
+.sc-grid > .ds-ng3-section {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Static tag row — ports, display outputs (Badge, not the interactive Chip). */
+.sc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+}
+
+/* Hero glyph for component SKUs with no product photo and no parent system. */
+.sc-hero-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius-lg);
+  background: var(--ksg-w5);
+  border: 1px solid var(--ksg-w10);
+  color: var(--text-muted);
+}
+
+.sc-empty {
+  font-size: var(--text-body);
+  color: var(--text-muted);
+}
+
+@media (max-width: 600px) {
+  .sc-grid {
+    flex-direction: column;
+  }
+}

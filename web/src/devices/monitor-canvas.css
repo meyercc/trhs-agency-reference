@@ -1,0 +1,114 @@
+/* Monitor canvas — Display/Color/KVM/Settings on the shared device-canvas
+   chrome + .ds-ng3-* primitives. Only monitor-specific layout lives here;
+   the KVM tab's stage/columns are in kvm.css. */
+
+/* Tab body — sections packed into columns by height, not by a hand-written
+   grouping. Which sections exist is SKU data (Gear Switch, OLED Care,
+   Under-Glow, OSD, the inputs list all come and go), so a fixed set of
+   Ng3Col groups leaves a column empty on a light monitor and runs the panel
+   past the hero on a heavy one. Column layout lets the browser balance, and
+   it re-balances for free when a feature drops out. Column count comes from
+   MonitorGrid (one per section, capped at 3) so a two-section tab is two wide
+   columns rather than three with a hole. */
+/* Fixed body height, the same convention the sibling canvases already use
+   (.dc-buttons and .dc-placeholder are 266px, the keyboard tabs 340px). The
+   monitor was the one canvas without it, which is why its panel breathed from
+   240px to 509px and shoved the hero around. One height for every tab means
+   the tab strip, the console and the hero above it all hold still. */
+.mc-grid {
+  height: 380px;
+  /* An extra column means a tab outgrew the body — visible rather than
+     silently cropped, so it gets fixed instead of shipped. */
+  overflow-x: auto;
+}
+.mc-grid.mc-grid--packed {
+  display: block;
+  column-count: var(--mc-cols, 3);
+  column-gap: var(--gutter-xs);
+}
+.mc-grid--packed > .ds-ng3-section {
+  break-inside: avoid;
+  margin-bottom: var(--gutter-xs);
+  min-width: 0;
+}
+/* One or two sections: the DS flex row, so the cards stretch to the body
+   height instead of sitting as two short blocks in a tall frame. */
+.mc-grid--wide > .ds-ng3-section {
+  flex: 1;
+  min-width: 0;
+}
+
+/* A tab carrying a full-width block of its own: one column, scrolled. Used by
+   Connectivity on monitors without Gear Switch, where the upstream KVM tab is
+   mounted whole and is as wide as the panel. Interim shape — the real question
+   (does a non-Treehouse monitor get a KVM tab of its own, as upstream had?) is
+   an IA decision, not a layout one. */
+.mc-grid--stack {
+  flex-direction: column;
+  align-items: stretch;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* List-shaped sections cap their height and scroll in place — the sanctioned
+   overflow valve (.ds-ng3-scroll), used only where the content is a real list
+   whose length is data. Fixed control stacks are never given a scrollbar. */
+.mc-inputs .ds-ng3-scroll,
+.mc-list .ds-ng3-scroll {
+  max-height: 148px;
+}
+
+/* Hero — the shared arrangement, pinned. On the other canvases the hero is a
+   product photo that can take whatever height is left, so it is centred in the
+   slack; here it is a desk the user reads and drags on, and a desk that lands
+   somewhere different on every tab is a different desk each time. So the hero
+   takes its own height at the top and the panel is pushed to the bottom
+   (margin-top: auto) — both ends of the modal hold still and the tab-to-tab
+   difference becomes breathing room in the middle instead of movement.
+   No magic height: the map keeps its natural size, so nothing clips. */
+.mc-hero {
+  flex: 0 0 var(--mc-hero-h);
+  min-height: 0;
+  overflow: hidden;
+  /* The shared 56px top inset clears the status chips for heroes that run the
+     full canvas width. The arrangement is 780px centred and the chips end at
+     x≈257, so here that inset only costs the map height it needs. */
+  padding-top: 8px;
+}
+.mc-panel-wrap {
+  margin-top: auto;
+}
+/* Band = the map's own height (header + stage + name row), so the map fills it
+   exactly and nothing crops. Connectivity gets a shorter band because it shows
+   the rear render instead — the map is not on that tab, so a different height
+   there is not the map moving, and the tab with the tallest panel (Gear Switch)
+   is the one that needs the room. Short viewports shrink band and stage
+   together, so the map scales down instead of cropping. */
+/* A shorter window gives its height back from the hero, never from the body:
+   the map reads fine at a smaller scale, but squeezing the controls only
+   pushes sections into an overflow column. So the band is whatever is left
+   after the console, capped at the map's natural height.
+
+   652px = app chrome 88 + hero padding 32 + console 500 (body 380 + panel
+   chrome 120) + bottom 24, plus a few px of slack. Change the body height and
+   this number moves with it. Below ~770px tall the floor wins and the map
+   crops — the same floor the sibling canvases have. */
+.mc-canvas {
+  --mc-hero-h: clamp(120px, calc(100vh - 652px), 298px);
+}
+/* Stage = band minus the map's fixed overhead (title row + name row), so the
+   arrangement always fills its band exactly at any window height. */
+.mc-arrange .dsa-stage {
+  height: calc(var(--mc-hero-h) - 88px);
+}
+.mc-arrange {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+  .mc-grid {
+    column-count: 1;
+  }
+}

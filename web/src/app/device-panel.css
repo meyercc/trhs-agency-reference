@@ -1,0 +1,254 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   My Devices panel — global flyout opened from the main nav. Built on the DS
+   .ds-panel (frosted slide-in), pinned to the viewport (pages scroll under it).
+   Layout: device tabs across the top · hero image · feature shortcuts.
+   ══════════════════════════════════════════════════════════════════════════ */
+.device-panel {
+  position: fixed;
+  top: calc(var(--nav-full-h) + 4px);
+  right: var(--gutter);
+  bottom: var(--gutter);
+  width: var(--devices-panel-w, 340px);
+  max-width: calc(100vw - var(--gutter) * 2);
+  z-index: 40; /* above content + nav (z-10), below modals (z-51) */
+}
+
+/* ── Device tabs (top row) ── */
+.devp-tabs {
+  display: flex;
+  gap: var(--gutter-xs);
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-bottom: var(--gutter-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+.devp-tab {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+.devp-tab img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.devp-tab:hover {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.06);
+}
+.devp-tab.active {
+  border-color: var(--accent-color);
+  background: var(--accent-dimmer);
+}
+.devp-tab:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
+}
+/* Disconnected (device simulator): the device stays listed — it's still yours —
+   but its image drains, matching the locked-region convention. The selected
+   view's "Disconnected" badge carries the state in words, never dim alone. */
+.devp-tab.offline img {
+  opacity: 0.4;
+  filter: grayscale(0.85);
+}
+.devp-hero.offline .devp-hero-img {
+  opacity: 0.4;
+  filter: grayscale(0.85);
+}
+
+/* ── Hero image (selected device) ── */
+.devp-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  margin-top: var(--gutter);
+  padding: var(--gutter);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.06), transparent 70%),
+    rgba(0, 0, 0, 0.18);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.devp-hero:hover {
+  border-color: var(--accent-dim);
+}
+.devp-hero:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+.devp-hero-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.45));
+}
+
+/* ── Name + status badges ── */
+.devp-meta {
+  margin-top: var(--gutter-sm);
+}
+.devp-name {
+  font-family: var(--font-display);
+  font-size: var(--text-body-lg, var(--text-body));
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.devp-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xxs);
+  margin-top: 6px;
+}
+.devp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
+  border-radius: 99px;
+  padding: 2px 8px;
+}
+.devp-badge.connected {
+  color: var(--green, #22c55e);
+  border-color: color-mix(in srgb, var(--green, #22c55e) 30%, transparent);
+  background: color-mix(in srgb, var(--green, #22c55e) 10%, transparent);
+}
+.devp-badge.offline {
+  color: var(--red, #e0383e);
+  border-color: color-mix(in srgb, var(--red, #e0383e) 35%, transparent);
+  background: color-mix(in srgb, var(--red, #e0383e) 10%, transparent);
+}
+
+/* ── Feature shortcuts ── */
+.devp-features {
+  margin-top: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.devp-features-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--gutter-xxs);
+}
+.devp-feature {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  width: 100%;
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.devp-feature:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--border-light);
+}
+.devp-feature:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
+}
+.devp-feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+}
+.devp-feature:hover .devp-feature-icon {
+  color: var(--accent-color);
+}
+.devp-feature-label {
+  flex: 1;
+  min-width: 0;
+}
+.devp-feature-chev {
+  color: var(--text-muted);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* KVM — a keyboard/mouse routed to the other PC reads "handed off" (amber),
+   and an un-set-up KVM monitor gets a "Set up KVM" prompt. */
+.devp-badge.handed-off {
+  color: var(--yellow, #eab308);
+  border-color: color-mix(in srgb, var(--yellow, #eab308) 45%, transparent);
+  background: color-mix(in srgb, var(--yellow, #eab308) 12%, transparent);
+}
+.devp-kvm-cta {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  width: 100%;
+  margin-top: var(--gutter-sm);
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent-color), transparent 55%);
+  background: var(--accent-dimmer);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--text-caption);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-default);
+}
+.devp-kvm-cta:hover {
+  background: var(--accent-dim);
+}
+.devp-kvm-cta:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.devp-kvm-cta > span {
+  flex: 1 1 auto;
+}
+.devp-kvm-cta b {
+  color: var(--accent-color);
+  font-weight: var(--font-medium);
+}
+.devp-kvm-cta > svg:first-child {
+  color: var(--accent-color);
+  flex: 0 0 auto;
+}
+.devp-kvm-cta > svg:last-child {
+  color: var(--text-muted);
+  flex: 0 0 auto;
+}

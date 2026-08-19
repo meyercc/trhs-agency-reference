@@ -1,0 +1,15 @@
+<style>
+  /* Let the per-story themed canvas (the global decorator) own the full iframe.
+     Neutralise Storybook's per-layout padding/centering so var(--bg-base) fills
+     edge-to-edge instead of leaving a white border. The decorator handles its
+     own centering. */
+  body { margin: 0; }
+  .sb-show-main {
+    padding: 0 !important;
+    display: block !important;
+  }
+  #storybook-root {
+    width: 100%;
+    min-height: 100vh;
+  }
+</style>

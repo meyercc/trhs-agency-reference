@@ -1,0 +1,8 @@
+body {
+  margin: 0;
+  background:
+    radial-gradient(120% 80% at 50% -10%, var(--bg-mid) 0%, var(--bg-base) 60%) fixed,
+    var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+}

@@ -1,0 +1,126 @@
+/* ── Storybook Changelog page (.sbdoc-changelog) ─────────────────────────────
+   Catalog chrome for the Storybook "Changelog" docs page ONLY — deliberately
+   not in shared/components.css: this table is not an app component and must
+   never ship in the app bundle. Every value is a token from shared/tokens.css
+   (loaded globally by .storybook/preview.tsx); the ds-theme-dark scope comes
+   from the ChangelogTable root. */
+
+.sbdoc-changelog-root {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  padding: var(--gutter);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.sbdoc-changelog-title {
+  font-family: var(--font-cond);
+  font-size: var(--text-title);
+  font-weight: var(--font-bold);
+  margin: 0 0 var(--gutter-xs);
+}
+.sbdoc-changelog-intro {
+  color: var(--text-dim);
+  margin: 0 0 var(--gutter);
+  max-width: 60ch;
+}
+
+.sbdoc-changelog {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.sbdoc-changelog-col-version {
+  width: 10ch;
+}
+.sbdoc-changelog-col-meta {
+  width: 14ch;
+}
+
+.sbdoc-changelog th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-elevated);
+  text-align: left;
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  padding: var(--gutter-sm) var(--gutter);
+  border-bottom: 1px solid var(--border);
+}
+.sbdoc-changelog td {
+  vertical-align: top;
+  padding: var(--gutter-sm) var(--gutter);
+  border-top: 1px solid var(--border-light);
+}
+.sbdoc-changelog tbody tr:first-child td {
+  border-top: 0;
+}
+
+.sbdoc-changelog-version {
+  display: block;
+  font-family: var(--font-mono);
+  font-weight: var(--font-semibold);
+}
+.sbdoc-changelog-tasks {
+  display: block;
+  margin-top: var(--gutter-xxs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+
+.sbdoc-changelog-summary {
+  margin: 0 0 var(--gutter-sm);
+  color: var(--text-dim);
+}
+.sbdoc-changelog-kind + .sbdoc-changelog-kind {
+  margin-top: var(--gutter-sm);
+}
+.sbdoc-changelog-kind-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-weight: var(--font-semibold);
+}
+.sbdoc-changelog-tier {
+  margin: var(--gutter-xxs) 0 0 var(--gutter-sm);
+}
+.sbdoc-changelog-tier-name {
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.sbdoc-changelog-lead {
+  margin: var(--gutter-xxs) 0 0;
+  color: var(--text-dim);
+}
+.sbdoc-changelog-items {
+  margin: var(--gutter-xxs) 0 0;
+  padding-left: var(--gutter);
+  display: grid;
+  gap: var(--gutter-xxs);
+}
+
+.sbdoc-changelog-name {
+  text-decoration: underline;
+}
+.sbdoc-changelog-link {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+.sbdoc-changelog-link:hover {
+  color: var(--accent-color);
+}
+.sbdoc-changelog-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}

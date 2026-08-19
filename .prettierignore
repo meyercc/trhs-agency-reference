@@ -1,0 +1,7 @@
+node_modules/
+dist/
+build/
+Assets/
+*.min.js
+*.min.css
+.skills/

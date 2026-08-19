@@ -1,0 +1,312 @@
+{
+  "$schema": 1,
+  "mouse": {
+    "onboard": { "slots": 5 },
+    "buttons": {
+      "remappable": true,
+      "assignmentTypes": ["keys", "macro", "text", "launcher"],
+      "keyCategories": ["mouse", "alphanumeric", "special", "media"],
+      "callouts": []
+    },
+    "sensor": {
+      "dpi": {
+        "min": 50,
+        "step": 50,
+        "presets": 5
+      },
+      "pollingRates": [125, 250, 500, 1000, 2000, 4000, 8000],
+      "liftOffDistance": [
+        { "label": "Low",    "value": "1mm" },
+        { "label": "Medium", "value": "2mm" },
+        { "label": "High",   "value": "3mm" }
+      ],
+      "angleAdjustment": { "min": -30, "max": 30 },
+      "angleSnapping": true
+    },
+    "lighting": {
+      "zones": 1,
+      "perKey": false,
+      "effects": ["solid", "wave", "rainbow", "breathing", "reactive"],
+      "multiColor": false,
+      "directional": false,
+      "speedControl": false,
+      "opacityControl": true
+    },
+    "connectivity": "wired",
+    "power": false,
+    "windowsProperties": {
+      "sensitivity": true,
+      "enhancePointerPrecision": true,
+      "doubleClickSpeed": true
+    },
+    "support": { "deviceManager": true, "getSupport": true }
+  },
+
+  "keyboard": {
+    "onboard": { "slots": 3 },
+    "keys": {
+      "layout": "65",
+      "layers": ["base", "fn"],
+      "gameMode": true,
+      "quickSelectGroups": ["all", "wasd", "qwer", "numbers", "arrows", "functions"],
+      "assignmentTypes": ["keys", "macro", "text", "launcher"],
+      "keyCategories": ["alphanumeric", "special", "media", "ngenuity", "mouse"]
+    },
+    "lighting": {
+      "zones": "per-key",
+      "perKey": true,
+      "effects": ["solid", "wave", "rainbow", "swipe", "breathing", "reactive", "starlight"],
+      "multiColor": true,
+      "directional": true,
+      "speedControl": true,
+      "opacityControl": true
+    },
+    "pollingRates": [125, 250, 500, 1000, 2000, 4000, 8000],
+    "controlMode": ["software", "hardware"],
+    "connectivity": "wired",
+    "power": false,
+    "support": { "deviceManager": true, "getSupport": true }
+  },
+
+  "headset": {
+    "onboard": { "slots": 2 },
+    "audio": {
+      "volumeControl": true,
+      "mic": {
+        "volumeControl": true,
+        "vuMeter": true,
+        "monitoring": true,
+        "presets": ["gaming", "streaming", "podcast", "conference"],
+        "effects": ["noise-reduction", "compressor", "limiter"]
+      },
+      "equalizer": {
+        "bands": [63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000],
+        "range": { "min": -12, "max": 12 },
+        "presets": ["balanced", "gaming", "voice", "bassboost", "basscut", "trebleboost", "treblecut"]
+      }
+    },
+    "spatial": {
+      "surroundFormat": "7.1",
+      "experienceSlider": true,
+      "distanceSlider": true,
+      "advancedSettings": true,
+      "audioCredit": "HEAR360°"
+    },
+    "connectivity": "wireless",
+    "power": {
+      "autoPowerOff": ["5min", "10min", "20min", "30min", "never"]
+    },
+    "notifications": {
+      "modes": ["voice", "tone", "none"]
+    },
+    "support": { "deviceManager": true, "getSupport": true }
+  },
+
+  "notebook": {
+    "powerModes": [
+      { "id": "eco",         "label": "Eco" },
+      { "id": "balanced",    "label": "Balanced" },
+      { "id": "performance", "label": "Performance" },
+      { "id": "unleashed",   "label": "Unleashed" }
+    ],
+    "graphics":  { "switcher": ["integrated", "hybrid", "discrete"] },
+    "display":   { "resolution": "FHD", "refreshRate": 144, "hdr": false },
+    "battery":   { "capacityWh": 83, "fastCharge": true },
+    "keyboard":  { "perKeyRGB": false, "macroKeys": 0 },
+    "io":        ["HDMI 2.1", "USB-C (DP+PD)", "USB-A ×2", "3.5mm"],
+    "overclocking": false,
+    "vaporChamber": false,
+    "tobiiEyeTracking": false
+  },
+
+  "desktop": {
+    "powerModes": [
+      { "id": "balanced",    "label": "Balanced" },
+      { "id": "performance", "label": "Performance" },
+      { "id": "unleashed",   "label": "Unleashed" }
+    ],
+    "graphics":  false,
+    "display":   false,
+    "battery":   false,
+    "keyboard":  false,
+    "io":        ["HDMI 2.1", "DisplayPort 1.4 ×3", "USB-C", "USB-A ×4", "RJ-45", "3.5mm"]
+  },
+
+  "monitor": {
+    "onboard": { "slots": 0 },
+    "display": {
+      "size": "27\"",
+      "resolution": "QHD",
+      "refreshRate": 240,
+      "responseTime": "0.5ms",
+      "panel": "IPS"
+    },
+    "color": {
+      "hdr": true,
+      "gamuts": ["sRGB", "DCI-P3", "Adobe RGB"],
+      "presets": ["Standard", "Game", "Movie", "FPS", "RTS", "Custom"]
+    },
+    "connectivity": {
+      "inputs": ["HDMI 2.1 ×2", "DisplayPort 1.4", "USB-C (DP+PD 65W)"],
+      "usbHub": true,
+      "kvm": true
+    },
+    "osd": {
+      "joystick": true,
+      "lockable": true
+    }
+  },
+
+  "notebook-display": {
+    "panel": {
+      "size": "16\"",
+      "resolution": "QHD+",
+      "refreshRate": 240,
+      "responseTime": "3ms",
+      "panel": "OLED"
+    },
+    "color": {
+      "hdr": true,
+      "gamuts": ["sRGB", "DCI-P3"],
+      "presets": ["Standard", "Game", "Movie", "Custom"]
+    },
+    "calibration": {
+      "factoryCalibrated": true,
+      "deltaE": 2
+    },
+    "comfort": {
+      "blueLightFilter": true,
+      "adaptiveBrightness": true,
+      "flickerFree": true
+    }
+  },
+
+  "notebook-trackpad": {
+    "sensitivity": { "min": 1, "max": 10, "default": 6 },
+    "gestures": {
+      "twoFinger": ["scroll", "right-click"],
+      "threeFinger": ["mission-control", "app-switch", "show-desktop"],
+      "fourFinger": ["task-view"]
+    },
+    "palmRejection": true,
+    "tapToClick": true,
+    "naturalScrolling": false,
+    "haptic": false
+  },
+
+  "notebook-webcam": {
+    "resolution": "1080p",
+    "fov": 88,
+    "privacyShutter": true,
+    "ir": true,
+    "windowsHello": true,
+    "ai": {
+      "autoFraming": true,
+      "backgroundBlur": true,
+      "eyeContact": false,
+      "lowLightEnhance": true
+    }
+  },
+
+  "notebook-audio": {
+    "speakers": {
+      "count": 2,
+      "peakWatts": 4,
+      "dts": false
+    },
+    "mic": {
+      "arrayCount": 2,
+      "aiDenoise": true,
+      "beamforming": false
+    },
+    "effects": {
+      "spatialAudio": false,
+      "eqPresets": ["Game", "Music", "Movie", "Voice"]
+    }
+  },
+
+  "notebook-io": {
+    "io": [],
+    "wireless": {
+      "wifi": "Wi-Fi 6E",
+      "bluetooth": "5.3"
+    }
+  },
+
+  "desktop-gpu": {
+    "model": "GeForce RTX 5080",
+    "vramGB": 16,
+    "tdpW": 360,
+    "lengthMm": 320,
+    "outputs": ["HDMI 2.1", "DisplayPort 2.1 ×3"],
+    "lighting": {
+      "zones": 3,
+      "effects": ["static", "wave", "rainbow", "breathing", "reactive"]
+    }
+  },
+
+  "desktop-cpu-cooling": {
+    "kind": "AIO",
+    "radiatorMm": 360,
+    "fanCount": 3,
+    "pumpRpmMax": 2800,
+    "lighting": {
+      "zones": 1,
+      "effects": ["static", "wave", "rainbow", "breathing"]
+    }
+  },
+
+  "desktop-ram": {
+    "capacityGB": 64,
+    "channels": 2,
+    "speedMTs": 6400,
+    "cas": 32,
+    "xmp": true,
+    "lighting": {
+      "zones": 1,
+      "effects": ["static", "wave", "rainbow", "breathing"]
+    }
+  },
+
+  "desktop-psu": {
+    "wattage": 1000,
+    "efficiency": "80+ Gold",
+    "modular": "fully",
+    "atxRevision": "ATX 3.1"
+  },
+
+  "desktop-lighting": {
+    "fanChannels": 9,
+    "argbZones": 12,
+    "ecosystem": "OMEN Light Studio",
+    "effects": {
+      "presets": ["Static", "Wave", "Rainbow", "Breathe", "Reactive", "Music"]
+    }
+  },
+
+  "microphone": {
+    "onboard": { "slots": 2 },
+    "audio": {
+      "pickupPatterns": ["cardioid", "omnidirectional", "bidirectional", "stereo"],
+      "gain": true,
+      "monitoring": true,
+      "tapToMute": true
+    },
+    "effects": {
+      "presets": ["gaming", "streaming", "podcast", "conference"],
+      "noiseReduction": true,
+      "compressor": true,
+      "limiter": true,
+      "gate": true
+    },
+    "lighting": {
+      "zones": 1,
+      "effects": ["solid", "wave", "rainbow", "breathing"],
+      "multiColor": false
+    },
+    "mount": ["shock-mount", "boom-arm"],
+    "connectivity": "wired",
+    "power": false,
+    "support": { "deviceManager": true, "getSupport": true }
+  }
+}

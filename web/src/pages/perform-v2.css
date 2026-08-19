@@ -1,0 +1,7 @@
+/* PerformV2 (audit reorg preview) — page-local bits only. */
+
+/* Stacked full-width rows inside one section (the Maintenance stack). */
+.pv2-rows {
+  display: grid;
+  gap: var(--gutter);
+}

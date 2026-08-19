@@ -1,0 +1,24 @@
+/* Feature-card row — cards split the container into equal fractions.
+   grid-auto-flow: column + auto-columns 1fr means N cards each take 1/N width
+   (two → halves, three → thirds) with no per-count class. Shared by the Perform
+   Optimizer + Maintenance sections; cards use the shared .ds-feature-card. */
+.feature-card-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--gutter);
+}
+
+/* Pin every card's footer to the bottom so CTAs align across uneven content. */
+.feature-card-grid .ds-feature-card-footer {
+  margin-top: auto;
+  padding-top: var(--gutter-tablet);
+}
+
+/* Stack to a single column when there isn't room for side-by-side cards. */
+@media (max-width: 680px) {
+  .feature-card-grid {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+  }
+}

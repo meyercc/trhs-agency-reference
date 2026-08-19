@@ -1,0 +1,289 @@
+/* Profile bar — the software profile + this device's onboard slots, sitting
+   above the hero in a device canvas. Token-only; reuses .ds-btn/.ds-checkbox. */
+
+.pb {
+  flex: 0 0 auto;
+  /* width: 100%; */
+  max-width: 960px;
+  margin: 0 auto;
+  /* Own stacking context so the slot list clears the hero content below. */
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  /* Clears the status chips / close button, which sit at the same top inset. */
+  padding: 44px var(--gutter) 0;
+}
+
+/* Grid, not flex, for the two halves. The bar is fit-content (the auto margins
+   below beat the parent's stretch), and under intrinsic sizing two flex items
+   with `flex-basis: 0` each contribute the SAME width — so the wider onboard
+   half gets starved and its kicker clips mid-word. Two `1fr` tracks default to
+   an `auto` minimum, so they come out equal AND no narrower than their content. */
+.pb-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: var(--gutter-xxs);
+  padding: var(--gutter-xxs);
+  border: 1px solid var(--ksg-w20);
+  border-radius: var(--radius-full);
+  background: var(--ksg-panel-surface);
+  backdrop-filter: blur(4px);
+  /* backdrop-filter makes this a stacking context, so the slot list can never
+     escape it — the row itself has to outrank the actions row below. */
+  position: relative;
+  z-index: 2;
+}
+
+/* A device that isn't here can't be switched, so the whole bar goes inert.
+   Drained of color like every other locked region — the wording in the note
+   below carries the reason, never the dimming on its own. */
+.pb-row.disabled {
+  opacity: 0.4;
+  filter: grayscale(0.85);
+}
+.pb-row.disabled .pb-opt,
+.pb-row.disabled .pb-chev {
+  cursor: not-allowed;
+}
+
+/* Two equal halves — the software profile and the device's onboard memory.
+   Equal width is the point: they are the two kinds of place settings live, not
+   a list of options with one odd member. */
+.pb-half {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default);
+}
+/* Selected state lives on the half, not its buttons, so the split onboard half
+   (body + chevron) reads as one filled pill instead of two abutting boxes. */
+.pb-half.active {
+  background: color-mix(in srgb, var(--accent-color) 14%, transparent);
+  border-color: var(--accent-color);
+}
+
+/* One option: kicker (what kind of thing this is) over its name. The kicker is
+   what keeps the software profile and an onboard slot from reading as peers —
+   they are labelled as different kinds of thing, not just different values. */
+.pb-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px var(--gutter-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default);
+}
+.pb-half:not(.active) .pb-opt:hover {
+  background: var(--ksg-w5);
+  color: var(--text-primary);
+}
+.pb-opt:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.pb-half.active .pb-opt {
+  color: var(--text-primary);
+}
+
+.pb-opt-kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pb-half.active .pb-opt-kicker {
+  color: var(--text-dim);
+}
+.pb-opt-name {
+  font-size: var(--text-body);
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The software profile is a different kind of thing from onboard memory, so the
+   two halves are divided rather than sitting in one run of equal options. */
+.pb-sep {
+  width: 1px;
+  margin: var(--gutter-xxs) var(--gutter-xxs);
+  background: var(--ksg-w10);
+}
+
+/* Split affordance on the onboard half: the body picks the scope, this picks
+   which slot. Full-height so the target is the whole right edge of the pill. */
+.pb-chev {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  /* The control minor-axis token, used as the width of a square target. */
+  width: var(--control-height);
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--ksg-w10);
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default);
+}
+.pb-chev:hover {
+  background: var(--ksg-w5);
+  color: var(--text-primary);
+}
+.pb-chev:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+.pb-half.active .pb-chev {
+  color: var(--text-primary);
+  border-left-color: color-mix(in srgb, var(--accent-color) 40%, transparent);
+}
+.pb-chev .ds-icon {
+  transition: transform var(--dur-fast) var(--ease-default);
+}
+.pb-half.open .pb-chev .ds-icon {
+  transform: rotate(180deg);
+}
+
+/* Slot list. The ListBox owns the surface, border and radius — this only places
+   it under the half and lifts it over the hero. */
+.pb-pop {
+  position: absolute;
+  top: calc(100% + var(--gutter-xxs));
+  left: 0;
+  right: 0;
+  z-index: 20;
+  box-shadow: var(--shadow-lv-3);
+}
+.pb-pop-live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+
+/* "Running on the device" marker. Paired with the .on-device border below and
+   with the word "Running" in the list, so the state is never carried by color
+   alone. */
+.pb-live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex: 0 0 auto;
+}
+.pb-half.on-device {
+  border-color: var(--ksg-w25);
+}
+.pb-half.on-device.active {
+  border-color: var(--accent-color);
+}
+
+/* Second row — what this scope means right now, and what you can do about it.
+
+   Out of flow, deliberately. Everything in this row comes and goes on its own
+   timing: the note appears on a switch and retires itself, Save/Undo appear the
+   moment a control moves, and none of that should resize the bar and shove the
+   hero below it. In flow the bar swung 99 → 126 → 135px across its three
+   states; out of flow it is one height always, and the band it floats in is
+   empty canvas either way.
+
+   It starts at the bar's left edge and takes the width it needs. A right inset
+   would clamp it to the pill row — the bar is fit-content, so the row is only
+   as wide as its two halves — and the unsaved sentence would wrap under its own
+   buttons. In flow this row used to WIDEN the bar to fit itself, which is the
+   horizontal half of the same jump.
+
+   pointer-events are handed back per control, so the empty band never swallows
+   a click meant for the hero underneath. */
+.pb-actions {
+  position: absolute;
+  top: calc(100% + var(--gutter-xs));
+  left: var(--gutter);
+  width: max-content;
+  max-width: calc(100vw - var(--gutter) * 2);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  flex-wrap: wrap;
+  padding: 0 var(--gutter-xxs);
+}
+.pb-actions > * {
+  pointer-events: auto;
+}
+.pb-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.pb-note.pb-ok .ds-icon {
+  color: var(--green);
+}
+.pb-note.pb-warn {
+  color: var(--text-primary);
+}
+
+/* The onboard confirmation retires after a beat — it explains how the device
+   got onto this slot, which stops being news, and the bar itself keeps the
+   standing state. It fades in place instead of unmounting so the row holds its
+   height and nothing below the bar moves on a timer. visibility flips at the
+   end of the fade, which takes the retired sentence out of the a11y tree too.
+   Only this note fades: the unsaved warning is actionable, and the
+   disconnected note is a state rather than an event. */
+.pb-note.pb-transient {
+  transition: opacity var(--dur-xslow) var(--ease-default);
+}
+.pb-note.pb-transient.faded {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur-xslow) var(--ease-default),
+    visibility 0s var(--dur-xslow);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pb-note.pb-transient,
+  .pb-note.pb-transient.faded {
+    transition: none;
+  }
+}
+.pb-note.pb-warn .ds-icon {
+  color: var(--yellow);
+}
+.pb-scope-body {
+  display: contents;
+}

@@ -1,0 +1,93 @@
+/* Device simulator HUD (.sim-hud) — the floating admin/testing panel that
+   plays the hardware's side of the onboard-profile model. Sits above the
+   device canvases (z 51) so the physical acts can be performed while watching
+   the app react; below the shell dropdowns (z 60). Token-only. */
+
+.sim-hud {
+  position: fixed;
+  left: var(--gutter);
+  bottom: var(--gutter);
+  z-index: 56;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  width: min(340px, calc(100vw - var(--gutter) * 2));
+  padding: var(--gutter-sm);
+  border: 1px solid var(--ksg-w20);
+  border-radius: var(--radius-card);
+  background: var(--ksg-panel-surface);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-lv-3);
+}
+
+.sim-hud-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+.sim-hud-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.sim-hud-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.sim-hud-close:hover {
+  background: var(--ksg-w10);
+  color: var(--text-primary);
+}
+.sim-hud-close:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.sim-hud-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  padding-top: var(--gutter-xs);
+  border-top: 1px solid var(--ksg-w10);
+}
+/* Name over state — side-by-side the state line squeezes the name into
+   ellipsis on every wireless SKU's long name. */
+.sim-hud-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+  min-width: 0;
+}
+.sim-hud-name {
+  font-size: var(--text-caption);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sim-hud-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+/* Away is signalled by the word "Away" plus the muted tone — never color alone. */
+.sim-hud-state.away {
+  color: var(--text-muted);
+}
+.sim-hud-actions {
+  display: flex;
+  gap: var(--gutter-xxs);
+}

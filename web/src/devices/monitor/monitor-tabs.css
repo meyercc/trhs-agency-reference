@@ -1,0 +1,74 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Monitor tab bodies — layout glue only (`mt-*`).
+
+   Everything with a library home is used from there instead of being restyled:
+   sections/rows/fields/labels/specs = the Ng3 primitives, values = `.dc-mono-val`,
+   rules = `.dc-divider`, button rows = `.dc-btns`, colour dots = `.ds-swatch(-row)`,
+   inputs = `.ds-input`. What is left here has no shared equivalent (checked
+   shared/components.css in full): a caption paragraph — Chris scopes those per
+   component too (`kvm-caveat`, `pdm-settings-desc`) — a chip row (only the
+   *other* chip variant ships `.ds-chip-check-group`), the RGB gain 3-column row,
+   and the master-toggle gate.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Caption under a section title. */
+.mt-note {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs, 6px);
+}
+
+/* Trailing qualifier on a row label ("Mouse · USB dongle"). */
+.mt-sub {
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Row of picture-preset chips. */
+.mt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* RGB gain: channel letter · slider · value. */
+.mt-gain {
+  display: grid;
+  grid-template-columns: 14px 1fr 32px;
+  align-items: center;
+  gap: var(--gutter-sm, 12px);
+}
+.mt-gain .dc-mono-val {
+  text-align: right;
+}
+/* Channel letters use the DS semantic colour tokens (tokenized 2026-08-02 —
+   were Tailwind-400 hardcodes #f87171/#4ade80/#60a5fa, one shade lighter than
+   the library's --red/--green/--blue). */
+.mt-ch-r {
+  color: var(--red);
+}
+.mt-ch-g {
+  color: var(--green);
+}
+.mt-ch-b {
+  color: var(--blue);
+}
+
+/* Controls a master toggle owns: dimmed AND inert when the toggle is off, so
+   "off" is not contradicted by controls that still respond (the treatment the
+   Gear Switch widget established). */
+.mt-gate.is-off {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Rename field sits at the right of its row. */
+.mt-rename {
+  flex: 1;
+  min-width: 0;
+  max-width: 60%;
+}

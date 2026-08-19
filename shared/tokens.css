@@ -1,0 +1,534 @@
+/* ══════════════════════════════════════════
+   TREEHOUSE — DESIGN TOKENS
+   Source of truth: design-system.html
+   Consumers: prototype.html · widget-simulator.html · index.html
+   ──────────────────────────────────────────
+   Edit tokens here. Changes propagate to all
+   consuming files automatically.
+══════════════════════════════════════════ */
+
+:root {
+  /* ─── Backgrounds ─── */
+  --bg-base: #0d0f13;
+  --bg-mid: #11141a;
+  --bg-elevated: #161921;
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-light: rgba(255, 255, 255, 0.015);
+  --surface-hover: rgba(255, 255, 255, 0.07);
+  --surface-active: rgba(255, 255, 255, 0.09);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-light: rgba(255, 255, 255, 0.04);
+  --border-med: rgba(255, 255, 255, 0.12);
+
+  /* ─── Semantic colors ─── */
+  --cyan: #00c8d7;
+  --cyan-dim: rgba(0, 200, 215, 0.12);
+  --orange: #ff6b2b;
+  --orange-dim: rgba(255, 107, 43, 0.12);
+  --green: #22c55e;
+  --green-dim: rgba(34, 197, 94, 0.15);
+  --purple: #a855f7;
+  --purple-dim: rgba(168, 85, 247, 0.12);
+  --red: #ef4444;
+  --yellow: #eab308;
+  --blue: #3b82f6;
+  --blue-dim: rgba(59, 130, 246, 0.12);
+  --pink: #ec4899;
+  --indigo: #6366f1;
+  --white: #ffffff;
+  --omen-red: #EC1F2E;
+  --omen-orange: #F36822;
+  --omen-yellow: #FBB216;
+
+  /* ─── Named accent palette (for accent picker) ─── */
+  --accent-cyan: #00c8d7;
+  --accent-indigo: #6366f1;
+  --accent-purple: #a855f7;
+  --accent-orange: #ff6b2b;
+  --accent-green: #22c55e;
+  --accent-red: #ef4444;
+  --accent-yellow: #eab308;
+  --accent-pink: #ec4899;
+  --accent-white: #ffffff;
+
+  /* ─── Text color hierarchy ─── */
+  --text-primary: #e4e8f0;
+  --text-dim: rgba(228, 232, 240, 0.5);
+  --text-muted: rgba(228, 232, 240, 0.28);
+  --text-subtle: rgba(228, 232, 240, 0.14);
+  --text-on-image: #e4e8f0;
+  --text-on-image-dim: rgba(228, 232, 240, 0.5);
+  --text-on-accent: #0d0f13; /* dark text on bright accent fills */
+  --text-on-accent-light: #e4e8f0;
+  --text-on-fill: #ffffff; /* white text on solid-color fills (badges, etc.) */
+
+  /* ─── Type scale ─── */
+  --text-title: 32px;
+  --text-sm-title: 24px;
+  --text-section-lg: 20px;
+  --text-section: 16px;
+  --text-body: 13px;
+  --text-caption: 11px;
+  --text-micro: 10px;
+  --text-nano: 9.5px;
+
+  /* ─── Font families ─── */
+  /* --font-display: 'Miranda Sans', sans-serif;
+  --font-cond: 'Miranda Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace; */
+
+  /* ─── Font weights ─── */
+  --font-bold: 700;
+  --font-semibold: 600;
+  --font-medium: 500;
+  --font-regular: 400;
+  --font-light: 300;
+
+  /* ─── Spacing ─── */
+  /* `--gutter` is the page/section gutter and the one density re-points; see
+     the `[data-density='compact']` block below. Everything downstream reads
+     the token, so nothing needs a density-aware rule of its own. */
+  --gutter: 24px;
+  --gutter-tablet: 12px;
+  --gutter-mobile: 10px;
+  --gutter-sm: 16px;
+  --gutter-xs: 8px;
+  --gutter-xxs: 4px;
+  --gutter-xxxs: 2px;
+
+  /* ─── Spacing ─── */
+  --control-height: 32px;
+  --control-height-sm: 28px;
+
+  /* ─── Radius ─── */
+  --radius-card: 16px;
+  --radius: 8px;
+  --radius-sm: 4px;
+  --radius-full: 999px;
+
+  /* ─── Shadows ─── */
+  --shadow-lv-1: 0 2px 4px rgba(0, 0, 0, 0.14);
+  --shadow-lv-2: 0 4px 8px rgba(0, 0, 0, 0.28);
+  --shadow-lv-3: 0 8px 16px rgba(0, 0, 0, 0.28);
+  --shadow-lv-4: 0 32px 64px rgba(0, 0, 0, 0.4), 0 2px 21px rgba(0, 0, 0, 0.4);
+  --focus-ring: 2px solid var(--accent-color);
+
+  /* ─── Accent system (overridden at runtime by setAccent / setAccentColor) ─── */
+  --accent-color: #00c8d7;
+  --accent-dim: color-mix(in srgb, var(--accent-color), transparent 70%);
+  --accent-dimmer: color-mix(in srgb, var(--accent-color), transparent 90%);
+  --accent-dimmest: color-mix(in srgb, var(--accent-color), transparent 94%);
+
+  /* ─── Widget tint (updated by setAccent / setAccentColor) ─── */
+  --widget-tint-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.01) 60%);
+  --widget-tint-border: rgba(255, 255, 255, 0.08);
+
+  /* ─── Motion: durations ─── */
+  --dur-instant: 80ms;
+  --dur-fast: 120ms;
+  --dur-normal: 200ms;
+  --dur-slow: 350ms;
+  --dur-xslow: 500ms;
+
+  /* ─── Motion: easing ─── */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-linear: linear;
+
+  /* ─── Wallpaper effect controls ─── */
+  --wp-blur: 44px;
+  --wp-opacity: 1;
+
+
+  /* ─── Chrome / nav dimensions (prototype) ─── */
+  --titlebar-h: 32px;
+  --nav-h: 40px;
+  --nav-full-h: 64px;
+  --nav-bg: rgba(29, 30, 31, 0.8);
+  --icon-sz-nav: 20px;
+  /* Icon size scale (used by the Icon component) */
+  --icon-sz-sm: 16px;
+  --icon-sz-md: 20px;
+  --icon-sz-lg: 24px;
+  --panel-w: 300px;
+
+  /* ─── Design system shell dimensions ─── */
+  --header-h: 52px;
+  --sidebar-w: 240px;
+}
+
+/* ══════════════════════════════════════════
+   DENSITY
+   Activated by: html[data-density="compact"]
+   Default (absent) = comfortable, the values above.
+
+   Compact re-points the page gutter at the tablet step. Every padding, margin
+   and gap in the system reads `var(--gutter)`, so this one declaration is the
+   whole feature — no component knows density exists. Scoped to `--gutter`
+   only: the smaller steps stay put, so component internals keep their rhythm
+   while the page-level whitespace tightens.
+══════════════════════════════════════════ */
+html[data-density='compact'] {
+  --gutter: var(--gutter-tablet);
+}
+
+/* ══════════════════════════════════════════
+   LIGHT THEME
+   Activated by: html[data-theme="light"]  (design system)
+                 html.light                (prototype)
+                 .ds-theme-light           (any subtree)
+══════════════════════════════════════════ */
+html[data-theme='light'],
+html.light,
+.ds-theme-light {
+  /* Backgrounds */
+  --bg-base: #eef0f5;
+  --bg-mid: #e5e8ee;
+  --bg-elevated: #f2f4f8;
+  --surface: rgba(0, 0, 0, 0.04);
+  --surface-light: rgba(0, 0, 0, 0.015);
+  --surface-hover: rgba(0, 0, 0, 0.06);
+  --surface-active: rgba(0, 0, 0, 0.08);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-light: rgba(0, 0, 0, 0.05);
+  --border-med: rgba(0, 0, 0, 0.12);
+
+  /* Text */
+  --text-primary: #1a1d24;
+  --text-dim: rgba(26, 29, 36, 0.65);
+  --text-muted: rgba(26, 29, 36, 0.52);
+  --text-subtle: rgba(26, 29, 36, 0.38);
+  --text-on-image: #e4e8f0;
+  --text-on-image-dim: rgba(228, 232, 240, 0.5);
+  --text-on-accent: #ffffff;
+  --text-on-fill: #ffffff;
+
+  /* Shadows */
+  --shadow-lv-1: 0 2px 4px rgba(0, 0, 0, 0.07);
+  --shadow-lv-2: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lv-3: 0 8px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lv-4: 0 32px 64px rgba(0, 0, 0, 0.14), 0 2px 21px rgba(0, 0, 0, 0.1);
+
+  /* Nav */
+  --nav-bg: rgba(255, 255, 255, 0.7);
+
+  /* Widget tint */
+  --widget-tint-bg: linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.01) 60%);
+  --widget-tint-border: rgba(0, 0, 0, 0.1);
+
+  /* Accent palette — darker/more-saturated for light backgrounds */
+  --accent-cyan: #0097a7;
+  --accent-indigo: #4f46e5;
+  --accent-purple: #7c3aed;
+  --accent-orange: #d4500f;
+  --accent-green: #15803d;
+  --accent-red: #dc2626;
+  --accent-yellow: #b45309;
+  --accent-pink: #db2777;
+  --accent-white: #1a1a2e;
+
+  color-scheme: light;
+}
+
+
+/* ════════════════════════════════════════════════════════════
+   KINTSUGI — now the DEFAULT design system (folded in 2026-06-15).
+   Was an override layer (html[data-theme="kintsugi"]); de-scoped to
+   :root so it applies by default. Appended AFTER the base tokens so
+   it wins by cascade — identical to the old two-file load order.
+   ════════════════════════════════════════════════════════════ */
+@font-face {
+  font-family: 'RBNo3.1';
+  src: url('../Assets/fonts/RBNo3.1-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'RBNo3.1';
+  src: url('../Assets/fonts/RBNo3.1-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ====================================================================
+   1. PRIMITIVES  (scoped to kintsugi so they don't pollute other themes)
+   ==================================================================== */
+:root {
+  /* Brand */
+  --ksg-accent: #0078d7;
+  --ksg-hyperx: #c8102e;
+
+  /* Neutral solid scale */
+  --ksg-n100: #f9f9f8;
+  --ksg-n200: #efefef;
+  --ksg-n300: #dfdddd;
+  --ksg-n400: #c0c0c0;
+  --ksg-n500: #999999;
+  --ksg-n600: #666666;
+  --ksg-n700: #4c4c4c;
+  --ksg-n800: #353535;
+  --ksg-n900: #282828;
+  --ksg-n950: #1a1a1a;
+
+  /* Alpha white scale */
+  --ksg-w0:  rgba(255, 255, 255, 0);
+  --ksg-w5:  rgba(255, 255, 255, 0.05);
+  --ksg-w10: rgba(255, 255, 255, 0.1);
+  --ksg-w18: rgba(255, 255, 255, 0.18);
+  --ksg-w20: rgba(255, 255, 255, 0.2);
+  --ksg-w25: rgba(255, 255, 255, 0.25);
+  --ksg-w30: rgba(255, 255, 255, 0.3);
+  --ksg-w35: rgba(255, 255, 255, 0.35);
+  --ksg-w40: rgba(255, 255, 255, 0.4);
+  --ksg-w50: rgba(255, 255, 255, 0.5);
+  --ksg-w60: rgba(255, 255, 255, 0.6);
+  --ksg-w80: rgba(255, 255, 255, 0.8);
+  --ksg-w90: rgba(255, 255, 255, 0.9);
+
+  /* Alpha black scale */
+  --ksg-b6:  rgba(0, 0, 0, 0.06);
+  --ksg-b10: rgba(0, 0, 0, 0.1);
+  --ksg-b15: rgba(0, 0, 0, 0.15);
+  --ksg-b18: rgba(0, 0, 0, 0.18);
+  --ksg-b20: rgba(0, 0, 0, 0.2);
+  --ksg-b25: rgba(0, 0, 0, 0.25);
+  --ksg-b30: rgba(0, 0, 0, 0.3);
+  --ksg-b35: rgba(0, 0, 0, 0.35);
+  --ksg-b40: rgba(0, 0, 0, 0.4);
+  --ksg-b45: rgba(0, 0, 0, 0.45);
+  --ksg-b55: rgba(0, 0, 0, 0.55);
+  --ksg-b60: rgba(0, 0, 0, 0.6);
+  --ksg-b65: rgba(0, 0, 0, 0.65);
+  --ksg-b80: rgba(0, 0, 0, 0.8);
+  --ksg-b90: rgba(0, 0, 0, 0.9);
+}
+
+/* ====================================================================
+   2. SEMANTIC OVERRIDES — maps KINTSUGI values onto the trhs token names
+      and adds KINTSUGI-specific component tokens.
+      Dark is the default (:root); .ds-theme-dark re-applies it so a
+      subtree can be forced dark inside a light page.
+   ==================================================================== */
+:root,
+.ds-theme-dark {
+  /* ─── Backgrounds ─── */
+  --bg-base:     var(--ksg-n950);
+  --bg-mid:      var(--ksg-n900);
+  --bg-elevated: var(--ksg-n800);
+
+  /* ─── Surfaces ─── */
+  --surface:        var(--ksg-w5);
+  --surface-light:  var(--ksg-w5);
+  --surface-hover:  var(--ksg-w10);
+  --surface-active: var(--ksg-w20);
+
+  /* ─── Borders ─── */
+  --border:      var(--ksg-w20);
+  --border-light: var(--ksg-w5);
+  --border-med:  var(--ksg-w30);
+
+  /* ─── Accent ─── */
+  --accent-color:   var(--ksg-accent);
+  --accent-dim: color-mix(in srgb, var(--accent-color), transparent 70%);
+  --accent-dimmer: color-mix(in srgb, var(--accent-color), transparent 90%);
+  --accent-dimmest: color-mix(in srgb, var(--accent-color), transparent 94%);
+
+  /* ─── Accent palette ─── */
+  --accent-cyan:   #0091ff;
+  --accent-indigo: #6236ff;
+  --accent-purple: #b620e0;
+  --accent-orange: #fa6400;
+  --accent-green:  #6dd400;
+  --accent-red:    #F74056;
+  --accent-yellow: #f7b500;
+  --accent-pink:   #b620e0;
+  --accent-white:  #ffffff;
+
+  /* ─── Text ─── */
+  --text-primary:    var(--ksg-n200);
+  --text-dim:        var(--ksg-w80);
+  --text-muted:      var(--ksg-w50);
+  --text-subtle:     var(--ksg-w25);
+  --text-on-accent:  var(--ksg-n950);
+  --text-on-fill:    #ffffff;
+
+  /* ─── Type scale ─── */
+  --text-title:      28px;
+  --text-sm-title:   22px;
+  --text-section-lg: 20px;
+  --text-section:    18px;
+  --text-body:       15px;
+  --text-caption:    14px;
+  --text-micro:      12px;
+  --text-nano:       11px;
+
+  /* ─── Font families ─── */
+  --font-display: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --font-cond:    'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --font-mono:    'RBNo3.1', 'JetBrains Mono', monospace;
+
+  /* ─── Radius — KINTSUGI is more compact ─── */
+  --radius-card: 8px;
+  /* Figma Radius/XL — the step above lg. Reads as a pill at single-line
+     control height and as a rounded rect once content wraps, so one value
+     covers both the compact and multi-line status containers. */
+  --radius-xl:   24px;
+  --radius-lg:   16px;
+  --radius:      8px;
+  --radius-sm:   4px;
+
+  /* ─── Shadows ─── */
+  --shadow-lv-1: 0 1px 8px 0 var(--ksg-b30), 0 2px 24px 0 var(--ksg-b15);
+  --shadow-lv-2: 0 2px 12px 0 var(--ksg-b40), 0 4px 32px 0 var(--ksg-b20);
+  --shadow-lv-3: 0 4px 16px 0 var(--ksg-b50, rgba(0,0,0,0.5)), 0 8px 40px 0 var(--ksg-b25);
+  --shadow-lv-4: 0 8px 32px 0 var(--ksg-b60), 0 2px 24px 0 var(--ksg-b30);
+
+  /* ─── Nav ─── */
+  --nav-bg: rgba(28, 28, 29, 0.92);
+
+  /* ─── Widget tint ─── */
+  --widget-tint-bg:     linear-gradient(135deg, var(--ksg-w10) 0%, var(--ksg-w5) 60%);
+  --widget-tint-border: var(--ksg-w18);
+  --widget-surface: background: linear-gradient(158deg, rgba(255, 255, 255, 0.10) 15.53%, rgba(255, 255, 255, 0.00) 80.37%);
+
+  /* ─── Motion — unchanged but declared for clarity ─── */
+  --dur-fast:   120ms;
+  --dur-normal: 200ms;
+
+  /* ── KINTSUGI Component Tokens ─────────────────────────────────────────
+     These extend the trhs token set with KINTSUGI-specific values.
+     Consumed by kintsugi/components.css.
+  ─────────────────────────────────────────────────────────────────── */
+
+  /* Button — primary (accent fill) */
+  --ksg-btn-primary-surface:       var(--accent-color);
+  --ksg-btn-primary-border-inner:  var(--ksg-w20);
+  --ksg-btn-primary-border-outer:  var(--ksg-b90);
+  --ksg-btn-primary-hover-inner:   var(--ksg-w30);
+  --ksg-btn-primary-hover-shadow:  0 0 8px 0 color-mix(in srgb, var(--accent-color), transparent 60%);
+  --ksg-btn-primary-pressed-inner: var(--ksg-w40);
+
+  /* Button — secondary (ghost) */
+  --ksg-btn-secondary-surface:       var(--ksg-w10);
+  --ksg-btn-secondary-border-inner:  var(--ksg-w20);
+  --ksg-btn-secondary-border-outer:  var(--ksg-b80);
+  --ksg-btn-secondary-hover-inner:   var(--ksg-w30);
+  --ksg-btn-secondary-hover-shadow:  0 0 8px 0 var(--ksg-b40);
+  --ksg-btn-secondary-pressed-surface: var(--ksg-w5);
+  --ksg-btn-secondary-pressed-inner: var(--ksg-w40);
+
+  /* Button emboss — soft-light gradient sheen */
+  --ksg-sheen-default: linear-gradient(109.908deg, var(--ksg-b10) 0%, var(--ksg-w10) 100%);
+  --ksg-sheen-hover:   linear-gradient(109.908deg, var(--ksg-b60) 0%, var(--ksg-w60) 100%);
+  --ksg-sheen-pressed: linear-gradient(109.908deg, var(--ksg-b90) 0%, var(--ksg-w90) 100%);
+
+  /* Text field */
+  --ksg-field-surface:         var(--ksg-b20);
+  --ksg-field-border-inner:    var(--ksg-w20);
+  --ksg-field-border-outer:    var(--ksg-b80);
+  --ksg-field-hover-inner:     var(--ksg-w60);
+  --ksg-field-active-inner:    var(--accent-color);
+  --ksg-field-active-shadow:   0 0 8px 0 color-mix(in srgb, var(--accent-color), transparent 70%);
+  --ksg-field-error-inner:     #ff3b30;
+
+  /* Selector (checkbox / radio / toggle) */
+  --ksg-selector-surface-default:  var(--ksg-w10);
+  --ksg-selector-surface-selected: var(--accent-color);
+  --ksg-selector-border-inner:     var(--ksg-w20);
+  --ksg-selector-border-outer:     var(--ksg-b20);
+  --ksg-selector-handle-off:       var(--ksg-w80);
+  --ksg-selector-handle-on:        #ffffff;
+
+  /* Panel */
+  --ksg-panel-surface:      rgba(30, 30, 31, 0.85);
+  --ksg-panel-border-inner: var(--ksg-w20);
+  --ksg-panel-border-outer: var(--ksg-b80);
+
+  /* Scrollbar */
+  --ksg-scrollbar-surface: var(--ksg-b60);
+  --ksg-scrollbar-border:  var(--ksg-w30);
+}
+
+/* ====================================================================
+   3. KINTSUGI LIGHT THEME
+   Activated when html[data-theme="kintsugi"].light
+   or scoped to any subtree via .ds-theme-light
+   ==================================================================== */
+html.light,
+html[data-theme-mode='light'],
+.ds-theme-light {
+  /* Backgrounds */
+  --bg-base:     var(--ksg-n300);
+  --bg-mid:      #eeecec;
+  --bg-elevated: #f4f3f3;
+
+  /* Surfaces */
+  --surface:        var(--ksg-b6);
+  --surface-light:  rgba(0, 0, 0, 0.02);
+  --surface-hover:  var(--ksg-b10);
+  --surface-active: var(--ksg-b15);
+
+  /* Borders */
+  --border:      var(--ksg-b18);
+  --border-light: var(--ksg-b10);
+  --border-med:  var(--ksg-b25);
+
+  /* Text */
+  --text-primary: #282828;
+  --text-dim:     rgba(40, 40, 40, 0.65);
+  --text-muted:   var(--ksg-b55);
+  --text-subtle:  var(--ksg-b35);
+  --text-on-accent: #ffffff;
+
+  /* Nav */
+  --nav-bg: rgba(220, 218, 218, 0.88);
+
+  /* Widget tint */
+  --widget-tint-bg:     linear-gradient(135deg, var(--ksg-b6) 0%, rgba(0,0,0,0.01) 60%);
+  --widget-tint-border: var(--ksg-b15);
+
+  /* Shadows — softer on light */
+  --shadow-lv-1: 0 1px 4px var(--ksg-b10), 0 2px 12px var(--ksg-b6);
+  --shadow-lv-2: 0 2px 8px var(--ksg-b15), 0 4px 20px var(--ksg-b10);
+  --shadow-lv-3: 0 4px 12px var(--ksg-b20), 0 8px 28px var(--ksg-b10);
+  --shadow-lv-4: 0 8px 24px var(--ksg-b25), 0 2px 16px var(--ksg-b15);
+
+  /* Button secondary — translucent ink on light */
+  --ksg-btn-secondary-surface:       var(--ksg-b6);
+  --ksg-btn-secondary-border-inner:  var(--ksg-b15);
+  --ksg-btn-secondary-border-outer:  var(--ksg-b35);
+  --ksg-btn-secondary-hover-inner:   var(--ksg-b35);
+  --ksg-btn-secondary-pressed-surface: var(--ksg-b10);
+  --ksg-btn-secondary-pressed-inner: var(--ksg-b80);
+  --ksg-btn-secondary-hover-shadow:  0 0 8px 0 var(--ksg-b25);
+
+  /* Softer sheens for light surface */
+  --ksg-sheen-default: linear-gradient(109.908deg, var(--ksg-b18) 0%, var(--ksg-w18) 100%);
+  --ksg-sheen-hover:   linear-gradient(109.908deg, var(--ksg-b35) 0%, var(--ksg-w35) 100%);
+  --ksg-sheen-pressed: linear-gradient(109.908deg, var(--ksg-b60) 0%, var(--ksg-w60) 100%);
+
+  /* Text field */
+  --ksg-field-surface:         var(--ksg-w90);
+  --ksg-field-border-inner:    var(--ksg-b18);
+  --ksg-field-border-outer:    var(--ksg-b25);
+  --ksg-field-hover-inner:     var(--ksg-b45);
+
+  /* Selector */
+  --ksg-selector-surface-default: var(--ksg-b6);
+  --ksg-selector-border-inner:    var(--ksg-b20);
+  --ksg-selector-border-outer:    var(--ksg-w20);
+  --ksg-selector-handle-off:      var(--ksg-b80);
+
+  /* Scrollbar */
+  --ksg-scrollbar-surface: var(--ksg-b15);
+  --ksg-scrollbar-border:  var(--ksg-b25);
+
+  /* Panel */
+  --ksg-panel-surface:      rgba(249, 249, 248, 0.85);
+  --ksg-panel-border-inner: var(--ksg-w80);
+  --ksg-panel-border-outer: var(--ksg-b40);
+}

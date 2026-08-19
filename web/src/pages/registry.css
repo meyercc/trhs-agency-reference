@@ -1,0 +1,174 @@
+/* SKU Registry page — card grid + filters (React home of registry.html). */
+
+.reg-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gutter);
+}
+
+.reg-filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+  margin: var(--gutter-sm) 0 var(--gutter);
+  flex-wrap: wrap;
+}
+.reg-chips {
+  display: flex;
+  gap: var(--gutter-xs);
+  flex-wrap: wrap;
+}
+.reg-chips .ds-chip {
+  text-transform: capitalize;
+}
+.reg-filters .ds-input-group {
+  flex: 0 1 280px;
+}
+
+.reg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--gutter-sm);
+}
+
+.reg-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease-default);
+}
+.reg-card:hover {
+  border-color: var(--border-med);
+}
+.reg-card-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  background: var(--surface);
+  color: var(--text-subtle);
+}
+.reg-card-art img {
+  max-height: 84%;
+  max-width: 70%;
+  object-fit: contain;
+}
+.reg-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-tablet) var(--gutter-sm) var(--gutter-sm);
+  flex: 1;
+}
+.reg-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+.reg-card-name {
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reg-card-meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gutter-xs);
+  font-size: var(--text-caption);
+}
+.reg-card-type {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+.reg-card-code {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reg-card-cws {
+  display: flex;
+  gap: var(--gutter-xxs);
+}
+/* Colorway swatch. The per-colorway colors below are *product* colors (the
+   physical finish a SKU ships in), not design-system values — they live with
+   the swatch rather than in tokens.css, and are shared with the configurator's
+   colorway editor (which also renders .reg-cw-dot). */
+.reg-cw-dot {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-med);
+  background: var(--surface);
+  cursor: pointer;
+}
+.reg-cw-dot.active {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+.reg-cw-dot:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.reg-cw-dot[data-cw='black'] { background: #1a1a1a; }
+.reg-cw-dot[data-cw='white'] { background: #f5f5f5; }
+.reg-cw-dot[data-cw='blue'] { background: #3b82f6; }
+.reg-cw-dot[data-cw='light-blue'] { background: #93c5fd; }
+.reg-cw-dot[data-cw='red'] { background: #dc2626; }
+.reg-cw-dot[data-cw='pink'] { background: #ec4899; }
+.reg-cw-dot[data-cw='lavender'] { background: #c4b5fd; }
+.reg-cw-dot[data-cw='light-gray'] { background: #d4d4d4; }
+.reg-cw-dot[data-cw='silver'] { background: #cbd5e1; }
+.reg-cw-dot[data-cw='frost'] { background: #e0f2fe; }
+.reg-cw-dot[data-cw='green'] { background: #22c55e; }
+.reg-cw-dot[data-cw='yellow'] { background: #eab308; }
+.reg-cw-dot[data-cw='orange'] { background: #f97316; }
+.reg-cw-dot[data-cw='purple'] { background: #a855f7; }
+
+.reg-card-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+.reg-card-links {
+  display: flex;
+  gap: var(--gutter-xs);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.reg-card-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxxs);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  text-decoration: none;
+}
+.reg-card-links a:hover {
+  color: var(--text-primary);
+}
+.reg-card-btns {
+  display: flex;
+  gap: var(--gutter-xs);
+  flex-shrink: 0;
+}
+
+.reg-empty {
+  color: var(--text-dim);
+}

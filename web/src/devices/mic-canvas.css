@@ -1,0 +1,20 @@
+/* Microphone canvas — Audio/Effects/Lighting/Settings on the shared
+   device-canvas chrome + .ds-ng3-* primitives. Only mic-specific layout. */
+
+.mic-grid > .ds-ng3-section {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Pickup-pattern radio list */
+.mic-patterns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+}
+
+@media (max-width: 600px) {
+  .mic-grid {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,290 @@
+/* ── Monitor · Input / KVM tab (.kvm) ───────────────────────────────
+   KVM routing surface: two source computers + a shared keyboard/mouse that
+   follows the active input. Echoes the DisplayArrange canvas language
+   (.dsa-*) and reuses the device-modal field conventions (.dm-*).
+   ────────────────────────────────────────── */
+.kvm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+/* NG3-canvas column layout: routing stage · view/sources · switching. */
+.kvm-grid > .ds-ng3-section {
+  flex: 1;
+  min-width: 0;
+}
+.kvm-grid .kvm-col-stage {
+  flex: 1.5;
+}
+/* Beat 1 — discoverability prompt (shown until KVM is configured) */
+.kvm-setup {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--accent-color), transparent 55%);
+  background: var(--accent-dimmer);
+  border-radius: var(--radius);
+}
+.kvm-setup > svg {
+  color: var(--accent-color);
+  flex: 0 0 auto;
+}
+.kvm-setup-text {
+  flex: 1 1 auto;
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+.kvm-setup-text b {
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
+}
+.kvm-setup .ds-btn {
+  flex: 0 0 auto;
+}
+
+/* Beat 5 — persistence note */
+.kvm-persist {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+  margin: 0;
+  font-size: var(--text-nano);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.kvm-persist svg {
+  color: var(--text-muted);
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+/* status line */
+.kvm-status {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.kvm-status b {
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
+}
+.kvm-status-led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-dim);
+  flex: 0 0 auto;
+}
+
+/* ── canvas ─────────────────────────────── */
+.kvm-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  padding: var(--gutter);
+  background:
+    radial-gradient(420px 160px at 50% 0%, var(--accent-dimmest), transparent 70%),
+    var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+/* the display */
+.kvm-monitor {
+  position: relative;
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(0, 200, 215, 0.06), rgba(0, 0, 0, 0.25));
+  padding: 22px 14px 16px;
+}
+.kvm-mon-cap {
+  position: absolute;
+  top: 7px;
+  left: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.kvm-mon-screen {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+}
+.kvm-mon-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  min-height: 44px;
+}
+.kvm-mon-split span {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-med);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+.kvm-mon-split span.on {
+  border-style: solid;
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+  background: var(--accent-dimmer);
+}
+
+/* source computers */
+.kvm-sources {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gutter-sm);
+}
+.kvm-src {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.02);
+  color: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+.kvm-src:hover {
+  border-color: var(--border-med);
+  background: rgba(255, 255, 255, 0.04);
+}
+.kvm-src:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.kvm-src.active {
+  border-color: var(--accent-color);
+  background: var(--accent-dimmer);
+}
+.kvm-src-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.kvm-src-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-muted);
+  flex: 0 0 auto;
+}
+.kvm-src.active .kvm-src-dot {
+  border-color: var(--accent-color);
+  background: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-dimmer);
+}
+.kvm-src-name {
+  font-size: var(--text-caption);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+}
+.kvm-src-in {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  color: var(--text-dim);
+}
+.kvm-src-badge {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.kvm-src.active .kvm-src-badge {
+  color: var(--accent-color);
+  border-color: color-mix(in srgb, var(--accent-color), transparent 55%);
+  background: var(--accent-dimmer);
+}
+
+/* keyboard + mouse routing bar */
+.kvm-route {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.kvm-route svg {
+  color: var(--accent-color);
+  flex: 0 0 auto;
+}
+.kvm-route-what {
+  color: var(--text-primary);
+}
+.kvm-route-arrow {
+  flex: 0 0 auto;
+  color: var(--accent-color);
+}
+.kvm-route-arrow::before {
+  content: '→';
+  font-weight: 700;
+}
+.kvm-route-to {
+  font-weight: var(--font-medium);
+  color: var(--accent-color);
+}
+.kvm-route.idle {
+  opacity: 0.6;
+}
+.kvm-route.idle svg,
+.kvm-route.idle .kvm-route-arrow,
+.kvm-route.idle .kvm-route-to {
+  color: var(--text-muted);
+}
+
+/* switch action + caveat */
+.kvm-switch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.kvm-caveat {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--yellow), transparent 70%);
+  background: color-mix(in srgb, var(--yellow), transparent 92%);
+  border-radius: var(--radius);
+  font-size: var(--text-micro);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.kvm-caveat svg {
+  color: var(--yellow);
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+.kvm-caveat b {
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
+}

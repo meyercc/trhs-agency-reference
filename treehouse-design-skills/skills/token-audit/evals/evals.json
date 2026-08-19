@@ -1,0 +1,20 @@
+{
+  "skill_name": "token-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just finished writing some CSS for a new component. Can you check if I'm using the design tokens properly? The file is shared/components.css",
+      "expected_output": "Should run the audit script scoped to that file (--file shared/components.css), identify hardcoded values that should use tokens, and suggest specific var() replacements"
+    },
+    {
+      "id": 2,
+      "prompt": "Are there any tokens in tokens.css that we're not actually using anywhere? I want to clean up the token file.",
+      "expected_output": "Should run the unused tokens check and report which tokens are defined but never referenced"
+    },
+    {
+      "id": 3,
+      "prompt": "I just added some inline styles to a React page in web/src. Did I hardcode anything I should have tokenized?",
+      "expected_output": "Should grep web/src for hardcoded hex/rgb/px inside style={{ }} (the script does not read .tsx), report each hit, and suggest the matching var(--token) replacement"
+    }
+  ]
+}

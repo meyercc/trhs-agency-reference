@@ -1,0 +1,495 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Module Browser / store (?modal=modules). Reuses the .modal-shell chrome; a
+   narrow left nav + a searchable content area. Token-only, scoped .modulebrowser.
+   ══════════════════════════════════════════════════════════════════════════ */
+.modulebrowser .modal-body {
+  grid-template-columns: 230px 1fr;
+}
+
+/* ── Left nav ── */
+.modulebrowser .modal-left {
+  padding: var(--gutter-sm);
+  gap: 2px;
+}
+/* Left nav markup uses the shared .ds-modal-nav (shared/components.css). */
+
+/* ── Right content ── */
+.modulebrowser .modal-right {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.mb-search {
+  flex-shrink: 0;
+  padding: var(--gutter) var(--gutter) var(--gutter-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+.mb-search .ds-input-wrap,
+.mb-search .ds-input {
+  width: 100%;
+}
+.mb-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--gutter);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+.mb-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.mb-group-title {
+  margin: var(--gutter-xs) 0 2px;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.mb-empty {
+  color: var(--text-dim);
+  font-size: var(--text-body);
+}
+
+/* ── In-page manager (Personalize → Modules) ── */
+.mm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  margin-bottom: var(--gutter-sm);
+}
+.mm-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+/* ── Cards ── */
+.mb-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--gutter-sm);
+  margin-bottom: var(--gutter-sm);
+}
+.mb-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+/* The icon + copy + action row. Sole child of a plain card; below the banner on a media card. */
+.mb-card-main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-sm);
+}
+/* Screenshot banner (real capture of the module's surface). */
+.mb-card-media {
+  aspect-ratio: 16 / 9;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-inset, rgba(0, 0, 0, 0.25));
+}
+.mb-card-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.mb-card.has-media .mb-card-icon {
+  width: 32px;
+  height: 32px;
+}
+.mb-card.is-installed {
+  border-color: color-mix(in srgb, var(--accent-color) 22%, var(--border));
+}
+.mb-card.is-clickable {
+  cursor: pointer;
+}
+.mb-card.is-clickable:hover {
+  border-color: var(--accent-dim);
+  background: color-mix(in srgb, var(--surface) 70%, var(--accent-dimmer));
+}
+.mb-card.is-clickable:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
+}
+.mb-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent-dimmer);
+  color: var(--accent-color);
+}
+.mb-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.mb-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.mb-card-name {
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.mb-card-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: #04222b;
+}
+.mb-card-cat,
+.mb-card-soon {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+  border-radius: 99px;
+  padding: 1px 6px;
+}
+.mb-card-soon {
+  color: var(--accent-color);
+  border-color: var(--accent-dim);
+}
+.mb-card-tagline {
+  margin: 3px 0 0;
+  font-size: var(--text-caption);
+  font-weight: 300;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+.mb-card-action {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* Critical "Remove" text link (installed state). */
+.mb-remove-link {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--red, #f87171);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+.mb-remove-link:hover {
+  background: color-mix(in srgb, var(--red, #f87171) 12%, transparent);
+}
+
+/* ── What's New hero ── */
+.mb-hero {
+  position: relative;
+  display: flex;
+  gap: var(--gutter);
+  padding: var(--gutter);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 100% 0%, var(--accent-dimmer), transparent 60%),
+    var(--surface);
+}
+/* Real screenshot bled into the right side, fading into the surface behind the copy. */
+.mb-hero.has-art {
+  min-height: 196px;
+  align-items: center;
+}
+.mb-hero-art {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 62%;
+  background-size: cover;
+  background-position: left center;
+  -webkit-mask-image: linear-gradient(to right, transparent 38%, #000 70%);
+  mask-image: linear-gradient(to right, transparent 38%, #000 70%);
+  pointer-events: none;
+}
+.mb-hero.has-art .mb-hero-icon,
+.mb-hero.has-art .mb-hero-body {
+  position: relative;
+  z-index: 1;
+}
+.mb-hero.has-art .mb-hero-body {
+  max-width: 50%;
+}
+.mb-hero-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--radius);
+  background: var(--accent-dimmer);
+  color: var(--accent-color);
+}
+.mb-hero-body {
+  flex: 1;
+  min-width: 0;
+}
+.mb-hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-color);
+}
+.mb-hero-title {
+  margin: 4px 0 6px;
+  font-family: var(--font-display);
+  font-size: var(--text-title-3, 1.1rem);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.mb-hero-desc {
+  margin: 0 0 var(--gutter-sm);
+  font-size: var(--text-caption);
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.mb-hero-action {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+
+/* ── Module detail page ── */
+.mb-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+}
+/* Screenshot band — natural 16:10 of the capture, so nothing is cropped. */
+.mb-detail-preview {
+  margin: 0;
+  aspect-ratio: 1440 / 900;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-lv-2, 0 10px 28px rgba(0, 0, 0, 0.4));
+}
+.mb-detail-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.mb-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 6px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.mb-back:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+.mb-detail-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter);
+}
+.mb-detail-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--radius);
+  background: var(--accent-dimmer);
+  color: var(--accent-color);
+}
+.mb-detail-titles {
+  flex: 1;
+  min-width: 0;
+}
+.mb-detail-cat {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.mb-detail-name {
+  margin: 3px 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-title-3, 1.1rem);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.mb-detail-action {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  flex-shrink: 0;
+}
+.mb-detail-desc {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.mb-detail-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gutter);
+}
+@media (max-width: 720px) {
+  .mb-detail-cols {
+    grid-template-columns: 1fr;
+  }
+}
+.mb-detail-col {
+  padding: var(--gutter-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.mb-detail-list {
+  margin: var(--gutter-xs) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mb-detail-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: var(--text-caption);
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.mb-detail-list li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent-color);
+}
+.mb-detail-list-muted li {
+  padding-left: 13px;
+  position: relative;
+  color: var(--text-muted);
+}
+.mb-detail-list-muted li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 7px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+/* ── Remove confirmation ── */
+.mb-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70; /* above the nav (55) + modals (51) — a global confirm */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+}
+.mb-confirm {
+  width: min(440px, 100%);
+  padding: var(--gutter);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated, #14171e);
+  box-shadow: var(--shadow-lv-3);
+}
+.mb-confirm-title {
+  margin: 0 0 var(--gutter-xs);
+  font-family: var(--font-display);
+  font-size: var(--text-body-lg, 1.05rem);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.mb-confirm-desc {
+  margin: 0 0 var(--gutter-sm);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.mb-confirm-effects {
+  margin: 0 0 var(--gutter);
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mb-confirm-effects li {
+  font-size: var(--text-caption);
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+.mb-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gutter-sm);
+}
+.mb-confirm-remove {
+  padding: 0 16px;
+  height: 32px;
+  border: 1px solid color-mix(in srgb, var(--red, #f87171) 40%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--red, #f87171) 14%, transparent);
+  color: var(--red, #f87171);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.mb-confirm-remove:hover {
+  background: color-mix(in srgb, var(--red, #f87171) 24%, transparent);
+}

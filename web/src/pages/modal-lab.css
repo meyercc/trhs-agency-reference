@@ -1,0 +1,55 @@
+/* Modal Lab — .mlab-* annotation chrome (lives only on #/modal-lab). */
+
+.mlab-facts { display: flex; flex-wrap: wrap; gap: var(--gutter-xs) var(--gutter); margin-bottom: var(--gutter-sm); }
+.mlab-facts label { display: flex; align-items: center; gap: var(--gutter-xs); font-size: var(--text-micro); color: var(--text-dim); }
+
+.mlab-backdrop { background: rgba(0, 0, 0, 0.45); border-radius: var(--radius-card); padding: var(--gutter); }
+.mlab-modal { position: relative; background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--radius-card); overflow: hidden; max-width: 720px; }
+.mlab-header { display: flex; align-items: center; gap: var(--gutter); padding: var(--gutter-sm); border-bottom: 1px solid var(--border-light); }
+.mlab-header > div:first-child { flex: 1; min-width: 0; }
+.mlab-title { font-family: var(--font-display); font-weight: 600; color: var(--text-primary); }
+.mlab-x { background: none; border: none; color: var(--text-subtle); font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); }
+.mlab-x:hover { background: var(--surface-hover); color: var(--text-primary); }
+.mlab-l2 { flex-shrink: 0; }
+
+.mlab-body { display: flex; min-height: 180px; }
+.mlab-rail { display: flex; flex-direction: column; gap: 2px; padding: var(--gutter-xs); border-right: 1px solid var(--border-light); min-width: 108px; }
+.mlab-rail span { padding: 6px 10px; border-radius: var(--radius-sm); font-size: var(--text-micro); color: var(--text-dim); }
+.mlab-rail span.active { background: var(--surface-active); color: var(--text-primary); }
+.mlab-console { flex: 1; display: grid; gap: var(--gutter-xs); padding: var(--gutter-sm); align-content: start; }
+.mlab-standalone { max-width: 560px; background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--radius-card); }
+.mlab-group { font-family: var(--font-mono); font-size: var(--text-micro); letter-spacing: 0.08em; color: var(--text-subtle); padding-top: var(--gutter-xxs); }
+
+.mlab-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter-sm); background: var(--surface); border-radius: var(--radius-sm); padding: var(--gutter-xs) var(--gutter-sm); min-height: 44px; color: var(--text-primary); font-size: var(--text-body); }
+.mlab-row > span:first-child { display: flex; align-items: center; gap: var(--gutter-xs); }
+.mlab-val { color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mlab-slider { flex: 1; max-width: 220px; }
+.mlab-dep { margin-left: var(--gutter); transition: opacity 160ms ease; }
+.mlab-dep.is-dim { opacity: 0.5; }
+.mlab-drill { cursor: pointer; }
+.mlab-drill:hover { background: var(--surface-hover); }
+.mlab-trust { background: var(--orange-dim); color: var(--orange); font-size: var(--text-micro); min-height: 36px; }
+.mlab-firstrun { background: var(--accent-dimmest); font-size: var(--text-micro); color: var(--text-dim); }
+.mlab-firstrun button { background: none; border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text-primary); font-size: var(--text-micro); padding: 2px 8px; cursor: pointer; }
+
+.mlab-panel { width: 220px; border-right: 1px solid var(--border-light); padding: var(--gutter-sm); font-size: var(--text-micro); color: var(--text-dim); display: grid; gap: var(--gutter-xs); align-content: start; }
+.mlab-panel b { color: var(--text-primary); }
+.mlab-panel p { margin: 0; }
+.mlab-footer { display: flex; justify-content: flex-end; gap: var(--gutter-xs); padding: var(--gutter-sm); border-top: 1px solid var(--border-light); }
+
+.mlab-gatescrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55); display: grid; place-items: center; }
+.mlab-gate { background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--radius-card); padding: var(--gutter-sm); width: min(340px, 90%); display: grid; gap: var(--gutter-xs); color: var(--text-primary); font-size: var(--text-body); }
+.mlab-gate p { margin: 0; }
+.mlab-gate-actions { display: flex; justify-content: flex-end; gap: var(--gutter-xs); }
+
+.mlab-reg { display: grid; gap: 2px; }
+.mlab-reg-row { display: grid; grid-template-columns: 1.4fr 0.7fr 1.3fr 1fr 0.5fr 1.6fr; gap: var(--gutter-xs); align-items: center; background: var(--surface); border-radius: var(--radius-sm); padding: var(--gutter-xs) var(--gutter-sm); font-size: var(--text-micro); color: var(--text-primary); }
+.mlab-reg-head { background: none; color: var(--text-subtle); font-family: var(--font-mono); letter-spacing: 0.06em; }
+.mlab-flags { display: flex; gap: var(--gutter-xxs); flex-wrap: wrap; }
+.mlab-ghost { border: 1px dashed var(--border-light); background: none; color: var(--text-dim); }
+
+@media (max-width: 760px) {
+  .mlab-reg-row { grid-template-columns: 1fr 1fr; }
+  .mlab-body { flex-direction: column; }
+  .mlab-panel { width: auto; border-right: none; border-bottom: 1px solid var(--border-light); }
+}

@@ -1,0 +1,455 @@
+/* ── PerformV5 (#/perform-v5) — framework-showcase glue ──
+   Isolated proposal variant. Reuses the real DS tokens/components; this file
+   only adds the showcase chrome (proposal note, status legend, annotation
+   tags) and the spotlight frame. No existing class is redefined. */
+
+/* proposal note — lives inside the Simulator rig (ShowcaseRig) */
+.pv5-rig-proposal {
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--accent-color), transparent 92%);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius-sm);
+  padding: 5px 9px;
+  line-height: 1.45;
+}
+.pv5-rig-proposal strong { color: var(--text-primary); }
+
+/* status legend (color key for the annotation tags) */
+.pv5-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-sm);
+  margin: 0 0 var(--gutter-sm);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+.pv5-rig-div .pv5-legend { margin: 0; font-size: var(--text-micro); gap: 6px var(--gutter); line-height: 1.5; }
+
+/* ── V5 simulator comfort (scoped to .pv5-rig; shared .pv3-rig / V4 untouched) ── */
+.pv5-rig {
+  width: min(560px, calc(100vw - 2 * var(--gutter)));
+  padding: var(--gutter-sm) var(--gutter);   /* 16 24 — was 8 24 */
+  gap: var(--gutter-sm);                       /* 16 — was 8 */
+}
+.pv5-rig .pv3-rig-head { margin-bottom: var(--gutter-xxs); }
+.pv5-rig .pv3-rig-row { gap: var(--gutter); align-items: center; }
+.pv5-rig .pv3-rig-label { font-size: var(--text-caption); width: 76px; }
+.pv5-rig .pv5-rig-proposal { font-size: var(--text-caption); line-height: 1.55; padding: 10px 12px; }
+.pv5-rig .pv5-rig-div { gap: var(--gutter-sm); padding-top: var(--gutter-sm); }
+.pv5-rig .pv5-rig-sectlabel { font-size: var(--text-micro); letter-spacing: 0.1em; }
+.pv5-rig .pv5-rig-toggles { gap: var(--gutter-sm) var(--gutter); }
+.pv5-rig .pv5-ctrl-row { gap: 12px; align-items: flex-start; }
+.pv5-rig .pv5-ctrl-label { font-size: var(--text-caption); line-height: 1.3; }
+.pv5-rig .pv5-ctrl-meta { font-size: var(--text-nano); margin-top: 3px; }
+.pv5-rig .pv3-rig-foot { font-size: var(--text-micro); gap: var(--gutter); padding-top: var(--gutter-xs); line-height: 1.5; }
+
+/* title bar = drag handle (grip hint), plus a fold control */
+.pv5-rig .pv3-rig-head { gap: var(--gutter-xs); justify-content: flex-start; }
+.pv5-rig-grip { color: var(--text-subtle); font-size: 13px; letter-spacing: -1px; cursor: grab; user-select: none; }
+.pv5-rig .pv4-rig-state { margin-left: auto; }
+.pv5-rig-fold { flex: none; width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: none; color: var(--text-dim); cursor: pointer; font-size: 11px; line-height: 1; }
+.pv5-rig-fold:hover { background: var(--surface-hover); }
+/* folded: title bar only, shrink to content */
+.pv5-rig-folded { width: auto; }
+.pv5-rig-folded .pv4-rig-state { display: none; }
+
+/* System Vitals = a proper Control & Status card: title INSIDE the card, the
+   gauges are its content area (V5-scoped; shared bar / V4 untouched). */
+.pv5-vitals-card { cursor: default; }
+.pv5-vitals-card .ds-feature-card-header { margin-bottom: var(--gutter-sm); }
+
+/* Three hardware readings (CPU/GPU/RAM) in one card, separated by dividers (not
+   framed as sub-cards). Each cell's label is pinned TOP-LEFT (so the metric is
+   discoverable before the number); the gauge is vertically centred in the cell.
+   Network throughput moved to the Network Booster card. */
+.pv5-vitals-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.pv5-vcard { position: relative; display: flex; align-items: center; justify-content: center; min-height: 92px; padding: 24px 16px 12px; appearance: none; background: none; border: none; border-right: 1px solid var(--border-light); color: inherit; font: inherit; cursor: pointer; transition: background var(--dur-fast) ease; }
+.pv5-vcard:last-child { border-right: none; }
+.pv5-vcard:hover { background: var(--surface-hover); }
+.pv5-vcard-label { position: absolute; top: 12px; left: 15px; font-family: var(--font-mono); font-size: var(--text-body); font-weight: var(--font-medium); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); }
+.pv5-vcard-gauge { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.pv5-vcard-gauge .gauge-temp-badge { margin-top: 0; }
+
+/* ── Shared card affordances (the V5 rule) ────────────────────────────────
+   Config / navigation doors (Schedule, Manage, Settings, More, Open Task
+   Manager) live in the card header, top-right, tied to the title. Actionable
+   steps (Clean) stay in the footer. */
+.pv5-card-door { display: inline-flex; align-items: center; gap: 4px; appearance: none; background: none; border: none; padding: 0; font-family: var(--font-mono); font-size: var(--text-micro); text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); cursor: pointer; transition: color var(--dur-fast) ease; white-space: nowrap; }
+.pv5-card-door:hover { color: var(--accent-color); }
+.pv5-card-door span { font-size: var(--text-caption); }
+
+/* Standardized status "reading" — the state IS the card's headline reading:
+   a big bold highlighted word, weighted like the System Vitals gauge value
+   (.gauge-n, 20px/700). Words + tones come from CardKit's controlled vocabulary:
+   positive = green (Active/Ready/Good/Quiet) · muted = grey (Inactive, a
+   choice not an error) · attention = orange (N heavy). */
+.pv5-feat-status { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 22px; line-height: 1; margin: 4px 0 8px; }
+.pv5-feat-status--positive { color: var(--green); }
+.pv5-feat-status--muted { color: var(--text-subtle); }
+.pv5-feat-status--attention { color: var(--orange); }
+.pv5-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.pv5-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.pv5-dot--ratified { background: var(--green); }
+.pv5-dot--draft { background: var(--yellow); }
+.pv5-dot--open { background: var(--red); }
+
+/* showcase toggles — folded into the Simulator rig (ShowcaseRig) */
+.pv5-rig-div {
+  border-top: 1px dashed var(--border-light);
+  margin-top: var(--gutter-xxs);
+  padding-top: var(--gutter-xs);
+  display: grid;
+  gap: var(--gutter-xs);
+}
+.pv5-rig-sectlabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.pv5-rig-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter-xs) var(--gutter); }
+@media (max-width: 520px) { .pv5-rig-toggles { grid-template-columns: 1fr; } }
+.pv5-ctrl-row { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
+.pv5-ctrl-text { display: flex; flex-direction: column; gap: 1px; }
+.pv5-ctrl-label { font-size: var(--text-caption); color: var(--text-dim); }
+.pv5-ctrl-meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; }
+
+/* status chip */
+.pv5-status { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; white-space: nowrap; }
+.pv5-status--ratified { color: var(--green); background: var(--green-dim); }
+.pv5-status--draft { color: var(--yellow); background: color-mix(in srgb, var(--yellow), transparent 85%); }
+.pv5-status--open { color: var(--red); background: color-mix(in srgb, var(--red), transparent 85%); }
+
+/* annotation tags — hidden until annotate mode is on */
+.pv5-tagged { position: relative; }
+.pv5-anchor { position: relative; }
+.pv5-tag {
+  display: none;
+  position: absolute;
+  top: -9px;
+  right: 8px;
+  z-index: 3;
+  flex-direction: column;
+  gap: 1px;
+  max-width: 300px;
+  padding: 5px 9px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lv-1);
+  pointer-events: none;
+}
+.pv5-root.pv5-annotate .pv5-tag { display: inline-flex; }
+.pv5-tag-status { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; }
+.pv5-tag--ratified .pv5-tag-status { color: var(--green); }
+.pv5-tag--draft .pv5-tag-status { color: var(--yellow); }
+.pv5-tag--open .pv5-tag-status { color: var(--red); }
+.pv5-tag-type { font-size: var(--text-micro); color: var(--text-primary); font-weight: 600; }
+.pv5-tag-shows { font-size: 10.5px; color: var(--text-muted); line-height: 1.35; }
+
+/* Performance layout: Power Mode owns a full-width row (block child of .pv4-zone);
+   below it a half/half row — Network Booster + OMEN AI, equal height. */
+.pv5-perf-row2 { display: flex; gap: var(--gutter); align-items: stretch; }
+.pv5-perf-row2 > div { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.pv5-perf-row2 > div > .ds-feature-card { flex: 1; }
+@media (max-width: 900px) { .pv5-perf-row2 { flex-direction: column; } }
+
+/* Sub status = Facts rows (the ONE sanctioned reading form, all cards):
+   label left · mono value right. */
+.pv5-facts { display: flex; flex-direction: column; gap: 4px; margin-top: var(--gutter-xs); }
+.pv5-fact { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gutter); font-size: var(--text-caption); color: var(--text-muted); }
+.pv5-fact-v { color: var(--text-dim); font-weight: 500; font-family: var(--font-mono); white-space: nowrap; }
+
+/* ── Network Booster Detail modal (single page) ── */
+/* Compact summary at the top of the body — the identity/total that used to live
+   in a left panel, folded inline since this modal doesn't navigate. */
+.pv5-nbm-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; padding-bottom: var(--gutter-sm); border-bottom: 1px solid var(--border-light); }
+.pv5-nbm-sum-v { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 30px; color: var(--text-primary); }
+.pv5-nbm-sum-u { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--text-muted); }
+.pv5-nbm-sum-meta { margin-left: auto; font-size: var(--text-micro); color: var(--text-subtle); align-self: center; }
+
+.pv5-nbm-sect { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-subtle); margin: var(--gutter) 0 var(--gutter-xs); }
+.pv5-nbm-sect:first-child { margin-top: 0; }
+.pv5-nbm-ifaces { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); }
+@media (max-width: 640px) { .pv5-nbm-ifaces { grid-template-columns: 1fr; } }
+.pv5-nbm-iface { background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: var(--gutter-sm); }
+.pv5-nbm-iface-head { display: flex; align-items: center; gap: 8px; margin-bottom: var(--gutter-xs); }
+.pv5-nbm-iface-kind { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); border: 1px solid var(--border-light); border-radius: 4px; padding: 1px 5px; flex: none; }
+.pv5-nbm-iface-name { font-size: var(--text-caption); color: var(--text-primary); }
+.pv5-nbm-kv { display: flex; justify-content: space-between; gap: var(--gutter); font-size: var(--text-micro); color: var(--text-muted); padding: 2px 0; }
+.pv5-nbm-kv b { color: var(--text-dim); font-weight: 500; font-family: var(--font-mono); }
+
+.pv5-nbm-dualforce { margin-top: var(--gutter-sm); background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: var(--gutter-sm); }
+.pv5-nbm-df-head { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter); }
+.pv5-nbm-df-title { font-size: var(--text-caption); color: var(--text-primary); }
+.pv5-nbm-df-meta { font-size: var(--text-micro); color: var(--text-muted); }
+
+.pv5-nbm-table { display: flex; flex-direction: column; }
+.pv5-nbm-row { display: grid; grid-template-columns: 2fr 1fr 1fr 84px 48px; align-items: center; gap: var(--gutter-sm); padding: 8px 0; border-bottom: 1px solid var(--border-light); font-size: var(--text-caption); }
+.pv5-nbm-row-head { color: var(--text-subtle); font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.06em; }
+.pv5-nbm-app { color: var(--text-primary); }
+.pv5-nbm-num { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--text-muted); }
+.pv5-nbm-prio { font-family: var(--font-mono); font-size: var(--text-micro); font-weight: 600; }
+.pv5-nbm-prio--high { color: var(--orange); }
+.pv5-nbm-prio--medium { color: var(--text-dim); }
+.pv5-nbm-prio--low { color: var(--text-muted); }
+.pv5-nbm-note { font-size: var(--text-micro); color: var(--text-subtle); margin-top: var(--gutter-sm); }
+.pv5-nbm-modeswitch { margin-top: var(--gutter-sm); }
+
+/* ── Booster Manage modal (left rail — it navigates 4 groups, R8) ── */
+/* Left rail mirrors svm-left (identity + Menu); adds the modal-global ARM
+   toggle row. Body = active group's description + checkbox list (OGH content). */
+.pv5-bm-left { display: flex; flex-direction: column; gap: var(--gutter-xs); }
+.pv5-bm-id-sub { font-size: var(--text-micro); color: var(--text-muted); }
+.pv5-bm-arm { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter-sm); padding: var(--gutter-xs) 0 var(--gutter-sm); border-bottom: 1px solid var(--border-light); margin-bottom: var(--gutter-xs); }
+.pv5-bm-arm-l { font-size: var(--text-caption); color: var(--text-primary); }
+.pv5-bm-desc { font-size: var(--text-micro); color: var(--text-muted); padding-bottom: var(--gutter-sm); border-bottom: 1px solid var(--border-light); }
+.pv5-bm-list { display: flex; flex-direction: column; }
+.pv5-bm-item { display: grid; grid-template-columns: 16px 1fr 2fr auto; align-items: baseline; gap: var(--gutter-sm); padding: 8px 0; border-bottom: 1px solid var(--border-light); font-size: var(--text-caption); cursor: pointer; }
+.pv5-bm-item input { margin: 0; accent-color: var(--accent); }
+.pv5-bm-item-name { color: var(--text-primary); }
+.pv5-bm-item-desc { color: var(--text-muted); font-size: var(--text-micro); }
+.pv5-bm-item-meta { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--text-dim); white-space: nowrap; }
+
+/* ── Governance chip ("Control by profile" frame-badge style) ── */
+/* ONE governed state only: 2.0 MANAGED — purple chip on the card's bottom
+   edge + inert controls. Default = no management marks at all (1.0 signature
+   chip removed; attribution recorded, not displayed). */
+.pv5-gov-chip {
+  position: absolute;
+  left: 50%;
+  bottom: -13px;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-lv-2);
+}
+
+/* SOFT management: controls stay live — clicking a mode tile IS the dismiss
+   (the user's write wins and the frame drops). The managed state is carried by
+   the purple frame + chip only; nothing is inert, nothing is dimmed. */
+.pv5-gov-chip:hover { background: color-mix(in srgb, var(--purple), white 14%); }
+
+/* spotlight (G12 frame signal; arbitration order Q-11). Also used as the
+   ARRIVAL CUE when the governance chip navigates to the OMEN AI card — the
+   class is applied transiently and fades via the wrapper transition below. */
+.pv5-spotlight { border-radius: var(--radius); box-shadow: 0 0 0 2px var(--accent-color), 0 0 26px 2px color-mix(in srgb, var(--accent-color), transparent 55%); }
+.pv5-perf-row2 > .pv5-tagged { border-radius: var(--radius); transition: box-shadow 0.35s ease; }
+
+/* ── OMEN AI per-game modal (Control-and-Status, no image) ── */
+.pv5-omm-left { display: flex; flex-direction: column; gap: var(--gutter-xs); }
+.pv5-omm-hero { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-dimmest); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+.pv5-omm-id-title { font-family: var(--font-mono); text-transform: uppercase; font-weight: 700; font-size: 18px; color: var(--text-primary); margin-top: 4px; }
+.pv5-omm-id-sub { font-size: var(--text-micro); color: var(--text-muted); line-height: 1.5; }
+.pv5-omm-status { display: flex; align-items: center; gap: 6px; font-size: var(--text-caption); color: var(--text-dim); margin-top: var(--gutter-xs); }
+.pv5-omm-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex: none; }
+.pv5-omm-stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter-xs); margin: var(--gutter-xs) 0; }
+.pv5-omm-stat { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 10px; }
+.pv5-omm-stat-v { display: block; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: var(--text-section); color: var(--text-primary); }
+.pv5-omm-stat-l { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-subtle); }
+.pv5-omm-list-head { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle); margin-top: var(--gutter-xs); }
+.pv5-omm-notes { margin: 4px 0 0; padding-left: 16px; font-size: var(--text-micro); color: var(--text-muted); line-height: 1.6; }
+.pv5-omm-notes-warn { color: var(--orange); }
+
+.pv5-omm-sect { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-subtle); margin: var(--gutter) 0 var(--gutter-xs); }
+.pv5-omm-sect:first-child { margin-top: 0; }
+.pv5-omm-games { display: flex; flex-direction: column; gap: var(--gutter-xs); }
+.pv5-omm-game { background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: var(--gutter-sm); }
+.pv5-omm-game-off { opacity: 0.6; }
+.pv5-omm-game-head { display: flex; align-items: center; gap: var(--gutter-xs); }
+.pv5-omm-game-thumb { width: 30px; height: 30px; border-radius: var(--radius-sm); background: rgba(0, 0, 0, 0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; flex: none; }
+.pv5-omm-game-id { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.pv5-omm-game-title { font-size: var(--text-caption); color: var(--text-primary); }
+.pv5-omm-game-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-subtle); }
+.pv5-omm-game-body { margin-top: var(--gutter-xs); padding-top: var(--gutter-xs); border-top: 1px solid var(--border-light); display: flex; flex-direction: column; gap: var(--gutter-xs); }
+.pv5-omm-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter-sm); }
+.pv5-omm-row-fps { align-items: flex-start; }
+.pv5-omm-row-label { font-size: var(--text-caption); color: var(--text-dim); flex: none; }
+.pv5-omm-fps-chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.pv5-omm-fps-chip { font-family: var(--font-mono); font-size: var(--text-micro); padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border-light); background: transparent; color: var(--text-muted); cursor: pointer; }
+.pv5-omm-fps-chip.active { border-color: var(--accent-color); background: var(--accent-dim); color: var(--text-primary); }
+.pv5-omm-game-foot { display: flex; justify-content: flex-end; }
+.pv5-omm-supported { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--gutter-xs); }
+.pv5-omm-sup { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter-xs); background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 10px; }
+.pv5-omm-sup-title { font-size: var(--text-caption); color: var(--text-primary); }
+.pv5-omm-sup-badge { font-family: var(--font-mono); font-size: 10px; color: var(--text-subtle); }
+.pv5-omm-sup-cta { font-family: var(--font-mono); font-size: 10px; color: var(--accent-color); text-decoration: none; }
+
+
+/* ── Card-top logos off (preview "just the title") + header realign (pts 5, 1) ── */
+.pv5-root .ds-feature-card-icon { display: none; }
+/* title now lives IN the header row (left) with the control (right), one line */
+.pv5-root .ds-feature-card-header { justify-content: space-between; }
+.pv5-root .ds-feature-card-header .ds-feature-card-title { margin: 0; }
+.pv5-anchor .ds-feature-card-header .ds-badge { display: none; }
+
+/* (2) bigger Power Mode tiles */
+/* Mode tiles = the card's PRIMARY control: thicker two-row tiles with a
+   per-mode icon (icon top-left · watts top-right · label below). The icon
+   carries the state colour — same hues as the sub-area spine. The old
+   selection dot is gone; the sub-control list stays deliberately lighter. */
+.pv5-anchor .pv5-mode-tile { display: grid; grid-template-columns: auto 1fr; row-gap: 12px; align-items: start; min-height: 78px; padding: 13px 15px 12px; }
+.pv5-mode-ic { grid-row: 1; grid-column: 1; display: flex; color: var(--text-subtle); transition: color 0.15s ease; }
+.pv5-mode-ic svg { width: 20px; height: 20px; }
+.pv5-anchor .pv5-mode-tile .power-mode-watts { grid-row: 1; grid-column: 2; justify-self: end; }
+.pv5-anchor .pv5-mode-tile .power-mode-label { grid-row: 2; grid-column: 1 / -1; font-size: var(--text-body); }
+.pv5-anchor .pv5-mode-tile:hover .pv5-mode-ic { color: var(--text-dim); }
+.pv5-anchor .pv5-mode-tile.active .pv5-mode-ic { color: var(--cyan); }
+.pv5-anchor .pv5-mode-tile.active.batt-mode .pv5-mode-ic { color: var(--green); }
+.pv5-anchor .pv5-mode-tile.active.perf-mode .pv5-mode-ic { color: var(--orange); }
+.pv5-anchor .pv5-mode-tile.active.unleash-mode .pv5-mode-ic { color: var(--red); }
+
+/* managed frame stroke — the "managed" state carries a frame signal (G12) */
+.pv5-managed > .ds-feature-card { border-color: var(--purple); box-shadow: 0 0 0 1px var(--purple); }
+
+/* ── Maintenance L2: cleaner cards ── */
+.pv5-maint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); }
+@media (max-width: 720px) { .pv5-maint-grid { grid-template-columns: 1fr; } }
+/* Equal heights + aligned Clean buttons across the two cleaners. */
+.pv5-maint-grid > .pv5-tagged { display: flex; flex-direction: column; }
+.pv5-maint-grid .pv5-cleaner-card { flex: 1; display: flex; flex-direction: column; }
+/* margin-top:auto pins Clean to the card bottom (equal-height row) but eats the
+   shared footer's natural margin — padding-top restores the guaranteed gap. */
+.pv5-maint-grid .pv5-cleaner-card .ds-feature-card-footer { margin-top: auto; padding-top: var(--gutter-tablet); }
+.pv5-cleaner-card { cursor: default; }
+/* (cleaner stats + health bar removed — all sub status renders as .pv5-facts) */
+
+/* ── Clean progress Dialogue (the third modal template) ── */
+.pv5-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 51;
+  width: min(360px, calc(100vw - 2 * var(--gutter)));
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lv-4);
+  padding: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gutter-sm);
+  text-align: center;
+}
+.pv5-dialog-title { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; font-size: var(--text-section); color: var(--text-primary); }
+.pv5-dialog-ring { position: relative; width: 96px; height: 96px; display: flex; align-items: center; justify-content: center; }
+.pv5-dialog-ring::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent-color); animation: pv5-spin 0.9s linear infinite; }
+.pv5-dialog-ring-done::before { animation: none; border-color: var(--green); }
+.pv5-dialog-ring-label { position: relative; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 22px; color: var(--text-primary); }
+.pv5-dialog-ring-done .pv5-dialog-ring-label { color: var(--green); }
+@keyframes pv5-spin { to { transform: rotate(360deg); } }
+.pv5-dialog-status { font-size: var(--text-caption); color: var(--text-dim); }
+.pv5-dialog-bar { width: 100%; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.pv5-dialog-bar i { display: block; height: 100%; background: var(--accent-color); border-radius: 2px; transition: width 0.5s ease; }
+.pv5-dialog-foot { width: 100%; display: flex; justify-content: flex-end; }
+
+/* ── Cleaner Scheduler modal (single page) ── */
+/* The scheduler both cleaners share. Control-and-Status, no navigation → single
+   page. Opened from a cleaner card's "Schedule →". */
+.pv5-sched-main { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter); padding-bottom: var(--gutter-sm); border-bottom: 1px solid var(--border-light); }
+.pv5-sched-label { font-size: var(--text-caption); color: var(--text-primary); }
+.pv5-sched-meta { font-size: var(--text-micro); color: var(--text-muted); }
+.pv5-sched-body { display: flex; flex-direction: column; gap: var(--gutter-sm); margin-top: var(--gutter-sm); }
+.pv5-sched-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter); min-height: 32px; }
+.pv5-sched-days-row { align-items: flex-start; }
+.pv5-sched-k { font-size: var(--text-caption); color: var(--text-dim); }
+.pv5-sched-time { font-family: 'JetBrains Mono', monospace; font-size: var(--text-caption); color: var(--text-primary); }
+.pv5-sched-days { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.pv5-sched-day { min-width: 40px; height: 28px; padding: 0 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); background: transparent; color: var(--text-muted); font-family: var(--font-mono); font-size: var(--text-micro); cursor: pointer; }
+.pv5-sched-day:hover { border-color: var(--border); color: var(--text-dim); }
+.pv5-sched-day.active { border-color: var(--accent-color); background: var(--accent-dimmest); color: var(--text-primary); }
+.pv5-sched-logs { margin-top: var(--gutter-xs); padding-top: var(--gutter-sm); border-top: 1px solid var(--border-light); }
+.pv5-sched-logs-head { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-subtle); margin-bottom: 6px; }
+.pv5-sched-log-empty { font-size: var(--text-micro); color: var(--text-muted); }
+.pv5-sched-foot { display: flex; justify-content: flex-end; gap: var(--gutter-sm); margin-top: var(--gutter); padding-top: var(--gutter-sm); border-top: 1px solid var(--border-light); }
+
+/* Sub-control area grows out from under the mode row (PowerModeCard.GrowArea):
+   pixel height + transition instead of an instant snap, so the section-level
+   framer layout spring never fires and nothing stretches. */
+.pv5-pm-grow { overflow: hidden; transition: height 0.3s ease; }
+.pv5-pm-grow-inner { display: flow-root; }
+@media (prefers-reduced-motion: reduce) { .pv5-pm-grow { transition: none; } }
+
+/* The sub-control area visually BELONGS to the selected mode: indented under
+   the tile row with a spine in the mode's hue. One row style for every mode —
+   the SPG list-item (.ut-group/.ut-row). */
+.pv5-pm-sub { --pm-hue: var(--accent-color); margin: var(--gutter-sm) 0 2px 10px; padding-left: 14px; border-left: 2px solid color-mix(in srgb, var(--pm-hue), transparent 55%); display: grid; gap: var(--gutter-sm); }
+.pv5-pm-sub--eco { --pm-hue: var(--green); }
+.pv5-pm-sub--balanced { --pm-hue: var(--cyan); }
+.pv5-pm-sub--performance { --pm-hue: var(--orange); }
+.pv5-pm-sub--unleashed { --pm-hue: var(--red); }
+.pv5-pm-sub .ut-banner { margin: 0; }
+.pv5-pm-sub .ut-group { margin: 0; }
+
+/* (A) keep titles aligned after removing the top icon: uniform header height +
+   centered control. The anchor's header is empty (icon+badge hidden) → collapse. */
+.pv5-root .ds-feature-card-header { min-height: 32px; align-items: center; }
+.pv5-anchor .ds-feature-card-header { min-height: 0; margin-bottom: 0; }
+
+/* ── Monitoring: System Vitals + Top Processes ── */
+/* Monitoring row: System Vitals (left, wide) + Top Processes (right, narrow).
+   3/4 + 1/4 truncated the process names hard, so we use 2/3 + 1/3.
+   EQUAL HEIGHTS by construction: the grid stretches both items to the row
+   height; the tagged wrapper passes that height down to its card. */
+.pv5-monitor { display: grid; grid-template-columns: 2fr 1fr; gap: var(--gutter); }
+@media (max-width: 900px) { .pv5-monitor { grid-template-columns: 1fr; } }
+.pv5-monitor > .pv5-tagged { display: flex; flex-direction: column; }
+.pv5-monitor > .pv5-tagged > .ds-feature-card { flex: 1; }
+
+/* Top Processes card */
+.pv5-top-card { cursor: default; display: flex; flex-direction: column; }
+/* Narrow card (1/3 width): keep the title whole; let the long "Open Task
+   Manager" door wrap below only if it truly can't fit beside it. */
+.pv5-top-card .ds-feature-card-header { flex-wrap: wrap; row-gap: 4px; }
+.pv5-top-card .ds-feature-card-title { white-space: nowrap; }
+/* A technical list: ranked rows, hairline dividers, mono value, resource chip,
+   a full-width magnitude bar under each row. */
+.pv5-top-list { list-style: none; margin: var(--gutter-xs) 0 0; padding: 0; display: flex; flex-direction: column; }
+.pv5-top-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; column-gap: var(--gutter-sm); row-gap: 7px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.pv5-top-row:last-child { border-bottom: none; }
+.pv5-top-rank { font-family: 'JetBrains Mono', monospace; font-size: var(--text-micro); color: var(--text-subtle); }
+.pv5-top-app { font-size: var(--text-caption); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pv5-top-res { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); border: 1px solid var(--border-light); border-radius: 4px; padding: 1px 5px; }
+.pv5-top-val { font-family: 'JetBrains Mono', monospace; font-size: var(--text-caption); font-weight: 600; color: var(--text-dim); white-space: nowrap; text-align: right; }
+.pv5-top-bar { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.pv5-top-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--orange), var(--red)); border-radius: 2px; }
+
+/* System Vitals detail modal */
+.pv5-svm-left { display: flex; flex-direction: column; gap: var(--gutter-xs); }
+.pv5-svm-id-sub { font-size: var(--text-micro); color: var(--text-muted); }
+.pv5-svm-status { display: flex; align-items: center; gap: 6px; font-size: var(--text-caption); color: var(--text-dim); margin-bottom: var(--gutter-xs); }
+.pv5-svm-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex: none; }
+.pv5-svm-head { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--text-caption); color: var(--text-primary); margin-bottom: var(--gutter-sm); }
+.pv5-svm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--gutter-xs); }
+.pv5-svm-stat { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 10px 12px; }
+.pv5-svm-stat-l { display: block; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); }
+.pv5-svm-stat-v { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: var(--text-section); color: var(--text-primary); }
+.pv5-svm-graph-head { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle); margin: var(--gutter) 0 var(--gutter-xs); }
+.pv5-linegraph { display: block; width: 100%; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-light); border-radius: var(--radius-sm); }
+
+/* System Info modal (single page) */
+/* identity + actions folded into a compact body header row */
+.pv5-si-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter); padding-bottom: var(--gutter-sm); margin-bottom: var(--gutter); border-bottom: 1px solid var(--border-light); }
+.pv5-si-bar-meta { font-size: var(--text-micro); color: var(--text-muted); }
+.pv5-si-actions { display: flex; gap: 6px; }
+.pv5-si-specs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); }
+@media (max-width: 640px) { .pv5-si-specs { grid-template-columns: 1fr; } }
+.pv5-si-spec-label { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-subtle); }
+.pv5-si-spec-value { font-size: var(--text-caption); color: var(--text-primary); margin-top: 2px; }
+.pv5-si-spec-row { font-size: var(--text-micro); color: var(--text-muted); margin-top: 2px; }

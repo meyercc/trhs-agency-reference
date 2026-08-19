@@ -1,0 +1,272 @@
+/* Light Studio — 3D device desk + inline RGB controls (Personalize section,
+   gated by the `lightstudio` module). Token-only, scoped `.ls`. */
+.ls {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: var(--gutter);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .ls {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Stage (viewport + device rail) ── */
+.ls-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  min-width: 0;
+}
+.ls-viewport {
+  position: relative;
+  height: 440px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #06070c;
+}
+.ls-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+.ls-canvas.over-device {
+  cursor: pointer;
+}
+.ls-canvas.dragging-device {
+  cursor: grabbing;
+}
+.ls-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: opacity 0.4s ease;
+}
+.ls-loaded .ls-loading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Camera-view HUD (top-right of the viewport) */
+.ls-hud {
+  position: absolute;
+  top: var(--gutter-sm);
+  right: var(--gutter-sm);
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg-elevated, #14171e) 70%, transparent);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.ls-hud-btn {
+  padding: 4px 9px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.ls-hud-btn:hover {
+  color: var(--text-primary);
+}
+.ls-hud-btn.active {
+  color: var(--accent-color);
+  background: var(--accent-dimmer);
+}
+
+/* Device rail */
+.ls-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+}
+.ls-rail-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.ls-rail-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.ls-rail-btn.active {
+  color: var(--accent-color);
+  background: var(--accent-dimmer);
+  border-color: var(--accent-dim);
+}
+
+/* ── Controls ── */
+.ls-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  padding: var(--gutter);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.ls-target-title {
+  font-family: var(--font-display);
+  font-size: var(--text-body-lg, 1.05rem);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ls-target-desc {
+  margin-top: 2px;
+  font-size: var(--text-caption);
+  font-weight: 300;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+.ls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+}
+.ls-label {
+  font-size: var(--text-body);
+  color: var(--text-dim);
+}
+.ls-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.ls-group:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.ls-group-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: var(--gutter-xxs);
+}
+.ls-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ls-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px var(--border);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s ease;
+}
+.ls-swatch:hover {
+  transform: scale(1.12);
+}
+.ls-swatch.active {
+  border-color: var(--text-primary);
+}
+.ls-swatch-custom {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-dim);
+  box-shadow: 0 0 0 1px var(--border);
+  overflow: hidden;
+}
+.ls-swatch-custom input[type='color'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.ls-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ls-effect {
+  padding: 5px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.ls-effect:hover {
+  color: var(--text-primary);
+}
+.ls-effect.active {
+  color: var(--accent-color);
+  background: var(--accent-dimmer);
+  border-color: var(--accent-dim);
+}
+.ls-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: var(--gutter-xxs);
+}
+.ls-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+  padding-top: var(--gutter-xs);
+  border-top: 1px solid var(--border-light);
+}
+.ls-action {
+  padding: 5px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.ls-action:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}

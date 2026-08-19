@@ -1,0 +1,177 @@
+/* PerformV4 — layout-grammar middle zone. Rules embodied here:
+   marks carry governance (signature badge, capture edge), not the grid;
+   the envelope anchor owns its row; form upgrades are additive devices.
+   Composes .ds-feature-card + the .power-mode-* base; only pv4-* glue here.
+   NOTE: the AI identity hue is provisionally --purple — the real token
+   decision (an OMEN AI hue the selection system never uses) is pending. */
+
+.pv4-zone {
+  display: grid;
+  gap: var(--gutter);
+}
+
+/* Row 1 — uneven pair: AI card beside Optimization (1/3 · 2/3) */
+.pv4-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--gutter);
+  align-items: stretch;
+}
+@media (max-width: 1024px) {
+  .pv4-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pv4-ai-card .ds-feature-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+}
+
+/* ── Form 1+: the AI strip docks onto what it manages ──
+   Capture styling = the necessary marker of management: the gap collapses
+   to a hairline and the managed card gains a colored top edge. Plain
+   stacking elsewhere stays innocent. */
+.pv4-dock {
+  display: grid;
+  gap: 4px;
+}
+.pv4-dock .pv3-ai-header {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.pv4-captured {
+  border-top: 2px solid var(--purple);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* ── Signature (the shared write point's attribution) ── */
+.pv4-signature {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.pv4-signature-meta {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+}
+
+/* ── Form 2: AI as a peer tile inside the mode row ── */
+.pm-row.pv4-modes-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.pv4-ai-tile-icon {
+  display: inline-flex;
+  align-items: center;
+}
+.pv4-ai-tile-icon svg {
+  width: 14px;
+  height: 14px;
+}
+.power-mode-btn.pv4-ai-tile.active {
+  border-color: color-mix(in srgb, var(--purple), transparent 50%);
+  background: color-mix(in srgb, var(--purple), transparent 92%);
+}
+
+.pv4-envelope {
+  display: grid;
+  gap: var(--gutter-xs);
+}
+
+/* ── Unleashed Detail Modal (Chris's OMEN AI / Booster pattern) ──
+   Left identity panel + right working console, over .modal-shell's
+   .modal-left / .modal-right split. */
+.pv4-um-left {
+  display: grid;
+  gap: var(--gutter);
+  align-content: start;
+}
+.pv4-um-hero {
+  width: 96px;
+  height: 96px;
+}
+.pv4-um-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm-title);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.pv4-um-desc {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.pv4-um-status {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: var(--gutter-xs) var(--gutter-sm);
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-primary);
+}
+.pv4-um-status i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+.pv4-um-status-meta {
+  margin-left: auto;
+  color: var(--text-subtle);
+}
+.pv4-um-warn {
+  margin-top: auto;
+}
+.pv4-um-body {
+  display: grid;
+  gap: var(--gutter);
+  align-content: start;
+}
+.pv4-um-vitals {
+  margin: 0;
+}
+
+/* ── Matrix rig — cell state legend (separate / leads / hardware) ── */
+.pv4-rig-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+  text-align: right;
+}
+.pv4-rig-state i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--text-subtle);
+  flex-shrink: 0;
+}
+.pv4-rig-state[data-state='leads'] {
+  color: var(--purple);
+}
+.pv4-rig-state[data-state='leads'] i {
+  background: var(--purple);
+}
+.pv4-rig-state[data-state='hardware'] {
+  color: var(--green);
+}
+.pv4-rig-state[data-state='hardware'] i {
+  background: var(--green);
+}
+.pv4-rig-cell {
+  font-weight: 600;
+  color: var(--text-primary);
+}

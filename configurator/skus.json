@@ -1,0 +1,3037 @@
+[
+  {
+    "$schema": 1,
+    "id": "haste-3",
+    "name": "HyperX Pulsefire Haste 3",
+    "type": "mouse",
+    "status": "in-design",
+    "links": {
+      "figma": [
+        {
+          "title": "Sensor",
+          "url": "https://www.figma.com/design/fwn9P6IJxoh4r50gXcTrMc/Sensor?node-id=8123-11082&t=X9ZN73VKVWr2DvOb-11"
+        },
+        {
+          "title": "Buttons",
+          "url": "https://www.figma.com/design/9UJHfxbYuTKiUbquv6u8CD/Keys-Buttons?node-id=7026-56708&t=019PU6hfsp9knmtL-11"
+        },
+        {
+          "title": "Settings",
+          "url": "https://figma.com/file/haste3/settings"
+        }
+      ],
+      "swpd": "https://hp.sharepoint.com/:w:/r/teams/hx-design/_layouts/15/doc2.aspx?sourcedoc=%7B83C78E73-E60F-4575-BF4C-7FAE33550FE2%7D&file=DRAFT%20-%20Concorde%20-%20WIRELESS%20MOUSE%20(no%20RGB)%20SWPD%20-%20Standard%20PD%20Template1.docx&action=default&mobileredirect=true&TeamsCID=c23f371f-63c5-4c79-8b51-12d60d1a784a"
+    },
+    "notes": "Lightweight wired mouse, no RGB, top-tier sensor. (Renamed from pulsefire-haste-3.)",
+    "features": {
+      "buttons": {
+        "callouts": [
+          {
+            "slot": "lt",
+            "id": "mouse-l",
+            "label": "Mouse Left"
+          },
+          {
+            "slot": "rt",
+            "id": "mouse-r",
+            "label": "Mouse Right"
+          },
+          {
+            "slot": "rm",
+            "id": "mouse-m",
+            "label": "Mouse Middle"
+          },
+          {
+            "slot": "lm",
+            "id": "mouse-5",
+            "label": "Mouse 5"
+          },
+          {
+            "slot": "lb",
+            "id": "mouse-4",
+            "label": "Mouse 4"
+          },
+          {
+            "slot": "rb",
+            "id": "dpi",
+            "label": "DPI"
+          }
+        ]
+      },
+      "sensor": {
+        "dpi": {
+          "max": 32000,
+          "ticks": [
+            50,
+            400,
+            800,
+            1600,
+            2400,
+            3200,
+            6400,
+            9600,
+            12800,
+            16000,
+            26000,
+            32000
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "King",
+      "Spitfire",
+      "Queen",
+      "Mustang"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste-3-pro",
+    "name": "HyperX Pulsefire Haste 3 Pro",
+    "type": "mouse",
+    "status": "in-design",
+    "links": {
+      "swpd": "PERIPH-510"
+    },
+    "notes": "Pro tier of the Haste 3 line. Wireless dual-mode, RGB scroll wheel LED, lower DPI ceiling than wired Haste 3.",
+    "features": {
+      "buttons": {
+        "callouts": [
+          {
+            "slot": "lt",
+            "id": "mouse-l",
+            "label": "Mouse Left"
+          },
+          {
+            "slot": "rt",
+            "id": "mouse-r",
+            "label": "Mouse Right"
+          },
+          {
+            "slot": "rm",
+            "id": "mouse-m",
+            "label": "Mouse Middle"
+          },
+          {
+            "slot": "lm",
+            "id": "mouse-5",
+            "label": "Mouse 5"
+          },
+          {
+            "slot": "lb",
+            "id": "mouse-4",
+            "label": "Mouse 4"
+          },
+          {
+            "slot": "rb",
+            "id": "dpi",
+            "label": "DPI"
+          }
+        ]
+      },
+      "sensor": {
+        "dpi": {
+          "max": 42000,
+          "ticks": [
+            50,
+            400,
+            800,
+            1600,
+            2400,
+            3200,
+            6400,
+            12800,
+            16000,
+            26000,
+            32000,
+            42000
+          ]
+        }
+      },
+      "connectivity": "dual",
+      "power": {
+        "lowPowerAlert": true,
+        "chargeReporting": true,
+        "batteryLevel": 68,
+        "charging": false
+      },
+      "lighting": false
+    },
+    "codenames": [
+      "PFH3P"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "saga-pro",
+    "name": "HyperX Pulsefire Saga Pro",
+    "type": "mouse",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-220"
+    },
+    "notes": "Flagship symmetric mouse. Per-zone RGB, hot-swappable side buttons, 8K polling on wired tether.",
+    "features": {
+      "buttons": {
+        "callouts": [
+          {
+            "slot": "lt",
+            "id": "mouse-l",
+            "label": "Mouse Left"
+          },
+          {
+            "slot": "rt",
+            "id": "mouse-r",
+            "label": "Mouse Right"
+          },
+          {
+            "slot": "rm",
+            "id": "mouse-m",
+            "label": "Mouse Middle"
+          },
+          {
+            "slot": "lm",
+            "id": "mouse-5",
+            "label": "Mouse 5"
+          },
+          {
+            "slot": "lb",
+            "id": "mouse-4",
+            "label": "Mouse 4"
+          },
+          {
+            "slot": "rb",
+            "id": "dpi",
+            "label": "DPI"
+          }
+        ]
+      },
+      "sensor": {
+        "dpi": {
+          "max": 26000,
+          "ticks": [
+            50,
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000,
+            26000
+          ]
+        },
+        "angleAdjustment": false
+      },
+      "connectivity": "dual",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 84,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "PFSP"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "dart",
+    "name": "HyperX Pulsefire Dart",
+    "type": "mouse",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-088"
+    },
+    "notes": "Legacy wireless mouse. Maintained in the registry for historical reference; product is EOL.",
+    "features": {
+      "buttons": {
+        "callouts": [
+          {
+            "slot": "lt",
+            "id": "mouse-l",
+            "label": "Mouse Left"
+          },
+          {
+            "slot": "rt",
+            "id": "mouse-r",
+            "label": "Mouse Right"
+          },
+          {
+            "slot": "rm",
+            "id": "mouse-m",
+            "label": "Mouse Middle"
+          },
+          {
+            "slot": "lm",
+            "id": "mouse-5",
+            "label": "Mouse 5"
+          },
+          {
+            "slot": "lb",
+            "id": "mouse-4",
+            "label": "Mouse 4"
+          }
+        ]
+      },
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "connectivity": "wireless",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 0,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "PFD"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "surge",
+    "name": "HyperX Pulsefire Surge",
+    "type": "mouse",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-095"
+    },
+    "notes": "360° RGB ring mouse. Distinctive light halo, ambidextrous symmetric body.",
+    "features": {
+      "buttons": {
+        "callouts": [
+          {
+            "slot": "lt",
+            "id": "mouse-l",
+            "label": "Mouse Left"
+          },
+          {
+            "slot": "rt",
+            "id": "mouse-r",
+            "label": "Mouse Right"
+          },
+          {
+            "slot": "rm",
+            "id": "mouse-m",
+            "label": "Mouse Middle"
+          },
+          {
+            "slot": "lm",
+            "id": "mouse-5",
+            "label": "Mouse 5"
+          },
+          {
+            "slot": "lb",
+            "id": "mouse-4",
+            "label": "Mouse 4"
+          }
+        ]
+      },
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFS"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "saga",
+    "name": "HyperX Pulsefire Saga",
+    "type": "mouse",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-219"
+    },
+    "notes": "Base of the Saga line. Symmetric body, single-zone RGB scroll wheel, dual-mode (2.4GHz + wired).",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 26000,
+          "ticks": [
+            50,
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000,
+            26000
+          ]
+        },
+        "angleAdjustment": false
+      },
+      "connectivity": "dual",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 76,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "SAGA"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste",
+    "name": "HyperX Pulsefire Haste",
+    "type": "mouse",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-040"
+    },
+    "notes": "Original honeycomb-shell ultralight wired mouse. Superseded by Haste 2 then Haste 3.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "haste-black.webp",
+        "default": true
+      },
+      {
+        "id": "black-red",
+        "label": "Black/Red",
+        "image": "haste-black-red.webp"
+      },
+      {
+        "id": "white-pink",
+        "label": "White/Pink",
+        "image": "haste-white-pink.webp"
+      }
+    ],
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFH"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste-wireless",
+    "name": "HyperX Pulsefire Haste Wireless",
+    "type": "mouse",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-051"
+    },
+    "notes": "Wireless variant of original Haste. 100h battery life, 2.4GHz only.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "haste-wireless-black.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "haste-wireless-white.webp"
+      }
+    ],
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wireless",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 0,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "PFHW"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste-2-pro",
+    "name": "HyperX Pulsefire Haste 2 Pro",
+    "type": "mouse",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-118"
+    },
+    "notes": "Pro tier of Haste 2 line. Dual-mode wireless, RGB scroll wheel. Superseded by Haste 3 Pro.",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 26000,
+          "ticks": [
+            50,
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000,
+            26000
+          ]
+        },
+        "angleAdjustment": false
+      },
+      "connectivity": "dual",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 94,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "PFH2P"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste-2-s",
+    "name": "HyperX Pulsefire Haste 2 S",
+    "type": "mouse",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-126"
+    },
+    "notes": "Symmetric variant of Haste 2 wireless. Available in two colorways.",
+    "colorways": [
+      {
+        "id": "blue",
+        "label": "Blue",
+        "image": "haste-2-s-blue.webp",
+        "default": true
+      },
+      {
+        "id": "silver",
+        "label": "Silver",
+        "image": "haste-2-s-silver.webp"
+      }
+    ],
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 26000,
+          "ticks": [
+            50,
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000,
+            26000
+          ]
+        },
+        "angleAdjustment": false
+      },
+      "connectivity": "wireless",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 6,
+        "charging": true
+      }
+    },
+    "codenames": [
+      "PFH2S"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste-2-wireless",
+    "name": "HyperX Pulsefire Haste 2 Wireless",
+    "type": "mouse",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-119"
+    },
+    "notes": "Wireless Haste 2 (non-Pro). 2.4GHz, no RGB.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "haste-2-black-wireless.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "haste-2-white-wireless.webp"
+      }
+    ],
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 26000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000,
+            26000
+          ]
+        },
+        "angleAdjustment": false
+      },
+      "lighting": false,
+      "connectivity": "wireless",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 40,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "PFH2W"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste-2-core-wireless",
+    "name": "HyperX Pulsefire Haste 2 Core Wireless",
+    "type": "mouse",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-122"
+    },
+    "notes": "Entry-tier wireless Haste 2. Simplified button layout, lower DPI ceiling.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "haste-2-black-core-wireless.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "haste-2-white-core-wireless.webp"
+      }
+    ],
+    "features": {
+      "buttons": {
+        "callouts": [
+          {
+            "slot": "lt",
+            "id": "mouse-l",
+            "label": "Mouse Left"
+          },
+          {
+            "slot": "rt",
+            "id": "mouse-r",
+            "label": "Mouse Right"
+          },
+          {
+            "slot": "rm",
+            "id": "mouse-m",
+            "label": "Mouse Middle"
+          },
+          {
+            "slot": "lb",
+            "id": "mouse-4",
+            "label": "Mouse 4"
+          }
+        ]
+      },
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wireless",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 0,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "PFH2CW"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "fps",
+    "name": "HyperX Pulsefire FPS",
+    "type": "mouse",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-008"
+    },
+    "notes": "Original FPS-focused wired mouse. Right-handed ergo shell, basic LED logo (no RGB).",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 3200,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFFPS"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "fps-pro",
+    "name": "HyperX Pulsefire FPS Pro",
+    "type": "mouse",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-014"
+    },
+    "notes": "RGB-enabled FPS Pro. Scroll-wheel + DPI indicator lighting. Higher DPI ceiling than original FPS.",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFFPSP"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "core",
+    "name": "HyperX Pulsefire Core",
+    "type": "mouse",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-022"
+    },
+    "notes": "Entry-level wired mouse. Single-zone logo lighting, value tier.",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 6200,
+          "ticks": [
+            800,
+            1600,
+            3200,
+            6200
+          ]
+        }
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFC"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "raid",
+    "name": "HyperX Pulsefire Raid",
+    "type": "mouse",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-030"
+    },
+    "notes": "MMO mouse with 11 programmable side buttons. Right-handed ergo.",
+    "features": {
+      "buttons": {
+        "callouts": [
+          {
+            "slot": "lt",
+            "id": "mouse-l",
+            "label": "Mouse Left"
+          },
+          {
+            "slot": "rt",
+            "id": "mouse-r",
+            "label": "Mouse Right"
+          },
+          {
+            "slot": "rm",
+            "id": "mouse-m",
+            "label": "Mouse Middle"
+          },
+          {
+            "slot": "lm",
+            "id": "mmo-1",
+            "label": "MMO 1-6"
+          },
+          {
+            "slot": "lb",
+            "id": "mmo-2",
+            "label": "MMO 7-11"
+          },
+          {
+            "slot": "rb",
+            "id": "dpi",
+            "label": "DPI"
+          }
+        ]
+      },
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFR"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "fuse",
+    "name": "HyperX Pulsefire Fuse",
+    "type": "mouse",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-035"
+    },
+    "notes": "Wireless mid-tier mouse. 2.4GHz only, no Bluetooth fallback.",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 6200,
+          "ticks": [
+            800,
+            1600,
+            3200,
+            6200
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wireless",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 0,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "PFF"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "origins-65",
+    "name": "HyperX Alloy Origins 65",
+    "type": "keyboard",
+    "status": "shipping",
+    "links": {
+      "figma": [
+        {
+          "title": "Design Handoff",
+          "url": "https://figma.com/file/def456/ORG65-handoff"
+        }
+      ],
+      "swpd": "PERIPH-310"
+    },
+    "notes": "65% wired mechanical, per-key RGB, hardware/software dual-mode. This is the modal's default render today, so a no-op spec is a useful baseline.",
+    "features": {
+      "keys": {
+        "layout": "65"
+      }
+    },
+    "codenames": [
+      "ORG65"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "origins-2-pro-65",
+    "name": "HyperX Alloy Origins 2 Pro 65",
+    "type": "keyboard",
+    "status": "engineering",
+    "links": {
+      "swpd": "PERIPH-540"
+    },
+    "notes": "Pro tier of Origins 2 in 65% format. Magnetic Hall-effect switches with adjustable actuation, USB-C wireless dongle support.",
+    "features": {
+      "keys": {
+        "layout": "65"
+      },
+      "connectivity": "dual",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 92,
+        "charging": true
+      }
+    },
+    "codenames": [
+      "ORG2P65"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "origins-2-1800",
+    "name": "HyperX Alloy Origins 2 1800",
+    "type": "keyboard",
+    "status": "engineering",
+    "links": {
+      "swpd": "PERIPH-548"
+    },
+    "notes": "Origins 2 in 1800 / compact full-size layout. Numpad + media row, same Hall-effect switches as the Pro 65.",
+    "features": {
+      "keys": {
+        "layout": "100"
+      }
+    },
+    "codenames": [
+      "ORG2-1800"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "eve-1800",
+    "name": "HyperX Eve 1800",
+    "type": "keyboard",
+    "status": "in-design",
+    "links": {
+      "swpd": "PERIPH-602"
+    },
+    "notes": "Concept full-size board with experimental cap profile. RGB + LCD volume wheel.",
+    "features": {
+      "keys": {
+        "layout": "100"
+      }
+    },
+    "codenames": [
+      "EVE18"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "rise-75-wireless",
+    "name": "HyperX Alloy Rise 75 Wireless",
+    "type": "keyboard",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-575"
+    },
+    "notes": "75% wireless mechanical with rotary control knob. Sub-brand of Alloy — distinct from Origins.",
+    "features": {
+      "keys": {
+        "layout": "75"
+      },
+      "connectivity": "dual",
+      "power": {
+        "lowPowerAlert": true,
+        "batteryLevel": 64,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "RISE75W"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "origins-2-65",
+    "name": "HyperX Alloy Origins 2 65",
+    "type": "keyboard",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-521"
+    },
+    "notes": "65% compact mechanical, second generation. Sibling of Pro 65 — drops hot-swap sockets and Hall-effect sensing for a price cut.",
+    "features": {
+      "keys": {
+        "layout": "65"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "ORG265"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "rise-75",
+    "name": "HyperX Alloy Rise 75",
+    "type": "keyboard",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-572"
+    },
+    "notes": "Wired version of Rise 75 Wireless. Same rotary knob + 75% layout, no battery.",
+    "features": {
+      "keys": {
+        "layout": "75"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "RISE75"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "origins",
+    "name": "HyperX Alloy Origins",
+    "type": "keyboard",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-180"
+    },
+    "notes": "Original full-size Alloy Origins. Aluminum frame, per-key RGB. Foundation of the Origins line.",
+    "features": {
+      "keys": {
+        "layout": "full"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "ORG"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "origins-core",
+    "name": "HyperX Alloy Origins Core",
+    "type": "keyboard",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-185"
+    },
+    "notes": "Tenkeyless Alloy Origins. Same aluminum frame, no numpad.",
+    "features": {
+      "keys": {
+        "layout": "tkl"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "ORGCORE"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "origins-60",
+    "name": "HyperX Alloy Origins 60",
+    "type": "keyboard",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-200"
+    },
+    "notes": "60% compact Alloy Origins. Available in two colorways.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "origins-60.webp",
+        "default": true
+      },
+      {
+        "id": "pink",
+        "label": "Pink",
+        "image": "origins-60-pink.webp"
+      }
+    ],
+    "features": {
+      "keys": {
+        "layout": "60"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "ORG60"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "rise",
+    "name": "HyperX Alloy Rise",
+    "type": "keyboard",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-560"
+    },
+    "notes": "Full-size Alloy Rise with rotary knob. Predecessor to Rise 75.",
+    "features": {
+      "keys": {
+        "layout": "full"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "RISE"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "mkw100",
+    "name": "HyperX Alloy MKW100",
+    "type": "keyboard",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-090"
+    },
+    "notes": "Entry-tier mechanical. Red-only LED backlight (no RGB), TTC red switches.",
+    "features": {
+      "keys": {
+        "layout": "full"
+      },
+      "lighting": false,
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "MKW100"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "elite",
+    "name": "HyperX Alloy Elite",
+    "type": "keyboard",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-060"
+    },
+    "notes": "Original Alloy Elite. Full-size with dedicated media keys + volume wheel. Red-only LED (no per-key RGB).",
+    "features": {
+      "keys": {
+        "layout": "full"
+      },
+      "lighting": false,
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "ELT"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "elite-2",
+    "name": "HyperX Alloy Elite 2",
+    "type": "keyboard",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-070"
+    },
+    "notes": "Successor to Alloy Elite. RGB per-key, pudding keycaps, dedicated media keys + volume wheel.",
+    "features": {
+      "keys": {
+        "layout": "full"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "ELT2"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "cloud-iii-s",
+    "name": "HyperX Cloud III S",
+    "type": "headset",
+    "status": "shipping",
+    "links": {
+      "figma": [
+        {
+          "title": "Design Handoff",
+          "url": "https://figma.com/file/ghi789/C3S-handoff"
+        }
+      ],
+      "swpd": "PERIPH-220"
+    },
+    "notes": "Flagship wireless headset. Full feature set — exercises the all-defaults path. Six factory colorways.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "cloud-iii-s-black.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "cloud-iii-s-white.webp"
+      },
+      {
+        "id": "blue",
+        "label": "Blue",
+        "image": "cloud-iii-s-blue.webp"
+      },
+      {
+        "id": "red",
+        "label": "Red",
+        "image": "cloud-iii-s-red.webp"
+      },
+      {
+        "id": "pink",
+        "label": "Pink",
+        "image": "cloud-iii-s-pink.webp"
+      },
+      {
+        "id": "lavender",
+        "label": "Lavender",
+        "image": "cloud-iii-s-lavender.webp"
+      }
+    ],
+    "features": {
+      "power": {
+        "batteryLevel": 28,
+        "charging": true
+      }
+    },
+    "codenames": [
+      "C3S"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "cloud-iii",
+    "name": "HyperX Cloud III",
+    "type": "headset",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-200"
+    },
+    "notes": "Wired sibling of Cloud III S. Eight factory colorways — the broadest palette in the lineup.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "cloud-iii-black.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "cloud-iii-white.webp"
+      },
+      {
+        "id": "blue",
+        "label": "Blue",
+        "image": "cloud-iii-blue.webp"
+      },
+      {
+        "id": "red",
+        "label": "Red",
+        "image": "cloud-iii-red.webp"
+      },
+      {
+        "id": "pink",
+        "label": "Pink",
+        "image": "cloud-iii-pink.webp"
+      },
+      {
+        "id": "lavender",
+        "label": "Lavender",
+        "image": "cloud-iii-lavender.webp"
+      },
+      {
+        "id": "light-blue",
+        "label": "Light Blue",
+        "image": "cloud-iii-light-blue.webp"
+      },
+      {
+        "id": "light-gray",
+        "label": "Light Gray",
+        "image": "cloud-iii-light-gray.webp"
+      }
+    ],
+    "features": {
+      "connectivity": "wired",
+      "power": false,
+      "spatial": false
+    },
+    "codenames": [
+      "C3"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "cloud-ii-wireless",
+    "name": "HyperX Cloud II Wireless",
+    "type": "headset",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-170"
+    },
+    "notes": "Long-running wireless headset, dual chamber drivers, USB-A dongle.",
+    "features": {
+      "power": {
+        "batteryLevel": 55,
+        "charging": false
+      },
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        },
+        "equalizer": false
+      }
+    },
+    "codenames": [
+      "C2W"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "flight-2",
+    "name": "HyperX Cloud Flight 2",
+    "type": "headset",
+    "status": "engineering",
+    "links": {
+      "swpd": "PERIPH-450"
+    },
+    "notes": "Wireless gaming headset with detachable boom mic. Three colorways including Lavender LE.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "flight-2-black.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "flight-2-white.webp"
+      },
+      {
+        "id": "lavender",
+        "label": "Lavender",
+        "image": "flight-2-lavender.webp"
+      }
+    ],
+    "features": {
+      "power": {
+        "batteryLevel": 47,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "FL2"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "stinger-3-wireless",
+    "name": "HyperX Cloud Stinger 3 Wireless",
+    "type": "headset",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-380"
+    },
+    "notes": "Entry-level wireless headset. Two colorways. Replaces the wired Stinger 2 in the active lineup.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "stinger-3-wireless-black.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "stinger-3-wireless-white.webp"
+      }
+    ],
+    "features": {
+      "power": {
+        "batteryLevel": 78,
+        "charging": false
+      },
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        },
+        "equalizer": false
+      },
+      "spatial": false,
+      "notifications": false
+    },
+    "codenames": [
+      "STG3W"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "stinger-3-wired",
+    "name": "HyperX Cloud Stinger 3 Wired",
+    "type": "headset",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-571"
+    },
+    "notes": "Wired Stinger 3. Same drivers as wireless, USB-A + 3.5mm switchable. No spatial audio.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "stinger-3-wired-black.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "stinger-3-wired-white.webp"
+      }
+    ],
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        },
+        "equalizer": false
+      },
+      "spatial": false,
+      "notifications": false
+    },
+    "codenames": [
+      "STG3W"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "alpha-air",
+    "name": "HyperX Cloud Alpha Air",
+    "type": "headset",
+    "status": "in-design",
+    "links": {
+      "swpd": "PERIPH-624"
+    },
+    "notes": "Lightweight refresh of the Cloud Alpha line. Wireless 2.4GHz, no detachable cable.",
+    "features": {
+      "connectivity": "wireless",
+      "power": {
+        "autoPowerOff": [
+          "10min",
+          "20min",
+          "30min",
+          "never"
+        ],
+        "batteryLevel": 92,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "ALPHAA"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "alpha",
+    "name": "HyperX Cloud Alpha",
+    "type": "headset",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-110"
+    },
+    "notes": "Original wired Cloud Alpha. Dual-chamber driver design, detachable mic. No surround.",
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        },
+        "equalizer": false
+      },
+      "spatial": false,
+      "notifications": false
+    },
+    "codenames": [
+      "ALPHA"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "alpha-2",
+    "name": "HyperX Cloud Alpha 2",
+    "type": "headset",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-115"
+    },
+    "notes": "Second-gen Cloud Alpha. Refined dual-chamber drivers, improved comfort.",
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        }
+      },
+      "spatial": false,
+      "notifications": false
+    },
+    "codenames": [
+      "ALPHA2"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "alpha-s",
+    "name": "HyperX Cloud Alpha S",
+    "type": "headset",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-113"
+    },
+    "notes": "Cloud Alpha with 7.1 surround box and bass-adjustment sliders on each cup.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "alpha-s-black.webp",
+        "default": true
+      },
+      {
+        "id": "blue",
+        "label": "Blue",
+        "image": "alpha-s-blue.webp"
+      }
+    ],
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        }
+      },
+      "notifications": false
+    },
+    "codenames": [
+      "ALPHAS"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "cloud-ii-core",
+    "name": "HyperX Cloud II Core",
+    "type": "headset",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-108"
+    },
+    "notes": "Entry tier of the Cloud II line. Wired-only, simplified controls, no detachable mic.",
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        },
+        "equalizer": false
+      },
+      "spatial": false,
+      "notifications": false
+    },
+    "codenames": [
+      "C2C"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "mix-2",
+    "name": "HyperX Cloud Mix 2",
+    "type": "headset",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-540"
+    },
+    "notes": "Cloud Mix 2: full wireless. 2.4GHz + Bluetooth dual-mode, longer battery vs original Mix.",
+    "features": {
+      "connectivity": "dual",
+      "power": {
+        "autoPowerOff": [
+          "10min",
+          "30min",
+          "never"
+        ],
+        "batteryLevel": 88,
+        "charging": false
+      }
+    },
+    "codenames": [
+      "MIX2"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "mix-buds",
+    "name": "HyperX Cloud Mix Buds",
+    "type": "headset",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-135"
+    },
+    "notes": "True-wireless earbuds. 2.4GHz dongle + Bluetooth, in-ear form factor.",
+    "features": {
+      "connectivity": "dual",
+      "power": {
+        "autoPowerOff": [
+          "never"
+        ],
+        "batteryLevel": 0,
+        "charging": false
+      },
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false,
+          "monitoring": false
+        },
+        "equalizer": false
+      },
+      "spatial": false,
+      "notifications": false
+    },
+    "codenames": [
+      "MIXB"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "mix-buds-2",
+    "name": "HyperX Cloud Mix Buds 2",
+    "type": "headset",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-545"
+    },
+    "notes": "Second-gen wireless earbuds. ANC, longer battery, upgraded drivers.",
+    "features": {
+      "connectivity": "dual",
+      "power": {
+        "autoPowerOff": [
+          "never"
+        ],
+        "batteryLevel": 76,
+        "charging": false
+      },
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false,
+          "monitoring": false
+        }
+      },
+      "spatial": false
+    },
+    "codenames": [
+      "MIXB2"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "stinger-core-plus71",
+    "name": "HyperX Cloud Stinger Core+ 7.1",
+    "type": "headset",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-095"
+    },
+    "notes": "Entry-tier wired headset with 7.1 surround via USB dongle. Lightweight Stinger frame.",
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        },
+        "equalizer": false
+      },
+      "notifications": false
+    },
+    "codenames": [
+      "STGCP"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "stinger-s",
+    "name": "HyperX Cloud Stinger S",
+    "type": "headset",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-085"
+    },
+    "notes": "Stinger with virtual 7.1 surround. Software-based, no USB dongle.",
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        },
+        "equalizer": false
+      },
+      "notifications": false
+    },
+    "codenames": [
+      "STGS"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "stinger-2",
+    "name": "HyperX Cloud Stinger 2",
+    "type": "headset",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-462"
+    },
+    "notes": "Direct predecessor to Stinger 3. Wired, no spatial audio, no equalizer.",
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        },
+        "equalizer": false
+      },
+      "spatial": false,
+      "notifications": false
+    },
+    "codenames": [
+      "STG2"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "pulse-27",
+    "name": "OMEN OLED 27",
+    "type": "monitor",
+    "status": "engineering",
+    "links": {
+      "figma": [
+        {
+          "title": "Design Handoff",
+          "url": "https://figma.com/file/pulse27/PLS27-handoff"
+        }
+      ],
+      "swpd": "PERIPH-630"
+    },
+    "colorways": [
+      { "id": "black", "label": "Black", "image": "oled-27-qhd.webp", "default": true }
+    ],
+    "notes": "27\" QHD 240Hz OLED gaming monitor. HDR400, USB-C 65W, KVM. Sits between the legacy Pulse 25 and the upcoming flagship Pulse 32.",
+    "features": {
+      "display": {
+        "size": "27\"",
+        "resolution": "QHD",
+        "refreshRate": 240,
+        "responseTime": "0.03ms",
+        "panel": "OLED"
+      },
+      "color": {
+        "hdr": true,
+        "gamuts": [
+          "sRGB",
+          "DCI-P3"
+        ]
+      },
+      "connectivity": {
+        "inputs": [
+          "HDMI 2.1 ×2",
+          "DisplayPort 1.4",
+          "USB-C (DP+PD 65W)"
+        ],
+        "usbHub": true,
+        "kvm": true
+      }
+    },
+    "codenames": [
+      "PLS27"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "treehouse-32",
+    "name": "Treehouse 32",
+    "type": "monitor",
+    "status": "concept",
+    "colorways": [
+      { "id": "black", "label": "Black", "image": "treehouse-32.png", "default": true }
+    ],
+    "notes": "32\" 4K 240Hz OLED flagship concept (monitor section). Thunderbolt 4 90W, built-in speakers, Gear Switch (KVM) — keyboard & mouse follow the active computer. Concept SKU from the monitor-integration branch.",
+    "features": {
+      "display": {
+        "size": "32\"",
+        "resolution": "4K UHD",
+        "refreshRate": 240,
+        "responseTime": "0.03ms",
+        "panel": "OLED"
+      },
+      "color": {
+        "hdr": true,
+        "presets": [
+          "Native",
+          "sRGB",
+          "DCI-P3",
+          "Warm",
+          "Cool",
+          "Custom"
+        ],
+        "gamuts": [
+          "Native",
+          "sRGB",
+          "DCI-P3"
+        ]
+      },
+      "connectivity": {
+        "inputs": [
+          "Thunderbolt 4 ×2 (90W)",
+          "DisplayPort 1.4 ×2",
+          "HDMI 2.1 ×2"
+        ],
+        "usbHub": true,
+        "kvm": true
+      },
+      "gearSwitch": {
+        "hosts": [
+          "MacBook",
+          "Gaming Laptop"
+        ],
+        "hotkey": "Ctrl ×2",
+        "viewingModes": [
+          "Full Screen",
+          "PBP",
+          "PIP"
+        ]
+      },
+      "xray": true,
+      "heroArrangement": "rich",
+      "audio": {
+        "speakers": true,
+        "outputModes": [
+          "Game",
+          "Music",
+          "Video",
+          "EQ"
+        ]
+      },
+      "care": {
+        "oled": true
+      },
+      "power": {
+        "eco": true,
+        "autoSleep": [
+          "5 min",
+          "10 min",
+          "30 min",
+          "Never"
+        ]
+      },
+      "underGlow": true,
+      "modes": [
+        "Game",
+        "Work",
+        "Create"
+      ]
+    },
+    "codenames": [
+      "TRHS32"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "forge-45l",
+    "name": "OMEN Forge 45L",
+    "type": "desktop",
+    "status": "shipping",
+    "links": {
+      "figma": [
+        {
+          "title": "Design Handoff",
+          "url": "https://figma.com/file/forge45/FRG45-handoff"
+        }
+      ],
+      "swpd": "PERIPH-401"
+    },
+    "notes": "45L mid-tower desktop. Discrete GPU only, no graphics switcher. Includes Cryo Chamber liquid cooling and tool-less side panel.",
+    "features": {
+      "io": [
+        "HDMI 2.1",
+        "DisplayPort 1.4 ×3",
+        "USB-C ×2",
+        "USB-A ×6",
+        "RJ-45",
+        "3.5mm"
+      ]
+    },
+    "codenames": [
+      "FRG45"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "forge-45l-gpu",
+    "name": "OMEN Forge 45L — GPU",
+    "codenames": [
+      "FRG45-GPU"
+    ],
+    "type": "desktop-gpu",
+    "status": "shipping",
+    "partOf": "forge-45l",
+    "notes": "GeForce RTX 5090 32GB GDDR7 — flagship discrete GPU. Triple-slot, 360mm length, 600W TDP, dual 12V-2x6 connector.",
+    "features": {
+      "model": "GeForce RTX 5090",
+      "vramGB": 32,
+      "tdpW": 600,
+      "lengthMm": 360,
+      "outputs": [
+        "HDMI 2.1",
+        "DisplayPort 2.1 ×3"
+      ],
+      "lighting": {
+        "zones": 3,
+        "effects": ["static", "wave", "rainbow", "breathing", "reactive"]
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "forge-45l-cpu-cooling",
+    "name": "OMEN Forge 45L — Cryo Chamber",
+    "codenames": [
+      "FRG45-COOL"
+    ],
+    "type": "desktop-cpu-cooling",
+    "status": "shipping",
+    "partOf": "forge-45l",
+    "notes": "Cryo Chamber 360mm liquid AIO with copper cold plate, dual-tower pump, triple PWM fans.",
+    "features": {
+      "kind": "AIO",
+      "radiatorMm": 360,
+      "fanCount": 3,
+      "pumpRpmMax": 2800,
+      "lighting": {
+        "zones": 1,
+        "effects": ["static", "wave", "rainbow", "breathing", "temperature"]
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "forge-45l-ram",
+    "name": "OMEN Forge 45L — Memory",
+    "codenames": [
+      "FRG45-RAM"
+    ],
+    "type": "desktop-ram",
+    "status": "shipping",
+    "partOf": "forge-45l",
+    "notes": "64GB (2×32GB) DDR5-7200 RGB kit. CL34, on-die ECC, XMP 3.0 / EXPO profiles.",
+    "features": {
+      "capacityGB": 64,
+      "channels": 2,
+      "speedMTs": 7200,
+      "cas": 34,
+      "xmp": true,
+      "lighting": {
+        "zones": 1,
+        "effects": ["static", "wave", "rainbow", "breathing"]
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "forge-45l-psu",
+    "name": "OMEN Forge 45L — PSU",
+    "codenames": [
+      "FRG45-PSU"
+    ],
+    "type": "desktop-psu",
+    "status": "shipping",
+    "partOf": "forge-45l",
+    "notes": "1200W 80+ Platinum fully modular ATX 3.1 PSU. Native 12V-2x6 connector for 600W GPU support.",
+    "features": {
+      "wattage": 1200,
+      "efficiency": "80+ Platinum",
+      "modular": "fully",
+      "atxRevision": "ATX 3.1"
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "forge-45l-lighting",
+    "name": "OMEN Forge 45L — Hub Pro",
+    "codenames": [
+      "FRG45-HUB"
+    ],
+    "type": "desktop-lighting",
+    "status": "shipping",
+    "partOf": "forge-45l",
+    "notes": "OMEN Hub Pro: 9 PWM fan channels + 12 addressable RGB zones. OMEN Light Studio sync ecosystem with per-app reactive palettes.",
+    "features": {
+      "fanChannels": 9,
+      "argbZones": 12,
+      "ecosystem": "OMEN Light Studio",
+      "effects": {
+        "presets": [
+          "Static",
+          "Wave",
+          "Rainbow",
+          "Breathe",
+          "Reactive",
+          "Music"
+        ]
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "quadcast-2-s",
+    "name": "QuadCast 2 S",
+    "type": "microphone",
+    "status": "shipping",
+    "links": {
+      "figma": [
+        {
+          "title": "Design Handoff",
+          "url": "https://figma.com/file/quadcast2s/QC2S-handoff"
+        }
+      ],
+      "swpd": "PERIPH-621"
+    },
+    "notes": "Flagship USB-C condenser. Four pickup patterns, RGB ring, tap-to-mute top plate, internal shock mount, integrated pop filter.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "quadcast-2-s.webp",
+        "default": true
+      },
+      {
+        "id": "frost",
+        "label": "Frost",
+        "image": "quadcast-2-frost.webp"
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "quadcast-2-white.webp"
+      }
+    ],
+    "features": {},
+    "codenames": [
+      "QC2S"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "solocast-2-pro",
+    "name": "SoloCast 2 Pro",
+    "type": "microphone",
+    "status": "shipping",
+    "links": {
+      "figma": [
+        {
+          "title": "Design Handoff",
+          "url": "https://figma.com/file/solocast2pro/SC2P-handoff"
+        }
+      ],
+      "swpd": "PERIPH-622"
+    },
+    "notes": "Compact cardioid-only USB-C mic for streamers. Tap-to-mute, plug-and-play, no RGB.",
+    "features": {
+      "audio": {
+        "pickupPatterns": [
+          "cardioid"
+        ]
+      },
+      "lighting": false
+    },
+    "codenames": [
+      "SC2P"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "flipcast",
+    "name": "FlipCast",
+    "type": "microphone",
+    "status": "in-design",
+    "links": {
+      "figma": [
+        {
+          "title": "Design Handoff",
+          "url": "https://figma.com/file/flipcast/FLPC-handoff"
+        }
+      ],
+      "swpd": "PERIPH-623"
+    },
+    "notes": "Premium broadcast-quality condenser with signature flip-to-mute gesture (90° hinge mute). Dual pickup patterns, USB-C, RGB ring.",
+    "features": {
+      "audio": {
+        "pickupPatterns": [
+          "cardioid",
+          "omnidirectional"
+        ]
+      }
+    },
+    "codenames": [
+      "FLPC"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "quadcast-2",
+    "name": "QuadCast 2",
+    "type": "microphone",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-620"
+    },
+    "notes": "Non-S QuadCast 2. Four pickup patterns, RGB ring, tap-to-mute, USB-C. Drops the S's hardware gain dial.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "quadcast-2.webp",
+        "default": true
+      },
+      {
+        "id": "frost",
+        "label": "Frost",
+        "image": "quadcast-2-frost.webp"
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "quadcast-2-white.webp"
+      }
+    ],
+    "features": {
+      "audio": {
+        "gain": false
+      }
+    },
+    "codenames": [
+      "QC2"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "solocast-2",
+    "name": "SoloCast 2",
+    "type": "microphone",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-619"
+    },
+    "notes": "Base SoloCast 2. Cardioid-only USB-C, tap-to-mute, no RGB. Drops the Pro's higher sample rate.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "solocast-2.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "solocast-2-white.webp"
+      }
+    ],
+    "features": {
+      "audio": {
+        "pickupPatterns": [
+          "cardioid"
+        ]
+      },
+      "lighting": false
+    },
+    "codenames": [
+      "SC2"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "duocast",
+    "name": "DuoCast",
+    "type": "microphone",
+    "status": "shipping",
+    "links": {
+      "swpd": "PERIPH-618"
+    },
+    "notes": "Compact dual-pattern condenser. Cardioid + omnidirectional, RGB indicator ring, USB-C, tap-to-mute.",
+    "features": {
+      "audio": {
+        "pickupPatterns": [
+          "cardioid",
+          "omnidirectional"
+        ]
+      }
+    },
+    "codenames": [
+      "DC"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "quadcast",
+    "name": "QuadCast",
+    "type": "microphone",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-150"
+    },
+    "notes": "Original QuadCast. Four pickup patterns, RGB body, USB-A, tap-to-mute. Predecessor to QuadCast 2.",
+    "features": {},
+    "codenames": [
+      "QC"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "quadcast-s",
+    "name": "QuadCast S",
+    "type": "microphone",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-155"
+    },
+    "notes": "QuadCast S: original QuadCast with full RGB lighting effects and NGENUITY control. USB-A.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "quadcast-s-black.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "quadcast-s-white.webp"
+      }
+    ],
+    "features": {},
+    "codenames": [
+      "QCS"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "solocast",
+    "name": "SoloCast",
+    "type": "microphone",
+    "status": "eol",
+    "links": {
+      "swpd": "PERIPH-145"
+    },
+    "notes": "Original SoloCast. Cardioid-only USB-A, tap-to-mute, no RGB. Compact streamer mic.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "solocast-black.webp",
+        "default": true
+      },
+      {
+        "id": "white",
+        "label": "White",
+        "image": "solocast-white.webp"
+      }
+    ],
+    "features": {
+      "audio": {
+        "pickupPatterns": [
+          "cardioid"
+        ]
+      },
+      "lighting": false
+    },
+    "codenames": [
+      "SC"
+    ]
+  },
+  {
+    "id": "haste-naruto-orange",
+    "name": "x",
+    "type": "mouse",
+    "specialEdition": {
+      "collab": "naruto",
+      "baseSku": "haste-naruto-orange"
+    },
+    "codenames": []
+  },
+  {
+    "$schema": 1,
+    "id": "haste-naruto-red",
+    "name": "HyperX Pulsefire Haste — Naruto Red Edition",
+    "type": "mouse",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "naruto",
+      "label": "Naruto Edition",
+      "baseSku": "haste"
+    },
+    "links": {
+      "swpd": "PERIPH-701"
+    },
+    "notes": "Limited-edition Pulsefire Haste with Naruto red colorway and exclusive packaging.",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFH-NRTR"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste-ttt",
+    "name": "HyperX Pulsefire Haste — TTT Edition",
+    "type": "mouse",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "ttt",
+      "label": "TimTheTatman Edition",
+      "baseSku": "haste"
+    },
+    "links": {
+      "swpd": "PERIPH-702"
+    },
+    "notes": "Limited-edition Pulsefire Haste with TTT branded colorway. Signature accents.",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFH-TTT"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste-aimlabs",
+    "name": "HyperX Pulsefire Haste — Aimlabs Edition",
+    "type": "mouse",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "aimlabs",
+      "label": "Aimlabs Edition",
+      "baseSku": "haste"
+    },
+    "links": {
+      "swpd": "PERIPH-703"
+    },
+    "notes": "Limited-edition Pulsefire Haste co-branded with Aimlabs. Ships with Aimlabs Pro trial.",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFH-AIM"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "haste-hex-worlds",
+    "name": "HyperX Pulsefire Haste — Hex Worlds Edition",
+    "type": "mouse",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "hex-worlds",
+      "label": "Hex Worlds Edition",
+      "baseSku": "haste"
+    },
+    "links": {
+      "swpd": "PERIPH-704"
+    },
+    "notes": "Limited-edition Pulsefire Haste with Hex Worlds artwork.",
+    "features": {
+      "sensor": {
+        "dpi": {
+          "max": 16000,
+          "ticks": [
+            400,
+            800,
+            1600,
+            3200,
+            6400,
+            12800,
+            16000
+          ]
+        }
+      },
+      "lighting": false,
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "PFH-HXW"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "alpha-s-naruto-orange",
+    "name": "HyperX Cloud Alpha S — Naruto Orange Edition",
+    "type": "headset",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "naruto",
+      "label": "Naruto Edition",
+      "baseSku": "alpha-s"
+    },
+    "links": {
+      "swpd": "PERIPH-710"
+    },
+    "notes": "Limited-edition Cloud Alpha S with Naruto orange theming. Includes themed carrying pouch.",
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": {},
+          "effects": {}
+        }
+      },
+      "notifications": false
+    },
+    "codenames": [
+      "ALPHAS-NRTO"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "alpha-s-naruto-red",
+    "name": "HyperX Cloud Alpha S — Naruto Red Edition",
+    "type": "headset",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "naruto",
+      "label": "Naruto Edition",
+      "baseSku": "alpha-s"
+    },
+    "links": {
+      "swpd": "PERIPH-711"
+    },
+    "notes": "Limited-edition Cloud Alpha S with Naruto red theming. Includes themed carrying pouch.",
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        }
+      },
+      "notifications": false
+    },
+    "codenames": [
+      "ALPHAS-NRTR"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "alpha-s-ttt",
+    "name": "HyperX Cloud Alpha S — TTT Edition",
+    "type": "headset",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "ttt",
+      "label": "TimTheTatman Edition",
+      "baseSku": "alpha-s"
+    },
+    "links": {
+      "swpd": "PERIPH-712"
+    },
+    "notes": "Limited-edition Cloud Alpha S with TTT branded colorway.",
+    "features": {
+      "connectivity": "wired",
+      "audio": {
+        "mic": {
+          "presets": false,
+          "effects": false
+        }
+      },
+      "notifications": false
+    },
+    "codenames": [
+      "ALPHAS-TTT"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "elite-2-ttt",
+    "name": "HyperX Alloy Elite 2 — TTT Edition",
+    "type": "keyboard",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "ttt",
+      "label": "TimTheTatman Edition",
+      "baseSku": "elite-2"
+    },
+    "links": {
+      "swpd": "PERIPH-720"
+    },
+    "notes": "Limited-edition Alloy Elite 2 with TTT branded keycap set. Signature space bar.",
+    "features": {
+      "keys": {
+        "layout": "full"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "ELT2-TTT"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "origins-naruto-orange",
+    "name": "HyperX Alloy Origins — Naruto Orange Edition",
+    "type": "keyboard",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "naruto",
+      "label": "Naruto Edition",
+      "baseSku": "origins"
+    },
+    "links": {
+      "swpd": "PERIPH-730"
+    },
+    "notes": "Limited-edition Alloy Origins with Naruto orange theming + exclusive keycaps.",
+    "features": {
+      "keys": {
+        "layout": "full"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "ORG-NRTO"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "origins-naruto-red",
+    "name": "HyperX Alloy Origins — Naruto Red Edition",
+    "type": "keyboard",
+    "status": "shipping",
+    "specialEdition": {
+      "collab": "naruto",
+      "label": "Naruto Edition",
+      "baseSku": "origins"
+    },
+    "links": {
+      "swpd": "PERIPH-731"
+    },
+    "notes": "Limited-edition Alloy Origins with Naruto red theming + exclusive keycaps.",
+    "features": {
+      "keys": {
+        "layout": "full"
+      },
+      "connectivity": "wired"
+    },
+    "codenames": [
+      "ORG-NRTR"
+    ]
+  },
+  {
+    "$schema": 1,
+    "id": "omen-max-16",
+    "name": "OMEN Max 16",
+    "codenames": [
+      "MAX16"
+    ],
+    "type": "notebook",
+    "status": "shipping",
+    "links": {
+      "swpd": "https://onedrive.example.com/swpd/omen-max-16"
+    },
+    "notes": "Flagship 16\" gaming notebook. Vapor chamber cooling, OLED display, per-key RGB keyboard, manual overclocking via OMEN Gaming Hub.",
+    "features": {
+      "overclocking": true,
+      "vaporChamber": true,
+      "tobiiEyeTracking": false,
+      "graphics": {
+        "switcher": [
+          "integrated",
+          "hybrid",
+          "discrete"
+        ]
+      },
+      "battery": {
+        "capacityWh": 99,
+        "fastCharge": true
+      },
+      "io": [
+        "HDMI 2.1",
+        "Thunderbolt 4 ×2",
+        "USB-A ×2",
+        "3.5mm",
+        "SD card",
+        "RJ-45"
+      ]
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-max-16-keyboard",
+    "name": "OMEN Max 16 — Keyboard",
+    "codenames": [
+      "MAX16-KB"
+    ],
+    "type": "keyboard",
+    "status": "shipping",
+    "partOf": "omen-max-16",
+    "notes": "Built-in keyboard: 100% layout, per-key RGB, anti-ghosting, 26-key rollover.",
+    "features": {
+      "keys": {
+        "layout": "full"
+      },
+      "connectivity": "wired"
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-max-16-display",
+    "name": "OMEN Max 16 — Display",
+    "codenames": [
+      "MAX16-DISP"
+    ],
+    "type": "notebook-display",
+    "status": "shipping",
+    "partOf": "omen-max-16",
+    "notes": "16\" OLED panel, QHD+ 240Hz, factory color-calibrated, HDR True Black 500.",
+    "features": {
+      "panel": {
+        "size": "16\"",
+        "resolution": "QHD+",
+        "refreshRate": 240,
+        "responseTime": "0.2ms",
+        "panel": "OLED"
+      },
+      "color": {
+        "hdr": true,
+        "gamuts": [
+          "sRGB",
+          "DCI-P3"
+        ]
+      },
+      "calibration": {
+        "factoryCalibrated": true,
+        "deltaE": 1
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-max-16-trackpad",
+    "name": "OMEN Max 16 — Trackpad",
+    "codenames": [
+      "MAX16-TP"
+    ],
+    "type": "notebook-trackpad",
+    "status": "shipping",
+    "partOf": "omen-max-16",
+    "notes": "Precision glass trackpad with haptic feedback and full Windows Precision gesture support.",
+    "features": {
+      "haptic": true,
+      "palmRejection": true,
+      "tapToClick": true
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-max-16-webcam",
+    "name": "OMEN Max 16 — Webcam",
+    "codenames": [
+      "MAX16-CAM"
+    ],
+    "type": "notebook-webcam",
+    "status": "shipping",
+    "partOf": "omen-max-16",
+    "notes": "1080p IR webcam with privacy shutter, Windows Hello, and NPU-accelerated AI effects.",
+    "features": {
+      "resolution": "1080p",
+      "fov": 88,
+      "privacyShutter": true,
+      "ir": true,
+      "windowsHello": true,
+      "ai": {
+        "autoFraming": true,
+        "backgroundBlur": true,
+        "eyeContact": true,
+        "lowLightEnhance": true
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-max-16-audio",
+    "name": "OMEN Max 16 — Audio",
+    "codenames": [
+      "MAX16-AUD"
+    ],
+    "type": "notebook-audio",
+    "status": "shipping",
+    "partOf": "omen-max-16",
+    "notes": "Quad-speaker array tuned by Bang & Olufsen, DTS:X Ultra. Four-mic top-firing array with AI noise cancellation + beamforming.",
+    "features": {
+      "speakers": {
+        "count": 4,
+        "peakWatts": 8,
+        "dts": true
+      },
+      "mic": {
+        "arrayCount": 4,
+        "aiDenoise": true,
+        "beamforming": true
+      },
+      "effects": {
+        "spatialAudio": true,
+        "eqPresets": [
+          "Game",
+          "Music",
+          "Movie",
+          "Voice"
+        ]
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-max-16-io",
+    "name": "OMEN Max 16 — I/O",
+    "codenames": [
+      "MAX16-IO"
+    ],
+    "type": "notebook-io",
+    "status": "shipping",
+    "partOf": "omen-max-16",
+    "notes": "Full desktop-replacement I/O: HDMI 2.1, dual Thunderbolt 4, dual USB-A, RJ-45 2.5GbE, SD card reader. Wi-Fi 7 + Bluetooth 5.4.",
+    "features": {
+      "io": [
+        "HDMI 2.1",
+        "Thunderbolt 4 ×2",
+        "USB-A ×2",
+        "3.5mm combo",
+        "SD card",
+        "RJ-45 2.5GbE"
+      ],
+      "wireless": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.4"
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-transcend-14",
+    "name": "OMEN Transcend 14",
+    "codenames": [
+      "TRN14"
+    ],
+    "type": "notebook",
+    "status": "shipping",
+    "links": {
+      "swpd": "https://onedrive.example.com/swpd/omen-transcend-14"
+    },
+    "notes": "14\" ultraportable gaming notebook. Tobii Eye Tracking, OLED 2.8K display, slim chassis. No vapor chamber (thin-and-light cooling); no manual overclocking.",
+    "features": {
+      "overclocking": false,
+      "vaporChamber": false,
+      "tobiiEyeTracking": true,
+      "graphics": {
+        "switcher": [
+          "integrated",
+          "hybrid",
+          "discrete"
+        ]
+      },
+      "battery": {
+        "capacityWh": 71,
+        "fastCharge": true
+      },
+      "io": [
+        "HDMI 2.1",
+        "Thunderbolt 4 ×2",
+        "USB-A",
+        "3.5mm",
+        "microSD"
+      ]
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-transcend-14-keyboard",
+    "name": "OMEN Transcend 14 — Keyboard",
+    "codenames": [
+      "TRN14-KB"
+    ],
+    "type": "keyboard",
+    "status": "shipping",
+    "partOf": "omen-transcend-14",
+    "notes": "Built-in keyboard: 4-zone RGB backlight, anti-ghosting, 1.5mm key travel.",
+    "features": {
+      "keys": {
+        "layout": "compact"
+      },
+      "connectivity": "wired"
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-transcend-14-display",
+    "name": "OMEN Transcend 14 — Display",
+    "codenames": [
+      "TRN14-DISP"
+    ],
+    "type": "notebook-display",
+    "status": "shipping",
+    "partOf": "omen-transcend-14",
+    "notes": "14\" OLED panel, 2.8K 120Hz, 16:10 aspect, factory color-calibrated.",
+    "features": {
+      "panel": {
+        "size": "14\"",
+        "resolution": "2.8K",
+        "refreshRate": 120,
+        "responseTime": "0.2ms",
+        "panel": "OLED"
+      },
+      "color": {
+        "hdr": true,
+        "gamuts": [
+          "sRGB",
+          "DCI-P3"
+        ]
+      },
+      "calibration": {
+        "factoryCalibrated": true,
+        "deltaE": 2
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-transcend-14-trackpad",
+    "name": "OMEN Transcend 14 — Trackpad",
+    "codenames": [
+      "TRN14-TP"
+    ],
+    "type": "notebook-trackpad",
+    "status": "shipping",
+    "partOf": "omen-transcend-14",
+    "notes": "Precision glass trackpad with full Windows Precision gesture support. No haptic motor on this tier.",
+    "features": {
+      "haptic": false,
+      "palmRejection": true,
+      "tapToClick": true
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-transcend-14-webcam",
+    "name": "OMEN Transcend 14 — Webcam",
+    "codenames": [
+      "TRN14-CAM"
+    ],
+    "type": "notebook-webcam",
+    "status": "shipping",
+    "partOf": "omen-transcend-14",
+    "notes": "1080p IR webcam paired with Tobii Eye Tracking sensor bar. Privacy shutter, Windows Hello, NPU-accelerated AI effects.",
+    "features": {
+      "resolution": "1080p",
+      "fov": 88,
+      "privacyShutter": true,
+      "ir": true,
+      "windowsHello": true,
+      "ai": {
+        "autoFraming": true,
+        "backgroundBlur": true,
+        "eyeContact": true,
+        "lowLightEnhance": true
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-transcend-14-audio",
+    "name": "OMEN Transcend 14 — Audio",
+    "codenames": [
+      "TRN14-AUD"
+    ],
+    "type": "notebook-audio",
+    "status": "shipping",
+    "partOf": "omen-transcend-14",
+    "notes": "Dual top-firing speakers tuned for vocal clarity. Two-mic array with AI noise cancellation. No DTS:X on this tier.",
+    "features": {
+      "speakers": {
+        "count": 2,
+        "peakWatts": 4,
+        "dts": false
+      },
+      "mic": {
+        "arrayCount": 2,
+        "aiDenoise": true,
+        "beamforming": false
+      },
+      "effects": {
+        "spatialAudio": false,
+        "eqPresets": [
+          "Music",
+          "Movie",
+          "Voice"
+        ]
+      }
+    }
+  },
+  {
+    "$schema": 1,
+    "id": "omen-transcend-14-io",
+    "name": "OMEN Transcend 14 — I/O",
+    "codenames": [
+      "TRN14-IO"
+    ],
+    "type": "notebook-io",
+    "status": "shipping",
+    "partOf": "omen-transcend-14",
+    "notes": "Thin-and-light I/O: HDMI 2.1, dual Thunderbolt 4, USB-A, microSD. No RJ-45 (Wi-Fi 7 only). Bluetooth 5.4.",
+    "features": {
+      "io": [
+        "HDMI 2.1",
+        "Thunderbolt 4 ×2",
+        "USB-A",
+        "3.5mm combo",
+        "microSD"
+      ],
+      "wireless": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.4"
+      }
+    }
+  }
+]

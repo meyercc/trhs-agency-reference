@@ -1,0 +1,192 @@
+/* PerformV3 — IA-spec middle zone (OMEN AI / envelope / optimizers) + the
+   prototype simulator rig. Composes .ds-feature-card and the .power-mode-*
+   base (power-thermal.css + performance-card.css); only pv3-* glue here. */
+
+/* ── Simulator rig — floating panel, bottom-right, prototype scaffolding ── */
+.pv3-rig {
+  position: fixed;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  z-index: 40;
+  width: min(480px, calc(100vw - 2 * var(--gutter)));
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lv-4);
+  padding: var(--gutter-xs) var(--gutter);
+  display: grid;
+  gap: var(--gutter-xs);
+}
+.pv3-rig-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.pv3-rig-head:active {
+  cursor: grabbing;
+}
+.pv3-rig-tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.pv3-rig-form {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--accent-color);
+}
+.pv3-rig-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.pv3-rig-row .ds-toggle-group {
+  flex-wrap: wrap;
+}
+.pv3-rig-label {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+  width: 64px;
+  flex-shrink: 0;
+}
+.pv3-rig-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gutter);
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+}
+.pv3-rig-log {
+  font-family: var(--font-mono);
+}
+
+/* ── Middle zone layouts ── */
+.pv3-peers {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--gutter);
+  align-items: start;
+}
+.pv3-stack {
+  display: grid;
+  gap: var(--gutter);
+}
+@media (max-width: 1024px) {
+  .pv3-peers {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── OMEN AI header bar (Form 1+) ── */
+.pv3-ai-header {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  padding: var(--gutter-xs) var(--gutter);
+}
+.pv3-ai-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.pv3-ai-header-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.pv3-ai-header-scope {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+}
+
+/* ── Blocks ── */
+.pv3-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+}
+.pv3-block-note {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+}
+.pv3-envelope {
+  display: grid;
+  gap: var(--gutter-xs);
+}
+.pv3-attribution {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.pv3-attribution-meta {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+}
+.pv3-escape,
+.pv3-unleash-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+
+/* ── OMEN AI peer card (Form 0) ── */
+.pv3-ai-peer .pv3-block-head {
+  margin-bottom: var(--gutter-xs);
+}
+
+/* ── Optimizers ── */
+.pv3-optimizers {
+  display: grid;
+  gap: var(--gutter-xs);
+}
+.pv3-opt-rows {
+  display: grid;
+}
+.pv3-opt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+  padding: var(--gutter-xs) 0;
+  border-top: 1px solid var(--border-light);
+}
+.pv3-opt-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.pv3-opt-row-label {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}
+.pv3-opt-row-sub {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+}

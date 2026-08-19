@@ -1,0 +1,49 @@
+{
+  "skill_name": "ds-component",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Add a Toast / notification snackbar component to the design system. It's a small notification bar that slides in from the bottom-right, with variants for success (green), error (red), and info (cyan). Auto-dismiss after a few seconds.",
+      "expected_output": "A complete Toast component: .ds-toast CSS, a React wrapper, a barrel export, and a Storybook story covering all variants.",
+      "files": [],
+      "assertions": [
+        {"text": "has_css_class", "description": "shared/components.css contains a .ds-toast block with a comment header and variant rules"},
+        {"text": "uses_design_tokens", "description": "CSS uses var(--token) references (at least 3); no hardcoded colors/spacing/radii"},
+        {"text": "has_react_wrapper", "description": "web/src/components/Toast.tsx exists — a thin wrapper that renders the .ds-toast classes and owns no visual values"},
+        {"text": "variants_as_props", "description": "Variants are a typed prop union mapped via a VARIANT_CLASS record; spreads ...rest and merges className"},
+        {"text": "exported_from_barrel", "description": "web/src/components/index.ts exports the component AND its prop types"},
+        {"text": "has_storybook_story", "description": "web/src/components/Toast.stories.tsx exists with title 'Components/Toast'"},
+        {"text": "story_covers_variants", "description": "Story has one export per variant/state plus an AllVariants overview render"},
+        {"text": "preserves_avalonia_mapping", "description": "Component JSDoc (or story docs description) includes an Avalonia mapping note"},
+        {"text": "accessibility", "description": "Interactive affordances forward ARIA / have focus-visible; status conveyed by more than color"}
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "We have an existing .ds-progress-bar in components.css but no React wrapper or Storybook story for it yet. Add them so it's usable in the web app and shows in the catalog.",
+      "expected_output": "A React wrapper + barrel export + Storybook story for the existing CSS. No CSS changes needed.",
+      "files": [],
+      "assertions": [
+        {"text": "no_css_change_needed", "description": "Reads the existing .ds-progress-bar CSS; does not rewrite it unless a real gap exists"},
+        {"text": "has_react_wrapper", "description": "web/src/components/ProgressBar.tsx renders the existing .ds-progress-bar classes; props match what the CSS actually supports"},
+        {"text": "wrapper_matches_css", "description": "Wrapper props/variants correspond to real classes/modifiers present in components.css (no invented variants)"},
+        {"text": "exported_from_barrel", "description": "web/src/components/index.ts exports the component AND its prop types"},
+        {"text": "has_storybook_story", "description": "web/src/components/ProgressBar.stories.tsx exists with title 'Components/ProgressBar' and shows representative states"},
+        {"text": "preserves_avalonia_mapping", "description": "Component JSDoc (or story docs description) includes an Avalonia mapping note"}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Add a new `device` variant to the existing Card component.",
+      "expected_output": "Targeted update: new .device CSS rule, extended wrapper variant union + VARIANT_CLASS, and the variant added to the existing story.",
+      "files": [],
+      "assertions": [
+        {"text": "css_variant_added", "description": "shared/components.css gets the new variant rule next to the existing Card component, using tokens"},
+        {"text": "wrapper_variant_extended", "description": "web/src/components/Card.tsx extends the variant union type and VARIANT_CLASS map; does not restructure the component"},
+        {"text": "story_variant_added", "description": "Card.stories.tsx adds a per-variant story export and includes the new variant in the AllVariants render"},
+        {"text": "targeted_edit", "description": "Existing files are edited surgically — no wholesale rewrite, no duplicated component"},
+        {"text": "uses_design_tokens", "description": "Any new CSS uses var(--token) references; no hardcoded values"}
+      ]
+    }
+  ]
+}

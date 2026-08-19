@@ -1,0 +1,218 @@
+.wb-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: 160px;
+  grid-auto-flow: row dense;
+  gap: var(--gutter);
+}
+.wb-cell {
+  position: relative;
+}
+/* The widget currently being dragged — a dashed placeholder showing exactly
+   where it will land. The real widget floats in `.wb-drag-overlay`. */
+.wb-cell.dragging {
+  border: 2px dashed var(--accent-color);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--accent-color), transparent 92%);
+}
+
+/* Floating "picked-up" widget that follows the cursor (portaled to <body>). */
+.wb-drag-overlay {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.97;
+  transform: rotate(-1deg) scale(1.02);
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.45));
+}
+.wb-drag-overlay > * {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+body.wb-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+body.wb-dragging .w-label {
+  cursor: grabbing;
+}
+/* the real widget fills its cell */
+.wb-cell > .w {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+/* drag handle = the widget header (.w-label); inner controls stay clickable */
+.wb-cell .w-label {
+  cursor: grab;
+  user-select: none;
+}
+.wb-cell.resizing .w-label {
+  cursor: nwse-resize;
+}
+
+/* size pill — appears only mid-resize */
+.wb-size-pill {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: var(--gutter-xxs) var(--gutter-sm);
+  border-radius: 999px;
+  background: var(--accent-color);
+  color: var(--text-on-accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-section);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: var(--shadow-lv-3);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* corner resize handle — hidden until the widget is hovered (or resizing) */
+.wb-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  z-index: 3;
+  cursor: nwse-resize;
+  border-radius: 0 0 var(--radius-card) 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0 45%,
+    var(--text-muted) 45% 55%,
+    transparent 55% 70%,
+    var(--text-muted) 70% 80%,
+    transparent 80%
+  );
+  opacity: 0;
+  transition: opacity var(--dur-fast) ease;
+}
+.wb-cell:hover .wb-resize,
+.wb-cell.resizing .wb-resize {
+  opacity: 1;
+}
+
+/* remove (×) — hidden until the widget is hovered */
+.wb-remove {
+  position: absolute;
+  top: var(--gutter-sm);
+  right: var(--gutter-sm);
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+  z-index: 4;
+}
+.wb-remove svg {
+  width: 9px;
+  height: 9px;
+}
+.wb-cell:hover .wb-remove {
+  opacity: 1;
+}
+.wb-remove:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+/* add-a-widget cell */
+.wb-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xs);
+  min-height: 160px;
+  border: 1px dashed var(--border-med);
+  border-radius: var(--radius-card);
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--text-body);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.wb-add:hover {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  background: var(--accent-dimmest);
+}
+.wb-add-plus {
+  font-size: var(--text-section);
+  line-height: 1;
+}
+
+/* picker overlay — backdrop is the shared <Backdrop> (.ds-backdrop) */
+.wb-pick {
+  position: fixed;
+  z-index: 51;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(440px, calc(100vw - 2 * var(--gutter)));
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lv-4);
+}
+.wb-pick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--gutter);
+  border-bottom: 1px solid var(--border);
+}
+.wb-pick-title {
+  font-family: var(--font-cond);
+  font-size: var(--text-section);
+  font-weight: var(--font-bold);
+}
+.wb-pick-body {
+  overflow-y: auto;
+  padding: var(--gutter);
+}
+.wb-pick-group + .wb-pick-group {
+  margin-top: var(--gutter);
+}
+.wb-pick-cat {
+  margin-bottom: var(--gutter-xs);
+}
+.wb-pick-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-xs) 0;
+}
+.wb-pick-row + .wb-pick-row {
+  border-top: 1px solid var(--border);
+}
+.wb-pick-name {
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+.wb-pick-added {
+  margin: 0;
+  color: var(--green);
+}

@@ -1,0 +1,782 @@
+/* Metro dashboard POC — horizontal panorama. Hybrid: Metro layout/motion on
+   kintsugi surfaces. Uses the real Treehouse tokens. */
+
+.metro {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+}
+
+/* Parallax background — blurred hero art that pans slower than the foreground */
+.metro-bg {
+  position: absolute;
+  inset: -8% -20% -8% -8%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(40px) saturate(1.3) brightness(0.55);
+  transform: scale(1.1);
+  z-index: 0;
+  will-change: transform;
+}
+.metro-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(90deg, var(--bg-base) 0%, rgba(0, 0, 0, 0.35) 38%, transparent 70%),
+    linear-gradient(0deg, var(--bg-base) 0%, transparent 40%),
+    radial-gradient(120% 90% at 0% 0%, rgba(0, 0, 0, 0.4), transparent 60%);
+  pointer-events: none;
+}
+
+/* ── Top navigation (persistent) ── */
+.metro-nav {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-sm) var(--gutter);
+  flex-shrink: 0;
+}
+.metro-brand {
+  justify-self: start;
+  font-family: var(--font-mono);
+  font-size: var(--text-section);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+/* Reuse the app's nav component, centered. */
+.metro-nav > .ds-menu {
+  justify-self: center;
+}
+.metro-nav-util {
+  justify-self: end;
+}
+
+/* ── Stage (the panorama area) ── */
+.metro-stage {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-height: 0;
+}
+.metro-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  outline: none;
+}
+.metro-track {
+  display: flex;
+  align-items: stretch;
+  gap: calc(var(--gutter) * 2.2);
+  height: 100%;
+  padding: var(--gutter) calc(var(--gutter) * 3) calc(var(--gutter) * 1.5) calc(var(--gutter) * 1.5);
+  cursor: grab;
+}
+.metro-track:active {
+  cursor: grabbing;
+}
+
+/* ── Group (a panorama section) ──
+   The tiles derive their WIDTH from their height (aspect-ratio + height:100%),
+   so the content needs a *definite* height for the section to size its width
+   correctly (a 1fr/flex-basis:0 height collapses the width during intrinsic
+   sizing). So: flex column, fixed-height header, and content height =
+   calc(100% − header), which chains to the viewport and excludes the header
+   (no width collapse → no overlap; no overflow past the window). */
+.metro-group {
+  --metro-head-h: 28px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 90%;
+  flex-shrink: 0;
+}
+.metro-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gutter-sm);
+  height: var(--metro-head-h);
+  margin-bottom: var(--gutter-sm);
+  flex-shrink: 0;
+}
+.metro-group-title {
+  font-family: var(--font-cond);
+  font-size: var(--text-sm-title);
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.metro-group-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+.metro-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, 1fr);
+  gap: var(--gutter-sm);
+  /* Definite height (excludes the header) — see .metro-group note. */
+  height: calc(100% - var(--metro-head-h) - var(--gutter-sm));
+}
+
+/* ── Cover tile (kintsugi surface) ── */
+.metro-tile {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 1.5px var(--border), var(--shadow-lv-1);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    transform var(--dur-normal) var(--ease-default),
+    box-shadow var(--dur-normal) var(--ease-default),
+    filter var(--dur-normal) var(--ease-default);
+  filter: brightness(0.95);
+}
+.metro-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: inset 0 0 0 1.5px var(--ksg-w30), var(--shadow-lv-3);
+  filter: brightness(1.1) saturate(1.1);
+}
+.metro-tile-label {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 22px var(--gutter-sm) var(--gutter-xs);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.metro-tile:hover .metro-tile-label {
+  opacity: 1;
+}
+
+/* ── Spotlight (hero) — no header, fills the whole section ── */
+.metro-spotlight {
+  position: relative;
+  height: 100%;
+  width: 34vw;
+  max-width: 520px;
+  min-width: 360px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 1.5px var(--border), var(--shadow-lv-3);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: pointer;
+}
+.metro-spotlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.2) 45%, transparent 70%);
+}
+.metro-spotlight-body {
+  position: relative;
+  z-index: 1;
+  padding: var(--gutter-lg);
+}
+.metro-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-color);
+  margin: 0 0 var(--gutter-xs);
+}
+.metro-spotlight-title {
+  font-family: var(--font-cond);
+  font-size: var(--text-title);
+  font-weight: 700;
+  line-height: 1.05;
+  margin: 0 0 var(--gutter-xs);
+  color: #fff;
+}
+.metro-spotlight-sub {
+  font-size: var(--text-body);
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0 0 var(--gutter);
+  max-width: 32ch;
+}
+.metro-play {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xs) var(--gutter);
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent-color);
+  color: var(--text-on-accent);
+  font-family: var(--font-cond);
+  font-size: var(--text-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--dur-fast) var(--ease-default);
+}
+.metro-play:hover {
+  filter: brightness(1.1);
+}
+
+/* ── Widget panel (kintsugi material) ── */
+.metro-widgets {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, 1fr);
+  grid-auto-columns: 220px; /* a 1-col widget = 220px; cols span N tracks */
+  gap: var(--gutter-sm);
+  height: calc(100% - var(--metro-head-h) - var(--gutter-sm));
+}
+.metro-widget {
+  border-radius: var(--radius-card);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lv-1);
+  padding: var(--gutter-sm) var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  /* cols/rows span set inline via grid-column / grid-row */
+}
+/* Device-card cell: no surface of its own (the shared <DeviceCard> .w provides
+   it); just a grid cell that the card fills. */
+.metro-devcell {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+.metro-devcell > .w {
+  width: 100%;
+  /*height: 100%;*/
+}
+.metro-widget-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.metro-widget-value {
+  font-family: var(--font-cond);
+  font-size: var(--text-sm-title);
+  color: var(--text-primary);
+}
+.metro-spark {
+  margin-top: auto;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--accent-dim), transparent);
+  -webkit-mask: var(--_spark) bottom / 100% 100% no-repeat;
+  mask: var(--_spark) bottom / 100% 100% no-repeat;
+}
+
+/* ── Edge peek chevrons ── */
+.metro-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 84px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  border: 0;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: opacity var(--dur-normal) var(--ease-default);
+}
+.metro-edge.left {
+  left: 0;
+  justify-content: flex-start;
+  padding-left: var(--gutter-xs);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.5), transparent);
+}
+.metro-edge.right {
+  right: 0;
+  justify-content: flex-end;
+  padding-right: var(--gutter-xs);
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.5), transparent);
+}
+.metro-edge[hidden] {
+  opacity: 0;
+  pointer-events: none;
+}
+.metro-edge svg {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+}
+
+/* ── Floating controls / view toggle ── */
+.metro-controls {
+  position: absolute;
+  z-index: 4;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lv-2);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+.metro-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+.metro-controls .sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+}
+.metro-controls button {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+.metro-controls input[type='range'] {
+  width: 88px;
+  accent-color: var(--accent-color);
+  cursor: pointer;
+}
+.metro-controls button.primary {
+  background: var(--accent-color);
+  border-color: transparent;
+  color: var(--text-on-accent);
+  font-weight: 600;
+  padding: 3px 14px;
+}
+
+/* ── Edit mode ── */
+.metro-reorder-item {
+  flex-shrink: 0;
+  height: 100%;
+}
+.metro-group.editing {
+  cursor: grab;
+  border-radius: var(--radius-lg);
+  outline: 1.5px dashed var(--ksg-w30);
+  outline-offset: 7px;
+}
+.metro-group.editing:active {
+  cursor: grabbing;
+}
+/* Children are inert while arranging, so the whole section drags cleanly. */
+/* Collection/feature sections drag as a whole, so their content is inert. */
+.metro-group.editing .metro-tile,
+.metro-group.editing .metro-spotlight {
+  pointer-events: none;
+}
+/* …but the per-widget controls + add tile stay interactive. */
+.metro-group.editing .metro-wchrome,
+.metro-group.editing .metro-resize-pop,
+.metro-group.editing .metro-add-widget {
+  pointer-events: auto;
+}
+
+/* ── Widget editing (within a packed section) ──
+   Glance widgets stay interactive so each can be grabbed and dragged to reorder
+   (the widget stops pointer propagation so the section doesn't drag with it). */
+.metro-group.editing .metro-widget {
+  position: relative;
+  outline: 1px dashed var(--ksg-w20);
+  outline-offset: -1px;
+  cursor: grab;
+}
+.metro-group.editing .metro-widget:active,
+.metro-group.editing .metro-devcell:active,
+.metro-group.editing .metro-devcell:active .ds-devcard {
+  cursor: grabbing;
+}
+/* Device cells: outline the card, and the whole card grabs to reorder/drag. */
+.metro-group.editing .metro-devcell {
+  outline: 1px dashed var(--ksg-w20);
+  outline-offset: 2px;
+  border-radius: var(--radius-card);
+  cursor: grab;
+}
+.metro-group.editing .metro-devcell .ds-devcard {
+  cursor: grab;
+}
+.metro-group.editing .metro-add-widget {
+  cursor: pointer;
+}
+.metro-wchrome {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 2px;
+}
+.metro-wbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.metro-wbtn:hover,
+.metro-wbtn.on {
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+.metro-wbtn.on {
+  background: var(--accent-dim);
+}
+.metro-wbtn svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* ── Resize menu (Columns / Rows segmented controls) ── */
+.metro-resize-pop {
+  position: absolute;
+  top: 26px;
+  right: 4px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  padding: var(--gutter-xs);
+  border-radius: var(--radius-card);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lv-3);
+}
+/* On single-widget sections the menu hangs from the section's top-left chrome. */
+.metro-group:not(:has(.metro-widgets)) > .metro-resize-pop {
+  top: 4px;
+  right: auto;
+  left: 2px;
+}
+.metro-seg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+}
+.metro-seg-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.metro-seg {
+  display: inline-flex;
+  gap: 2px;
+}
+.metro-seg button {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--text-micro);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default);
+}
+.metro-seg button:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+.metro-seg button.on {
+  background: var(--accent-color);
+  border-color: transparent;
+  color: var(--text-on-accent);
+  font-weight: 600;
+}
+
+/* Right-side cluster of section chrome (rows stepper + resize + remove). */
+.metro-chrome-actions {
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.metro-secresize:hover {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Per-section row-count stepper (packed sections author height ÷ N). */
+.metro-rows-step {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 20px;
+  padding: 0 2px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-lv-1);
+  color: var(--text-dim);
+  font-size: var(--text-micro);
+}
+.metro-rows-step button {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  width: 16px;
+  height: 18px;
+  line-height: 1;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+.metro-rows-step button:hover:not(:disabled) {
+  color: var(--accent-color);
+}
+.metro-rows-step button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.metro-rows-val {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 0 2px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+.metro-rows-unit {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* "Add widget" tile in the packed grid */
+.metro-add-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xxs);
+  border: 1px dashed var(--border-med);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default);
+}
+.metro-add-widget:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+.metro-add-widget .plus {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--accent-color);
+}
+.metro-gallery-grid--widgets {
+  grid-template-columns: repeat(3, 1fr);
+}
+.metro-edit-chrome {
+  position: absolute;
+  top: -22px;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 5;
+  pointer-events: none;
+}
+.metro-grip {
+  pointer-events: auto; /* the section's drag handle (dragControls) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 20px;
+  padding: 2px 3px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-lv-1);
+  color: var(--text-muted);
+  cursor: grab;
+  touch-action: none; /* let pointer drag start cleanly */
+  transition: color var(--dur-fast) var(--ease-default), border-color var(--dur-fast) var(--ease-default);
+}
+.metro-grip:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+.metro-grip:active {
+  cursor: grabbing;
+}
+.metro-grip svg {
+  width: 14px;
+  height: 14px;
+}
+.metro-remove {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+  cursor: pointer;
+  box-shadow: var(--shadow-lv-1);
+}
+.metro-remove:hover {
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+.metro-remove svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* ── Add gallery ── */
+.metro-gallery-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(6, 7, 9, 0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.metro-gallery {
+  width: min(560px, 90vw);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lv-4);
+  overflow: hidden;
+}
+.metro-gallery-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--gutter-sm) var(--gutter);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-cond);
+  font-size: var(--text-section);
+  color: var(--text-primary);
+}
+.metro-gallery-close {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+}
+.metro-gallery-close:hover {
+  color: var(--text-primary);
+}
+.metro-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gutter-sm);
+  padding: var(--gutter);
+}
+.metro-gallery-card {
+  position: relative;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--gutter-sm) var(--gutter);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+.metro-gallery-card:hover {
+  border-color: var(--accent-color);
+  background: var(--surface-hover);
+}
+.metro-gallery-card .name {
+  font-family: var(--font-cond);
+  font-size: var(--text-body);
+}
+.metro-gallery-card .hint {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+.metro-gallery-card .plus {
+  position: absolute;
+  top: var(--gutter-sm);
+  right: var(--gutter);
+  color: var(--accent-color);
+  font-size: 18px;
+  line-height: 1;
+}
+.metro-hint {
+  font-family: var(--font-mono);
+}
+
+/* Shop section — a vertical stack of wide DealTiles. */
+.metro-deals {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--gutter-sm);
+  height: 100%;
+  padding: var(--gutter) 0;
+}
+.metro-deal {
+  flex: 0 0 auto;
+  /* width comes from the cols preset (inline style on the tile) */
+}

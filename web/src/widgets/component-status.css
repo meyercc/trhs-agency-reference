@@ -1,0 +1,176 @@
+/* Component status card (.cs-*) — reusable dashboard widget: title + model,
+   status pill, arc gauge (top-right), utilization meter (bottom). Token-only.
+   The card is a size container so it stays tidy at 1 row and grows to a roomier
+   layout at 2+ rows (no sparse middle gap at either size). */
+
+.cs-card {
+  container-type: size;
+  container-name: cscard;
+  position: relative;
+  padding: var(--gutter);
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  cursor: pointer;
+}
+
+/* ── Top row: head (title/model/status) + gauge ── */
+.cs-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gutter);
+}
+.cs-head {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.cs-title {
+  font-family: var(--font-display);
+  font-weight: var(--font-bold, 700);
+  font-size: var(--text-section);
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+.cs-model {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cs-status {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  margin-top: var(--gutter-sm);
+}
+.cs-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cs-dot-positive {
+  background: var(--green);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--green), transparent 40%);
+}
+.cs-dot-warn {
+  background: var(--orange);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--orange), transparent 40%);
+}
+.cs-dot-danger {
+  background: var(--red);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--red), transparent 40%);
+}
+.cs-dot-neutral {
+  background: var(--text-muted);
+}
+.cs-status-label {
+  font-family: var(--font-display);
+  font-weight: var(--font-semibold, 600);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+
+/* ── Arc gauge (reuses .gauge-*; sized for this card) ── */
+.cs-gauge {
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+.cs-gauge .gauge-n {
+  font-size: 18px;
+}
+.cs-gauge .gauge-u {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+/* stacked sub-caption under the value (e.g. "Celsius") */
+.gauge-sub {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.04em;
+  color: var(--text-subtle);
+}
+
+/* ── Bottom meter ── */
+.cs-meter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.cs-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.cs-meter-label {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+.cs-meter-val {
+  font-family: var(--font-cond);
+  font-weight: var(--font-bold, 700);
+  font-size: var(--text-section);
+  line-height: 1;
+  color: var(--text-primary);
+}
+.cs-bar {
+  height: 8px;
+}
+
+/* ── Detail chevron (right edge) ── */
+.cs-chevron {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  color: var(--text-subtle);
+  transition: color var(--dur-fast) var(--ease-default);
+  pointer-events: none;
+}
+.cs-card:hover .cs-chevron {
+  color: var(--text-muted);
+}
+
+/* ── Roomier layout at 2+ rows (taller than ~1 row) — bigger type + gauge and
+   more generous spacing so the extra height reads as intentional, not empty. ── */
+@container cscard (min-height: 232px) {
+  .cs-card {
+    padding: var(--gutter-lg, 20px);
+    gap: var(--gutter);
+  }
+  .cs-title {
+    font-size: var(--text-section-lg);
+  }
+  .cs-model {
+    margin-top: 3px;
+  }
+  .cs-status {
+    margin-top: var(--gutter);
+  }
+  .cs-gauge {
+    width: 96px;
+    height: 96px;
+  }
+  .cs-gauge .gauge-n {
+    font-size: 24px;
+  }
+  .cs-gauge .gauge-u {
+    font-size: 12px;
+  }
+  .cs-meter {
+    gap: var(--gutter-sm);
+  }
+  .cs-meter-label {
+    font-size: var(--text-body);
+  }
+}

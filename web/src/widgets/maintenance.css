@@ -1,0 +1,62 @@
+/* Maintenance cards — System Cleaner stat rows + Fan Cleaner health bar.
+   Ported from the vanilla `.cleaner-stat-*` / `.fan-health-*` (prototype-only,
+   not shared). Layout grid comes from feature-cards.css (.feature-card-grid). */
+.cleaner-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+.cleaner-stat-row:last-of-type {
+  border-bottom: none;
+}
+.cleaner-stat-key {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.cleaner-stat-val {
+  font-family: var(--font-cond);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.cleaner-stat-val.highlight {
+  color: var(--accent-color);
+}
+
+/* Fan health bar */
+.fan-health-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin: var(--gutter-sm) 0 var(--gutter-xs);
+}
+.fan-health-fill {
+  height: 100%;
+  border-radius: 2px;
+  /* bg + glow re-tinted to accent by the html:root block in shared/components.css */
+  background: var(--accent-color);
+  box-shadow: 0 0 6px var(--accent-dimmest);
+}
+.fan-health-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.fan-health-pct {
+  font-family: var(--font-cond);
+  /* size/weight/color refined by the html:root block in shared/components.css */
+  font-size: var(--text-section-lg);
+  font-weight: var(--font-medium);
+  color: var(--accent-color);
+}
+.fan-health-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-subtle);
+}

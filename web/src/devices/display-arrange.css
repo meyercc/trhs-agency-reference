@@ -1,0 +1,226 @@
+/* Multi-display arrangement in the monitor modal hero. Ported from the
+   vanilla .dsa-* styles (css/prototype.css); token-only. */
+.dsa-hero {
+  position: relative;
+  padding: var(--gutter-sm) var(--gutter) var(--gutter);
+}
+.dsa-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  margin-bottom: var(--gutter-sm);
+}
+.dsa-hero-title {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.dsa-stage {
+  position: relative;
+  height: 230px;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(90% 70% at 50% 40%, var(--surface-light) 0%, transparent 70%),
+    linear-gradient(var(--border-light) 1px, transparent 1px) 0 0 / 100% 32px,
+    linear-gradient(90deg, var(--border-light) 1px, transparent 1px) 0 0 / 32px 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+/* Free drag here — this lens moves furniture, so no docking and no snap
+   (the Arrange editor is the strict one). On release the whole group glides
+   back to the stage centre; the transition is what makes that read as "the
+   desk settling" rather than a teleport, and it is disabled while dragging so
+   the tile under the pointer never lags. */
+.dsa-disp {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  user-select: none;
+  transition:
+    left 0.25s ease,
+    top 0.25s ease;
+}
+.dsa-disp:active {
+  cursor: grabbing;
+  z-index: 4;
+}
+.dsa-stage.dragging .dsa-disp {
+  transition: none;
+}
+/* Offset wrapper — the always-centred group.
+   NOT transitioned, deliberately: centring is a layout correction, not a motion
+   moment. With a transition the desk is only in the right place once the
+   animation finishes, so anything that samples earlier — a screenshot, a
+   throttled tab, a slow first paint — catches it off-centre, and a stalled
+   transition leaves it wrong indefinitely (observed 2026-08-03: currentTime
+   stuck at 0, group painted at identity while the inline transform was right).
+   The tiles keep their own left/top transition, which is what makes a released
+   drag read as the desk settling. */
+.dsa-group {
+  position: absolute;
+  inset: 0;
+}
+.dsa-stage.mirror .dsa-disp {
+  cursor: default;
+}
+/* `.dsa-screen` / `.dsa-base` (the drawn box + stand) removed 2026-08-02 — the
+   tile is a render now, so the box and the little trapezoid stand under it have
+   no element to style. The Perform map still draws schematic tiles and keeps
+   its own `.dov-screen` / `.dov-base`, which were always separate. */
+/* ── Photoreal tile (2026-08-02, Cindy) ──────────────────────────────────────
+   The desk map draws the actual product renders instead of numbered boxes.
+   Two things follow from that and both are the point, not decoration:
+   · size is physical (see photoTile in arrangement.ts), so a 32" really is
+     wider than a 27" and a laptop really is half of one;
+   · state lives on .dsa-bounds — the rectangle — never on the render, whose
+     silhouette has a stand and a neck that a glow would halo.
+   The render is inert: the bounds box owns hit testing and the drag. */
+.dsa-bounds {
+  position: relative;
+  border-radius: var(--radius-sm);
+  /* Crops each render to its measured hardware box (renderBox in
+     arrangement.ts) so the bounds are the display, not the PNG's padding. */
+  overflow: hidden;
+  transition:
+    box-shadow var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+/* `.dsa-bounds img` and not `.dsa-render`: the rule being undone is
+   `.dc-hero img` (class + type), which outranks a bare class and kept winning. */
+.dsa-bounds img.dsa-render {
+  position: absolute;
+  /* width/height/left/top come from renderCrop() per display */
+  object-fit: fill;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  /* The canvas's blanket `.dc-hero img` rule (device-canvas.css:91) caps every
+     image in the hero at 60% width and hangs a 24/40px product-photo shadow on
+     it. Correct for a single hero render, wrong for tiles: it drew each display
+     at 60% of its own bounds, so the ring floated around a shrunken monitor.
+     The tile sizes its own render, so all three are undone here. */
+  max-width: none;
+  max-height: none;
+  filter: none;
+}
+.dsa-num {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm-title);
+  color: var(--text-primary);
+  opacity: 0.8;
+  /* On a box the number could sit dead centre; on a render that is where the
+     panel art is, so it moves to a corner and gets a scrim to stay legible on
+     both a lit screen and a dark bezel. One step down in size too — at tile
+     scale the title ramp made the "2" wider than the laptop's lid. */
+  font-size: var(--text-body);
+  left: var(--gutter-xxs, 2px);
+  top: var(--gutter-xxs, 2px);
+  padding: 0 var(--gutter-xxs, 2px);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+/* The caption is taken OUT of the layout (absolute, centred under the tile).
+   `.dsa-disp` is a centred column, so while the name was a flow child the
+   column was as wide as the LONGER of tile-vs-name — and the tile sat in the
+   middle of that. Adding "This display" to a caption therefore pushed its own
+   display sideways, which is why the whole desk appeared to move when you
+   clicked another monitor (Cindy, 2026-08-03). Out of flow, the column hugs the
+   tile and the caption can be any length without touching the arrangement.
+   Selector carries the stage so it outranks `.mc-arrange .dsa-name`, which sets
+   the scrim and must keep applying. */
+.dsa-stage .dsa-disp .dsa-name {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: var(--gutter-xs);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+/* Navigable = another display whose settings this map can open. It has to look
+   reachable without competing with the accent ring that marks "this display",
+   so the hint is neutral and hover-only: a soft white edge plus a hairline lift.
+   Keyboard focus gets the same treatment through :focus-visible, since the tile
+   is a real button for assistive tech. */
+.dsa-disp.navigable .dsa-bounds {
+  cursor: pointer;
+}
+.dsa-disp.navigable:hover .dsa-bounds,
+.dsa-disp.navigable:focus-visible .dsa-bounds {
+  box-shadow:
+    0 0 0 2px var(--border-med),
+    0 6px 18px var(--ksg-b55, rgba(0, 0, 0, 0.45));
+}
+.dsa-disp.navigable:focus-visible {
+  outline: none;
+}
+.dsa-disp.navigable:hover .dsa-name {
+  color: var(--text-primary);
+}
+.dsa-disp.current .dsa-bounds {
+  box-shadow:
+    0 0 0 2px var(--accent-color),
+    0 0 0 6px var(--accent-dim);
+}
+.dsa-disp.current .dsa-name {
+  color: var(--accent-color);
+}
+/* In the name row now (see DisplayArrange). A tile is ~130px at its widest, so
+   nothing this long fits inside it beside the number without covering the
+   stand — and the ring already marks the tile. */
+.dsa-here {
+  margin-left: var(--gutter-xxs, 2px);
+  font-size: var(--text-nano);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-color);
+  opacity: 0.85;
+}
+.dsa-stage.identify .dsa-num {
+  opacity: 1;
+  font-size: var(--text-title);
+  transition: all var(--dur-normal) ease;
+}
+.dsa-mirror-badge {
+  position: absolute;
+  inset: auto auto var(--gutter-sm) 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs, 2px);
+  padding: var(--gutter-xxs, 2px) var(--gutter-xs);
+  border-radius: var(--radius-sm);
+  background: var(--accent-dim);
+  color: var(--accent-color);
+  font-size: var(--text-micro);
+  white-space: nowrap;
+  z-index: 5;
+}
+.dsa-head-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+}
+.dsa-hint {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dsa-actions {
+  display: flex;
+  gap: var(--gutter-xs);
+}

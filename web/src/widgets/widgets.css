@@ -1,0 +1,459 @@
+/* Shared content styles for the dashboard widgets ported from js/widgets.js.
+   Token-only; reused across the system-monitor + content widgets so each
+   widget body stays markup-light. */
+
+/* big stat number */
+.wg-stat {
+  font-family: var(--font-cond);
+  font-weight: var(--font-bold);
+  line-height: 1;
+  color: var(--cyan);
+}
+.wg-stat-lg {
+  font-size: var(--text-display);
+}
+.wg-stat-md {
+  font-size: var(--text-hero);
+}
+.wg-unit {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+.wg-sub {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+/* temp / status badge */
+.wg-badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--orange-dim);
+  border: 1px solid var(--orange-dim);
+  color: var(--orange);
+}
+
+/* a left-to-right meter bar */
+.wg-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ksg-w10, rgba(255, 255, 255, 0.08));
+  overflow: hidden;
+}
+.wg-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cyan);
+}
+
+/* dual stat split (fan speed) */
+.wg-dual {
+  display: flex;
+  flex: 1;
+}
+.wg-dual-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xs);
+}
+.wg-dual-cell + .wg-dual-cell {
+  border-left: 1px solid var(--border);
+}
+
+/* 4-cell thermal grid */
+.wg-grid4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gutter-sm);
+}
+.wg-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs, 2px);
+}
+.wg-cell .wg-val {
+  font-family: var(--font-cond);
+  font-weight: var(--font-bold);
+  font-size: var(--text-section);
+  line-height: 1;
+}
+
+/* label/value footer row */
+.wg-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--gutter-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+/* storage drive rows */
+.wg-drive + .wg-drive {
+  margin-top: var(--gutter-sm);
+}
+.wg-drive-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-caption);
+  margin-bottom: var(--gutter-xs);
+}
+.wg-drive-name {
+  color: var(--text-dim);
+}
+.wg-drive-pct {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+/* media row list (game pass / play next) */
+.wg-list {
+  display: flex;
+  flex-direction: column;
+}
+.wg-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-xs) 0;
+}
+.wg-list-row + .wg-list-row {
+  border-top: 1px solid var(--border);
+}
+.wg-thumb {
+  border-radius: var(--radius-sm);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.wg-list-name {
+  font-size: var(--text-body);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wg-list-sub {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+/* game-tile strip (quick launch / deals) */
+.wg-tiles {
+  display: grid;
+  gap: var(--gutter-sm);
+  flex: 1;
+}
+.wg-tile {
+  position: relative;
+  border-radius: var(--radius-sm);
+  aspect-ratio: 2 / 3;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.wg-tile-disc {
+  position: absolute;
+  top: var(--gutter-xs);
+  right: var(--gutter-xs);
+  font-family: var(--font-cond);
+  font-weight: var(--font-bold);
+  font-size: var(--text-caption);
+  padding: 2px 5px;
+  border-radius: var(--radius-sm);
+  background: var(--orange);
+  color: var(--text-on-accent, #fff);
+}
+
+/* accent swatch row (appearance) */
+.wg-swatch-row {
+  display: flex;
+  gap: var(--gutter-sm);
+  margin-top: var(--gutter-sm);
+}
+.wg-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--ksg-w25, rgba(255, 255, 255, 0.25));
+  padding: 0;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-default);
+}
+.wg-swatch:hover {
+  transform: scale(1.12);
+}
+
+/* OMEN AI slide */
+.wg-ai-hdr {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  margin-top: var(--gutter-sm);
+}
+.wg-ai-fps {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gutter-xs);
+  margin-top: var(--gutter-sm);
+}
+.wg-ai-fps-val {
+  font-family: var(--font-cond);
+  font-weight: var(--font-bold);
+  font-size: var(--text-hero);
+  line-height: 1;
+  color: var(--accent-color);
+}
+
+/* ── Wallpaper picker (Personalize) ─────────────────── */
+.wp-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--gutter-sm);
+  margin-top: var(--gutter-sm);
+}
+.wp-thumb {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius);
+  border: 2px solid var(--border-med);
+  background: center / cover no-repeat var(--surface);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.wp-thumb:hover {
+  transform: translateY(-2px);
+}
+.wp-thumb.is-active {
+  border-color: var(--accent-color);
+}
+.wp-thumb-name {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  font-size: var(--text-caption);
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+.wp-effect-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  margin-top: var(--gutter-sm);
+}
+.wp-effect-row .ds-slider {
+  flex: 1;
+}
+.wp-effect-label {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  width: 56px;
+  flex-shrink: 0;
+}
+.wp-effect-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  min-width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Booster widget (ported from vanilla w-booster) ── */
+.wbst-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.wbst-number {
+  font-family: var(--font-mono);
+  font-size: var(--text-title);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.wbst-caption {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: 300;
+  color: var(--text-muted);
+  width: 90px;
+  line-height: 1.1;
+  padding-top: 3px;
+}
+.wbst-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: var(--gutter-sm);
+}
+.wbst-stat {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 9px;
+}
+.wbst-stat-val {
+  font-family: var(--font-cond);
+  font-size: var(--text-section-lg);
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+}
+.wbst-stat-unit {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.wbst-stat-lbl {
+  font-size: 8px;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-top: 3px;
+}
+.wbst-ram {
+  margin-top: var(--gutter-mobile);
+}
+.wbst-ram-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 8.5px;
+  color: var(--text-subtle);
+  margin-bottom: 5px;
+}
+.wbst-ram-hdr-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.wbst-ram-hdr-val {
+  color: var(--text-muted);
+}
+.wbst-ram-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.wbst-ram-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.8) 0%, var(--orange) 100%);
+  width: 80%;
+}
+
+/* ── Last Played widget (.wg-lastplayed) ──
+   Full-bleed game key-art card: the game's cover tile + title + play button,
+   over a bottom scrim for legibility. Ported from the Figma "Last Played". */
+.wg-lastplayed {
+  padding: 0;
+  justify-content: flex-end;
+  cursor: grab;
+}
+/* Background art on its own layer — a slow Ken Burns zoom via GPU-composited
+   `transform: scale` (no per-frame repaint, unlike animating background-size).
+   background-image is set inline; cover/position live here (no .w shorthand to
+   fight, since this child isn't a .w). */
+.wg-lp-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-size: cover;
+  background-position: center 55%;
+  transform-origin: center;
+  animation: wg-lp-kenburns 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes wg-lp-kenburns {
+  from {
+    transform: scale(1.2);
+  }
+  to {
+    transform: scale(1.7);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wg-lp-bg {
+    animation: none;
+  }
+}
+.wg-lp-scrim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* Bottom scrim for the caption + a left bias so bottom-left content stays
+     legible over subject-heavy key art. */
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0.5) 72%, rgba(0, 0, 0, 0.85) 100%),
+    linear-gradient(72deg, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0) 46%);
+  /* Soft light inset frame over the whole edge + a gentle perimeter vignette so
+     bright key art doesn't clip harshly at the rounded border (matches Figma). */
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 0 24px rgba(255, 255, 255, 0),
+    inset 0 0 52px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.wg-lp-content {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gutter);
+  padding: var(--gutter);
+}
+.wg-lp-tile {
+  width: 64px;
+  flex: none;
+}
+.wg-lp-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-bottom: 2px;
+}
+.wg-lp-title {
+  font-family: var(--font-mono);
+  font-weight: var(--font-bold, 700);
+  font-size: var(--text-section);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wg-lp-sub {
+  font-size: var(--text-body);
+  color: rgba(255, 255, 255, 0.72);
+}
+.wg-lp-play {
+  align-self: flex-start;
+  margin-top: var(--gutter-sm);
+}
+/* Optical centering for the play triangle (was on the .ds-btn-icon base rule,
+   where it off-centred symmetric icons; the triangle keeps it here). */
+.wg-lp-play svg {
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+}

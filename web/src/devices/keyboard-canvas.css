@@ -1,0 +1,1156 @@
+/* Full-canvas keyboard device modal (Figma Keys-Buttons 2146:73092).
+   Reuses the mouse modal's .dc-canvas / .dc-close / .dc-panel-wrap shell
+   (device-canvas.css) + .ds-ng3-*; adds the keyboard hero + settings.
+   Device-scoped (.kbd-* / .pdm-*), token-only. */
+
+/* ── Hero ─────────────────────────────────────────────── */
+/* container-type drives the keyboard's cqw/cqh sizing. */
+.kbd-hero {
+  container-type: size;
+}
+.kbd-hero-img {
+  max-height: 100%;
+  max-width: min(58%, 560px);
+  object-fit: contain;
+  filter: drop-shadow(0 24px 40px var(--ksg-b55));
+  user-select: none;
+  pointer-events: none;
+}
+
+.kbd-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter);
+}
+/* Re-center the layer pill: the global .ds-toggle-group align-self:start
+   (content-width fix) would otherwise left-align it in this flex column. */
+.kbd-layer-toggle {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ── Keyboard board ───────────────────────────────────── */
+/* 1u = one keycap; scales with the hero via container-query units. */
+.kbd {
+  --ku: clamp(18px, min(3.7cqw, 11cqh), 44px);
+  --kg: calc(var(--ku) * 0.09);
+  /* Containing block for the marquee box. */
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--ku) * 0.5);
+  padding: calc(var(--ku) * 0.42);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lv-3);
+}
+.kbd-main,
+.kbd-nav,
+.kbd-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kg);
+}
+.kbd-row {
+  display: flex;
+  gap: var(--kg);
+  height: var(--ku);
+}
+.kbd-row-up {
+  justify-content: center;
+}
+.kbd-sp {
+  --kw: 1;
+  flex-shrink: 0;
+  width: calc((var(--ku) + var(--kg)) * var(--kw));
+}
+
+/* Keycap */
+.kbd-key {
+  --kw: 1;
+  position: relative;
+  flex-shrink: 0;
+  width: calc(var(--ku) * var(--kw) + var(--kg) * (var(--kw) - 1));
+  height: var(--ku);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  background: linear-gradient(180deg, var(--surface-hover), var(--surface-active));
+  border: 1px solid var(--border-med);
+  border-radius: calc(var(--ku) * 0.15);
+  box-shadow: var(--shadow-lv-1);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: calc(var(--ku) * 0.27);
+  font-weight: var(--font-medium);
+  line-height: 1.04;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default),
+    transform var(--dur-instant) var(--ease-default);
+}
+.kbd-key:hover {
+  border-color: var(--text-dim);
+}
+.kbd-key:active {
+  transform: translateY(1px);
+}
+.kbd-key:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+.kbd-stage[data-kb-mode='keys'] .kbd-key.selected {
+  background: var(--accent-dim);
+  border-color: var(--accent-color);
+}
+
+/* Per-layer legend — data-kind set by keyLegend() */
+.kbd-key[data-kind='fn'] .kbd-key-cap,
+.kbd-key[data-kind='custom'] .kbd-key-cap {
+  color: var(--accent-color);
+}
+.kbd-key[data-kind='custom'] .kbd-key-cap {
+  font-weight: var(--font-semibold);
+}
+.kbd-key[data-kind='dim']:not(.selected) {
+  opacity: 0.38;
+}
+
+/* Numpad — grid carries the double-height + / Ent and the 2u 0 */
+.kbd-numpad {
+  display: grid;
+  grid-template-columns: repeat(4, var(--ku));
+  grid-auto-rows: var(--ku);
+  gap: var(--kg);
+}
+.kbd-numpad .kbd-key {
+  width: auto;
+  height: auto;
+}
+
+/* Media keys + volume knob, above the numpad */
+.kbd-media {
+  display: flex;
+  align-items: center;
+  gap: var(--kg);
+  height: var(--ku);
+}
+.kbd-media-key {
+  width: calc(var(--ku) * 0.82);
+  height: calc(var(--ku) * 0.6);
+}
+.kbd-media-key .kbd-key-cap {
+  display: none;
+}
+.kbd-media-icon {
+  width: 46%;
+  height: 46%;
+}
+.kbd-knob {
+  margin-left: auto;
+  width: calc(var(--ku) * 0.92);
+  height: calc(var(--ku) * 0.92);
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, var(--surface-hover), var(--bg-base));
+  border: 1px solid var(--border-med);
+  box-shadow: var(--shadow-lv-1);
+}
+
+/* ── Lighting mode — quick-select + lit selection ─────── */
+.kbd-stage[data-kb-mode='lights'] .kbd-key.lit-sel {
+  outline: 2px solid var(--white);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+/* Rail — Figma "Keyboard Quick Select" (Lights 32:34339). The panel recipe is
+   the system's, not this file's: Kintsugi panel surface + the Hadouken double
+   stroke (an inner border over a 1px dark hairline, as .ds-input) + the
+   Panels/Dark shadow, which is --shadow-lv-1 exactly. */
+.kbd-quickselect {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  /* 16px, not --gutter: the page gutter is 24 (and density re-points it), while
+     this rail's rhythm is the control-scale step. */
+  gap: var(--gutter-sm);
+  /* The designed 32 is the whole control, borders included. */
+  box-sizing: border-box;
+  height: var(--control-height);
+  padding: 0 var(--gutter-sm);
+  background: var(--ksg-panel-surface);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px var(--ksg-b80),
+    var(--shadow-lv-1);
+}
+.kbd-qs-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  color: var(--text-dim);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default);
+}
+.kbd-qs-btn:hover,
+.kbd-qs-btn.active {
+  color: var(--text-primary);
+}
+.kbd-qs-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+/* The marquee tool. Armed reads as a filled chip as well as a brighter glyph,
+   so the mode is never carried by colour alone; aria-pressed says it in words. */
+.kbd-qs-icon {
+  padding: var(--gutter-xxs);
+  margin: 0 calc(var(--gutter-xxs) * -1);
+  border-radius: var(--radius-sm);
+}
+.kbd-qs-icon.active {
+  background: var(--ksg-w10);
+}
+/* 10% ink either way. The alpha-white scale doesn't flip with the theme, and
+   this rail's panel does — white 10% would vanish on the light surface. Same
+   shape as the DS's own .ds-input light override. */
+.kbd-qs-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: var(--gutter-sm);
+  background: var(--ksg-w10);
+}
+html[data-theme='light'] .kbd-qs-divider,
+html.light .kbd-qs-divider {
+  background: var(--ksg-b10);
+}
+html[data-theme='light'] .kbd-qs-icon.active,
+html.light .kbd-qs-icon.active {
+  background: var(--ksg-b10);
+}
+
+/* Marquee box — drawn in board-local coordinates while a drag is in progress.
+   Dashed, so it reads as a transient selection rather than a painted region. */
+.kbd-marquee {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  border: 1px dashed var(--accent-color);
+  border-radius: var(--radius-sm);
+  background: var(--accent-dimmest);
+}
+.kbd[data-marquee] {
+  cursor: crosshair;
+  user-select: none;
+  /* A touch drag has to draw the box, not pan the canvas. */
+  touch-action: none;
+}
+
+/* ── Settings tab ─────────────────────────────────────── */
+/* Sections/labels/gaps come from the shared .ds-ng3-* primitives —
+   only keyboard-specific layout lives below. */
+.pdm-settings {
+  min-height: 266px;
+}
+.pdm-settings-col .ds-ng3-section:first-child {
+  flex: 1.7;
+}
+.pdm-settings-col .ds-ng3-section:last-child {
+  flex: 1;
+}
+.pdm-settings-mode {
+  flex: 1;
+}
+.pdm-settings-fw {
+  font-size: var(--text-body);
+  color: var(--text-dim);
+}
+.pdm-settings-btns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.pdm-settings-btns .ds-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 7px;
+  font-size: var(--text-body);
+}
+.pdm-settings .ds-dropdown {
+  width: 100%;
+}
+.pdm-settings-mode .ds-toggle-group {
+  width: 100%;
+}
+.pdm-settings-mode .ds-toggle-group-btn {
+  flex: 1;
+}
+.pdm-settings-desc {
+  font-size: var(--text-body);
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LIGHTING TAB  (.pdm-lights + .pdm-editor) — Phase 2
+   Ported from vanilla css/prototype.css (.pdm-lights / .pdm-preset / .pdm-editor).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Per-key backlight paint (lighting mode). */
+.kbd-stage[data-kb-mode='lights'] .kbd-key.lit {
+  background:
+    radial-gradient(ellipse at 50% 135%, var(--key-rgb, transparent) -10%, transparent 78%),
+    linear-gradient(180deg, var(--surface-hover), var(--surface-active));
+  border-color: color-mix(in srgb, var(--key-rgb, transparent) 45%, var(--border-med));
+}
+
+/* Ambient hero glow behind the keyboard, tinted by the active preset. */
+.kbd-hero-glow {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  width: 62%;
+  height: 66%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, var(--glow, rgba(168, 85, 247, 0.55)) 0%, rgba(168, 85, 247, 0) 65%);
+  filter: blur(28px);
+  opacity: 0.85;
+  z-index: 0;
+  pointer-events: none;
+  animation: kbd-pulse 4s ease-in-out infinite;
+}
+@keyframes kbd-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.95; }
+}
+.kbd-hero .kbd-stage {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Lighting panel shell ── */
+.pdm-lights {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-tablet);
+  height: 340px;
+}
+.pdm-lights-body {
+  flex: 1;
+  min-height: 0;
+}
+/* ── Brightness rail ── */
+.pdm-bright {
+  flex: 0 0 auto;
+  align-items: center;
+  padding: var(--gutter-tablet);
+}
+.pdm-bright-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.pdm-bright-icon {
+  display: flex;
+  color: var(--text-dim);
+}
+.pdm-bright-slider {
+  flex: 1;
+  min-height: 0;
+  width: 24px;
+  position: relative;
+  container-type: size;
+}
+.pdm-bright-slider .ds-slider {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100cqh;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+/* ── Presets panel ── */
+.pdm-presets {
+  flex: 1;
+  position: relative;
+}
+.pdm-presets-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  align-content: start;
+  gap: 2px var(--gutter);
+  padding-bottom: calc(var(--gutter) * 2);
+  overflow-y: auto;
+}
+.pdm-preset {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  transition: background var(--dur-fast) var(--ease-default);
+}
+.pdm-preset:hover,
+.pdm-preset.menu-open {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.pdm-preset.active {
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+.pdm-preset-pick {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  height: 100%;
+  padding: 0 var(--gutter-sm);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  text-align: left;
+  cursor: pointer;
+}
+.pdm-preset-pick > span:last-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pdm-preset-swatch {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border-med);
+  box-shadow: var(--shadow-lv-1);
+}
+.pdm-preset-fx {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.pdm-preset:hover .pdm-preset-fx,
+.pdm-preset.active .pdm-preset-fx {
+  color: inherit;
+}
+.pdm-preset-menu {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: var(--gutter-xs);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.pdm-preset:hover .pdm-preset-menu,
+.pdm-preset.menu-open .pdm-preset-menu {
+  opacity: 1;
+}
+.pdm-preset-menu:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* preset ⋮ context menu (per-row) */
+.pdm-preset-cmenu {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 6px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 196px;
+  padding: var(--gutter-sm);
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lv-3);
+}
+.pdm-cmenu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  height: 32px;
+  padding: 0 var(--gutter-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  text-align: left;
+  cursor: pointer;
+}
+.pdm-cmenu-item:hover {
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+.pdm-cmenu-item.danger:hover {
+  color: var(--red);
+}
+
+/* new-preset FAB */
+.pdm-preset-fab {
+  position: absolute;
+  right: var(--gutter-tablet);
+  bottom: var(--gutter-tablet);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--accent-color);
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: var(--text-on-fill);
+  cursor: pointer;
+  box-shadow: var(--shadow-lv-2);
+  transition: transform var(--dur-fast) var(--ease-default);
+}
+.pdm-preset-fab:hover {
+  transform: scale(1.08);
+}
+.pdm-preset-fab:active {
+  transform: scale(0.96);
+}
+
+/* ── Preset editor overlay ── */
+.pdm-editor {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+}
+.pdm-editor-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-sm);
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lv-3);
+}
+.pdm-editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--gutter-sm);
+}
+.pdm-editor-effects,
+.pdm-editor-params {
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--gutter-mobile) var(--gutter);
+}
+.pdm-editor-effects {
+  flex: 0 0 184px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.pdm-fx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pdm-editor-params {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.pdm-editor-cols {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--gutter);
+}
+.pdm-editor-vrule,
+.pdm-color-vrule {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 1px;
+  background: var(--border);
+}
+
+/* assignment / category rows (effects list) */
+.pdm-assign-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  width: 100%;
+  padding: 6px var(--gutter-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default);
+}
+.pdm-assign-item:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.pdm-assign-item.active {
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+.pdm-assign-item span {
+  flex: 1;
+  min-width: 0;
+}
+
+/* colour picker */
+.pdm-color {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+}
+.pdm-color-pills {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter);
+}
+.pdm-color-pill {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lv-1);
+  cursor: pointer;
+}
+.pdm-color-pill.active {
+  border-color: var(--white);
+  outline: 1px solid var(--accent-color);
+  outline-offset: 2px;
+}
+.pdm-color-rand {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  height: 32px;
+  padding: 0 var(--gutter);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius-card);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  cursor: pointer;
+}
+.pdm-color-rand:hover {
+  border-color: var(--text-dim);
+}
+.pdm-color-rand svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-dim);
+}
+.pdm-color-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--gutter);
+}
+.pdm-color-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--gutter);
+}
+.pdm-color-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-tablet);
+}
+.pdm-cslider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius-card);
+  background: var(--surface-active);
+  cursor: pointer;
+  outline: none;
+}
+.pdm-cslider::-webkit-slider-runnable-track {
+  height: 12px;
+  background: transparent;
+}
+.pdm-cslider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: calc(-1 * var(--gutter-xs) - 1px);
+  border-radius: 50%;
+  background: var(--cslider-thumb, var(--white));
+  border: 4px solid var(--white);
+  box-shadow: var(--shadow-lv-1);
+  cursor: pointer;
+}
+
+/* hex field */
+.pdm-hex {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  max-width: 168px;
+  height: 32px;
+  padding: 0 var(--gutter-sm);
+  background: var(--bg-base);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius-sm);
+}
+.pdm-hex:focus-within {
+  border-color: var(--accent-dim);
+}
+.pdm-hex-sign {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  color: var(--text-dim);
+}
+.pdm-hex-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+.pdm-hex-copy {
+  display: flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.pdm-hex-copy:hover {
+  color: var(--text-dim);
+}
+
+/* swatch palette */
+.pdm-swatches {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 24px);
+  gap: var(--gutter-xs);
+  align-content: flex-start;
+}
+.pdm-sw,
+.pdm-sw-add {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border-med);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.pdm-sw {
+  box-shadow: var(--shadow-lv-1);
+}
+.pdm-sw:hover,
+.pdm-sw-add:hover {
+  border-color: var(--text-dim);
+}
+.pdm-sw-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  color: var(--text-dim);
+}
+
+/* direction / speed / opacity */
+.pdm-fx-params {
+  flex: 0 0 168px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+}
+.pdm-fx-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.pdm-fx-slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pdm-fx-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+/* angle dial */
+.pdm-angle {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+.pdm-angle-dial {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-base);
+  border: 1px solid var(--border-med);
+  cursor: grab;
+  touch-action: none;
+}
+.pdm-angle-dial:active {
+  cursor: grabbing;
+}
+.pdm-angle-needle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 11px;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 1px;
+  background: var(--text-primary);
+  transform-origin: 0 50%;
+  transform: rotate(var(--angle, 0deg));
+}
+.pdm-angle-input {
+  width: 52px;
+  height: 32px;
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  text-align: center;
+  outline: none;
+}
+.pdm-angle-input:focus {
+  border-color: var(--accent-dim);
+}
+.pdm-angle-steppers {
+  display: flex;
+  flex-direction: column;
+}
+.pdm-angle-steppers button {
+  display: flex;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.pdm-angle-steppers button:hover {
+  color: var(--text-primary);
+}
+
+/* CTA */
+.pdm-editor-cta {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gutter-sm);
+}
+.pdm-editor-cta .ds-btn {
+  padding: 7px 14px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   KEYS & MACROS TAB  (.pdm-keys) — Phase 3
+   Assignment rail + searchable keycap browser + click-to-bind on the hero.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Inactive-layer dot — the OTHER layer carries an assignment on this key. */
+.kbd-key::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: calc(var(--ku) * 0.1);
+  height: calc(var(--ku) * 0.1);
+  border-radius: 50%;
+  background: var(--accent-color);
+  opacity: 0;
+}
+.kbd[data-kb-layer='base'] .kbd-key[data-has-fn]::after,
+.kbd[data-kb-layer='base'] .kbd-key[data-bind-fn]::after,
+.kbd[data-kb-layer='fn'] .kbd-key[data-bind-base]::after {
+  opacity: 0.7;
+}
+.kbd-stage[data-kb-mode='lights'] .kbd-key::after {
+  display: none;
+}
+
+.pdm-keys {
+  display: flex;
+  gap: var(--gutter-sm);
+  height: 340px;
+}
+.pdm-keys-rail,
+.pdm-keys-browse {
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--gutter-tablet) var(--gutter);
+}
+
+/* Left — assignment rail */
+.pdm-keys-rail {
+  flex: 0 0 200px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-tablet);
+}
+.pdm-keys-rail-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  color: var(--text-primary);
+}
+.pdm-keys-rail-head .ds-icon {
+  color: var(--text-muted);
+}
+.pdm-assign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pdm-keys-rail-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.pdm-keys-rail-foot .ds-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 7px;
+}
+.pdm-keys-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+/* category header row shares the .pdm-assign-item look */
+.pdm-cat {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  width: 100%;
+  padding: 6px var(--gutter-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default);
+}
+.pdm-cat:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.pdm-cat.expanded {
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+.pdm-cat > .ds-icon:first-child {
+  flex-shrink: 0;
+}
+.pdm-cat span {
+  flex: 1;
+  min-width: 0;
+}
+.pdm-cat-chevron {
+  color: var(--text-muted);
+  transition: transform var(--dur-fast) var(--ease-default);
+}
+.pdm-cat.expanded .pdm-cat-chevron {
+  transform: rotate(90deg);
+}
+
+/* Right — key browser */
+.pdm-keys-browse {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-tablet);
+}
+.pdm-keys-browse .ds-input-group {
+  max-width: 360px;
+  flex-shrink: 0;
+}
+.pdm-cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.pdm-cat-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-sm) var(--gutter-xs) var(--gutter-tablet);
+}
+.pdm-keycap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: var(--gutter-xs) 2px;
+  background: var(--surface-active);
+  border: 1px solid var(--border-med);
+  border-radius: 6px;
+  box-shadow: var(--shadow-lv-1);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: var(--font-medium);
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  text-align: center;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default),
+    transform var(--dur-instant) var(--ease-default);
+}
+.pdm-keycap:hover {
+  border-color: var(--text-dim);
+}
+.pdm-keycap:active {
+  transform: scale(0.94);
+}
+.pdm-keycap.active {
+  background: var(--accent-dim);
+  border-color: var(--accent-color);
+}
+.pdm-keys-empty {
+  padding: var(--gutter) var(--gutter-sm);
+  font-size: var(--text-body);
+  color: var(--text-muted);
+}
+
+/* Selected-key readout */
+.pdm-keys-target {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  flex-shrink: 0;
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.pdm-keys-target[data-state='empty'] {
+  background: transparent;
+  border-color: transparent;
+  padding-left: var(--gutter-xs);
+}
+.pdm-keys-target[data-state='empty'] .pdm-keys-target-key {
+  display: none;
+}
+.pdm-keys-target-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 var(--gutter-xs);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius-sm);
+  background: var(--surface-active);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.pdm-keys-target[data-state='mapped'] .pdm-keys-target-key {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+.pdm-keys-target-info {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-body);
+  color: var(--text-dim);
+}
+.pdm-keys-target-clear {
+  flex-shrink: 0;
+  padding: 4px 12px;
+}

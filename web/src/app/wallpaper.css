@@ -1,0 +1,31 @@
+/* Full-bleed wallpaper background — ported from vanilla css/prototype.css
+   `#custom-wp-layer`. Fixed to the viewport at z-index:-1 so it paints above
+   the body gradient canvas but behind all in-flow app content (no positioned
+   ancestor needed — avoids creating a stacking/containing-block that would
+   disturb the home carousel aura). */
+.wp-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: var(--wp-opacity, 1);
+}
+.wp-img {
+  position: absolute;
+  inset: -8%; /* bleed so the blur edges never reveal a hard border */
+  background: center / cover no-repeat;
+  filter: blur(var(--wp-blur, 44px)) saturate(0.9) brightness(0.72);
+}
+.wp-dim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.9));
+}
+/* Light theme — softer dim + brighter image, matching vanilla. */
+html.light .wp-img {
+  filter: blur(var(--wp-blur, 44px)) saturate(0.85) brightness(1.35);
+}
+html.light .wp-dim {
+  background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.7));
+}

@@ -1,0 +1,395 @@
+/* Play page — full-bleed fixed hero slideshow + a floating "recently played"
+   rail (thumbs switch the hero; logo + friends update; everything fades on
+   scroll as content rises over it). Ported from the vanilla `#page-play`. */
+
+/* Break the page out of .shell-content's max-width + side padding so the hero
+   and rail span the full app window. The content below re-constrains itself. */
+.play-page {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+.play-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 var(--gutter) calc(var(--gutter) * 3);
+}
+/* Pushes the first content row below the visible hero. */
+.play-scroll-spacer {
+  height: 520px;
+  pointer-events: none;
+}
+
+/* ── Hero (fixed to viewport, full-bleed behind content) ── */
+.play-hero {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 640px;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  transition: opacity 60ms linear;
+}
+.play-hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1200ms var(--ease-default);
+  /* faded edges: top fade + side fades, composited */
+  -webkit-mask-image:
+    linear-gradient(180deg, black 50%, transparent 100%),
+    linear-gradient(90deg, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(180deg, black 50%, transparent 100%),
+    linear-gradient(90deg, transparent 0%, black 12%, black 88%, transparent 100%);
+  mask-composite: intersect;
+  transform: translateZ(0);
+}
+.play-hero-slide.active {
+  opacity: 1;
+  filter: brightness(0.9);
+}
+/* Ken-Burns as a keyframe (fires on rule-match, so the active slide animates). */
+@keyframes playHeroKenBurns {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale(1.12);
+  }
+}
+.play-hero-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center center;
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: center center;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+.play-hero-slide.active .play-hero-art {
+  animation: playHeroKenBurns 16s ease-out;
+}
+
+/* ── Rail (floating top-right, fades on scroll) ── */
+.play-hero-rail {
+  position: absolute;
+  top: 8px;
+  right: 40px;
+  width: 420px;
+  z-index: 3;
+  transition: opacity 60ms linear;
+  @media (min-width: 1600px) {
+    top: 315px;
+  }
+}
+.play-hero-rail.faded {
+  pointer-events: none;
+}
+.play-rail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: rgba(10, 10, 10, 0.55);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  backdrop-filter: blur(60px);
+  -webkit-backdrop-filter: blur(60px);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4), 0 2px 21px rgba(0, 0, 0, 0.4);
+}
+.play-rail-thumbs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 72px;
+}
+.play-rail-thumb {
+  appearance: none;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.55;
+  transition:
+    opacity var(--dur-normal) var(--ease-default),
+    transform var(--dur-fast) var(--ease-default),
+    box-shadow var(--dur-fast) var(--ease-default);
+}
+.play-rail-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+.play-rail-thumb:hover {
+  opacity: 0.85;
+  transform: translateY(-2px);
+}
+.play-rail-thumb.active {
+  opacity: 1;
+  width: 72px;
+  height: 72px;
+  flex-basis: 72px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+.play-rail-logo {
+  width: 100%;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.play-rail-logo img {
+  max-width: 316px;
+  max-height: 151px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.55));
+  animation: playLogoFade var(--dur-normal) var(--ease-default);
+}
+@keyframes playLogoFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.play-rail-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.play-rail-friends-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.play-rail-friend-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+}
+.play-rail-friend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #49f296;
+  box-shadow: 0 0 8px rgba(73, 242, 150, 0.6);
+}
+.play-rail-friend-count strong {
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+.play-rail-avatars {
+  display: flex;
+}
+.play-rail-avatar {
+  width: 32px;
+  height: 32px;
+  margin-left: -10px;
+  border-radius: 50%;
+  border: 2px solid rgba(10, 10, 10, 0.8);
+  background: var(--surface-active);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  color: #fff;
+}
+.play-rail-avatar:first-child {
+  margin-left: 0;
+}
+.play-rail-avatar.more {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-dim);
+}
+/* Footer actions — DS Buttons (accent Play + default Go to My Games). Anchored
+   right where the bespoke play button sat, whether or not the friends block
+   is showing. */
+.play-rail-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1600px) {
+  .play-hero {
+    height: 900px;
+  }
+  .play-scroll-spacer {
+    height: 760px;
+  }
+  .play-hero-rail {
+    right: 240px;
+  }
+}
+@media (max-width: 1100px) {
+  .play-hero-rail {
+    right: 24px;
+    width: 360px;
+  }
+}
+
+/* ── "My Games" library ── */
+/* Header row is the shared <SectionHeader> (.pg-section), matching Gallery. */
+/* .play-library {
+  margin-top: calc(var(--gutter) * 2);
+} */
+.lib-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+  margin: var(--gutter-sm) 0 var(--gutter);
+}
+.lib-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xs);
+  min-width: 0;
+}
+.lib-controls-right {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  flex-shrink: 0;
+}
+
+/* ── Game-tile ••• context menu (GameTileMenu) ── */
+.gtm-pop {
+  z-index: 8000; /* above content + nav; matches other floating menus */
+}
+/* Checkbox / radio in the menu rows are state-only — the row owns the click. */
+.gtm-ctrl {
+  display: inline-flex;
+  pointer-events: none;
+}
+/* Platform row label: platform glyph + name. */
+.gtm-plat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+
+/* View-options popover trigger */
+.lib-options-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.lib-options-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color), transparent 88%);
+  color: var(--accent-color);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default);
+}
+.lib-options-btn:hover,
+.lib-options-btn.active {
+  background: color-mix(in srgb, var(--accent-color), transparent 78%);
+}
+.lib-options-btn svg {
+  width: 15px;
+  height: 15px;
+}
+.lib-options-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 248px;
+  max-height: 72vh;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+/* Display rows inside the menu */
+.lib-zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--gutter-xs) var(--gutter-sm);
+}
+.lib-zoom-row .ds-slider {
+  flex: 1;
+}
+.lib-zoom-icon {
+  display: inline-flex;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.lib-perpage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-xs) var(--gutter-sm);
+  color: var(--text-dim);
+}
+.lib-save-row {
+  color: var(--accent-color);
+}
+
+/* The tile grid — size driven by the menu's slider via --lib-tile. */
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--lib-tile, 140px), 1fr));
+  gap: var(--gutter);
+}
+
+/* Filter groups inside the view-options menu (collapsible facet → checkboxes) */
+.lib-filter-header {
+  cursor: pointer;
+}
+.lib-filter-chevron {
+  transition: transform var(--dur-fast) var(--ease-default);
+}
+.lib-filter-chevron.open {
+  transform: rotate(180deg);
+}
+.lib-filter-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 8px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent-color);
+  color: var(--text-on-accent);
+  font-size: 10px;
+  font-weight: var(--font-bold);
+}
+.lib-filter-body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 4px var(--gutter-sm) 10px calc(var(--gutter) + 6px);
+}

@@ -1,0 +1,169 @@
+/* SKU Configurator page — spec form + live scaled canvas preview. */
+
+.cfg-cols {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: var(--gutter-sm);
+  align-items: start;
+}
+
+.cfg-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  min-width: 0;
+}
+.cfg-side {
+  position: sticky;
+  top: calc(var(--nav-full-h) + var(--gutter-sm));
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  min-width: 0;
+}
+
+.cfg-editing {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+
+.cfg-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gutter-xs);
+}
+
+.cfg-feature.cfg-off {
+  opacity: 0.6;
+}
+.cfg-feature-titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+  min-width: 0;
+}
+.cfg-feature-name {
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.cfg-feature-desc {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+.cfg-sub-label {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+
+.cfg-cw-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.cfg-cw-row .reg-cw-dot {
+  flex-shrink: 0;
+}
+/* Mouse callout slot rows — checkbox + slot code + id/label inputs. An
+   unclaimed slot stays visible but recedes, so the six anchors on the hero
+   are always discoverable. */
+.cfg-callout-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.cfg-callout-row.cfg-off {
+  opacity: 0.55;
+}
+.cfg-callout-slot {
+  flex-shrink: 0;
+  width: 24px;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.cfg-callout-row .ds-input-group {
+  min-width: 0;
+}
+
+.cfg-cw-default {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxxs);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cfg-actions {
+  display: flex;
+  gap: var(--gutter-xs);
+  flex-wrap: wrap;
+  padding: var(--gutter-xs) 0 var(--gutter);
+}
+
+/* ── Live preview stage ──
+   The device canvases are fixed-position full-viewport overlays; inside the
+   stage they become absolute within a contained, scaled 1440×900 world. */
+.cfg-stage {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-base);
+}
+.cfg-stage-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1440px;
+  height: 900px;
+  transform-origin: top left;
+}
+.cfg-stage-world .dc-canvas {
+  position: absolute;
+  padding: var(--gutter);
+}
+.cfg-stage-world .dc-status,
+.cfg-stage-world .dc-close {
+  top: var(--gutter);
+}
+/* The stage has no app nav — neutralize the nav clearance. */
+.cfg-stage-world .dc-hero {
+  padding-top: var(--gutter);
+}
+
+.cfg-json pre {
+  margin: 0;
+  max-height: 300px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.cfg-toast {
+  position: fixed;
+  bottom: var(--gutter);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  padding: var(--gutter-xs) var(--gutter-sm);
+  background: var(--ksg-n900);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  box-shadow: var(--shadow-lv-3);
+}
+
+@media (max-width: 1024px) {
+  .cfg-cols {
+    grid-template-columns: 1fr;
+  }
+  .cfg-side {
+    position: static;
+  }
+}

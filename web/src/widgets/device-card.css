@@ -1,0 +1,363 @@
+/* ── Device card (.ds-devcard) ──
+   The React port of the vanilla `.w-devcard`, on the DS `.w` surface. The card
+   is a size container, so its layout adapts to its OWN aspect ratio (set by the
+   board/Metro footprint) — the design team owns each size:
+     • wider than tall  → device photo in the right half (the reference design)
+     • square or taller → device photo centered, text below
+   `.dev-battery` / `.dev-shortcuts` come from the shared DS (shared/components.css). */
+.ds-devcard {
+  container: devcard / size;
+  position: relative;
+  min-height: 160px; /* one board row; the cell drives the real height */
+  cursor: pointer;
+}
+/* Battery floats top-left in every layout (out of the photo/text flow). */
+.ds-devcard .dev-battery {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  z-index: 2;
+}
+.ds-devcard .devw-body {
+  display: flex;
+  gap: var(--gutter-sm);
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+.ds-devcard .devw-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: var(--gutter-xs);
+}
+/* Title/sub/shortcuts pin to the bottom of the column. */
+.ds-devcard .devw-textblock {
+  margin-top: auto;
+}
+.ds-devcard .devw-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-section-lg);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.ds-devcard .devw-sub {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.ds-devcard .dev-shortcuts {
+  margin-top: var(--gutter-mobile);
+}
+.ds-devcard .devw-photo {
+  width: 42%;
+  flex-shrink: 0;
+  align-self: stretch;
+  background-size: contain;
+  background-position: center right;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 4px 18px color-mix(in srgb, var(--accent-color), transparent 80%));
+}
+
+/* ── Centered photo: square/taller-than-wide, OR the compact ~1×1 size ── */
+@container devcard (max-aspect-ratio: 1 / 1) or ((max-width: 260px) and (max-height: 230px)) {
+  .ds-devcard .devw-body {
+    flex-direction: column;
+  }
+  .ds-devcard .devw-photo {
+    order: -1; /* photo on top, centered */
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    background-position: center center;
+  }
+  .ds-devcard .devw-main {
+    flex: 0 0 auto;
+  }
+  .ds-devcard .devw-textblock {
+    margin-top: 0;
+  }
+}
+
+/* ── Compact (~1×1): too small for the subtitle + shortcuts — show just the
+   battery, the centered device photo, and a small 2-line name (a launcher tile). */
+@container devcard (max-width: 260px) and (max-height: 230px) {
+  .ds-devcard .devw-sub,
+  .ds-devcard .dev-shortcuts {
+    display: none;
+  }
+  .ds-devcard .devw-title {
+    font-size: var(--text-caption);
+    line-height: 1.15;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* tighten the photo's accent glow at small size */
+  .ds-devcard .devw-photo {
+    filter: drop-shadow(0 2px 10px color-mix(in srgb, var(--accent-color), transparent 85%));
+  }
+}
+
+/* KVM — this peripheral is currently routed to another PC by the KVM switch.
+   The card dims and its subtitle reads "On <PC>" in amber instead of connected. */
+.ds-devcard.routed-away {
+  opacity: 0.72;
+}
+.ds-devcard .devw-sub.devw-away {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--yellow, #eab308);
+}
+
+/* ── Rich monitor card — the monitor section's 3-size design (2026-07-01/06).
+   Board footprints: Compact 2×1 · Standard 3×2 · Expanded 6×3. Container
+   queries measure the card's CONTENT box (24px padding excluded): rows are
+   160px + 24px gap → 2 rows = 296px content, 3 rows = 480px; 6 columns ≈ 988px.
+   Everything scoped to `.ds-devcard.rich` — non-monitor cards untouched. */
+.ds-devcard .devw-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  min-width: 0;
+}
+.ds-devcard .devw-mode {
+  display: none; /* mode chip is an Expanded-tier element */
+  flex-shrink: 0;
+}
+.ds-devcard.rich .devr {
+  display: none; /* Compact (1 row): launcher content only */
+}
+
+/* AI-managed state is shown by the slider's TRACK COLOUR (not a trailing tag,
+   so the slider keeps full width). Orange = OMEN AI / auto; the default accent =
+   manual. The Slider paints its fill with var(--accent-color), so overriding
+   that one variable on the managed cell recolours the track WITHOUT touching the
+   shared Slider component (rule 11). Dragging flips it to manual (RichPanel) and
+   the track returns to the accent colour. Tier-agnostic on purpose — the same
+   state must read the same at Standard and Expanded. */
+/* AI-auto slider = the OMEN brand GRADIENT track (red→orange→yellow), painted by
+   the Slider's `gradient` prop — proposed managed variant for the DS (Chris
+   agenda). A gradient (not a solid) so it reads as AI/auto and never collides
+   with the user's solid accent. Here we only tint the THUMB warm to match the
+   track; the Auto switch stays the normal accent (blue). Scoped to .ds-slider so
+   the switch is unaffected. */
+.ds-devcard.rich .devr-cell.managed .ds-slider {
+  --accent-color: var(--omen-orange);
+}
+
+/* Auto (managed) = READ-ONLY slider: hide the thumb + make it non-interactive,
+   while the gradient fill stays bright to show the AI-set level. No handle =
+   clear "you don't grab this, OMEN AI owns it"; switch Auto OFF (the toggle) to
+   get a manual handle back. Proposed managed-slider variant (Chris agenda D-3),
+   scoped to our monitor managed sliders so Chris's base slider is unchanged. */
+.ds-devcard.rich .devr-cell.managed .ds-slider input[type='range'] {
+  pointer-events: none;
+}
+.ds-devcard.rich .devr-cell.managed .ds-slider input[type='range']::-webkit-slider-thumb {
+  opacity: 0;
+}
+.ds-devcard.rich .devr-cell.managed .ds-slider input[type='range']::-moz-range-thumb {
+  opacity: 0;
+}
+
+/* % value — hover-reveal, not always-on (small widgets don't need it persistently;
+   the fill + handle already cue the level). The AUTO toggle stays always-visible
+   — it's the control, must always be legible (2026-07-23 Cindy). */
+.ds-devcard.rich .devr-pct {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.ds-devcard.rich .devr-cell:hover .devr-pct,
+.ds-devcard.rich .devr-cell:focus-within .devr-pct {
+  opacity: 1;
+}
+
+/* Auto on/off switch (DS Toggle) + label — fixed-width slot so every slider
+   track lines up. The switch flips both ways; the track colour is the
+   at-a-glance state. */
+/* FIXED width (not min-width) so the empty (Volume) slot reserves the same space
+   as the Auto-switch slots → all three tracks come out exactly equal length. */
+.ds-devcard.rich .devr-toggle {
+  flex: 0 0 78px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gutter-xxs);
+}
+.ds-devcard.rich .devr-auto-lbl {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Ambient / under-glow behind the monitor render — a FAINT warm pool (Game
+   under-glow = warm, research), not a cyan halo washing the whole product, and
+   deliberately subtle so the card isn't all-orange (2026-07-23 Cindy). Gated to
+   .rich so Chris's peripheral photos keep their default accent glow. Final hue
+   should follow the active mode's under-glow colour (Thursday model). */
+.ds-devcard.rich .devw-photo {
+  filter: drop-shadow(0 16px 30px color-mix(in srgb, var(--orange), transparent 84%));
+}
+
+/* Standard (2 rows = ≥280px content): color-preset readout + brightness slider */
+@container devcard (min-height: 280px) {
+  .ds-devcard.rich .devw-body {
+    display: grid;
+    grid-template:
+      'main photo' 1fr
+      'rich photo' auto / 1fr 42%;
+    gap: var(--gutter-sm);
+  }
+  .ds-devcard.rich .devw-main {
+    grid-area: main;
+    min-width: 0;
+  }
+  .ds-devcard.rich .devw-photo {
+    grid-area: photo;
+    width: 100%;
+  }
+  .ds-devcard.rich .devr {
+    grid-area: rich;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gutter-xs);
+    min-width: 0;
+  }
+  .ds-devcard.rich .devr-meta,
+  .ds-devcard.rich .devr-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gutter-xs);
+    min-width: 0;
+  }
+  .ds-devcard.rich .devr-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--gutter-xs);
+    min-width: 0;
+    color: var(--text-dim);
+  }
+  .ds-devcard.rich .devr-cell .ds-slider {
+    flex: 1;
+    min-width: 0;
+  }
+  /* readout label — muted, quieter than the value it names */
+  .ds-devcard.rich .devr-lbl {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .ds-devcard.rich .devr-val {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ds-devcard.rich .devr-pct {
+    min-width: 34px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  /* Standard shows the color preset + brightness only */
+  .ds-devcard.rich .devr-conn,
+  .ds-devcard.rich .devr-output,
+  .ds-devcard.rich .devr-contrast,
+  .ds-devcard.rich .devr-volume {
+    display: none;
+  }
+}
+
+/* Square-ish rich cards (e.g. 2×2): the wide grid above (photo right 42%) would
+   strand the photo mid-card and crush the slider into a half-width column. Follow
+   Chris's base square anatomy instead — photo TOP (centered identity), then
+   title, then the controls across the FULL width (2026-07-23 Cindy). Content
+   stays the Standard tier (preset + brightness); only the layout changes. */
+/* threshold 5/4: a 2×2 board cell is a hair wider than tall (~1.02), while the
+   wide 3×2 is ~1.65 — 1.25 splits them cleanly */
+@container devcard (min-height: 280px) and (max-aspect-ratio: 5 / 4) {
+  .ds-devcard.rich .devw-body {
+    grid-template:
+      'photo' 1fr
+      'main'  auto
+      'rich'  auto / 1fr;
+  }
+  .ds-devcard.rich .devw-photo {
+    background-position: center;
+  }
+  .ds-devcard.rich .devw-textblock {
+    margin-top: 0;
+  }
+}
+
+/* Expanded (≥640×440): the product render stays LARGE on the right half —
+   identity register (2026-07-22 register B): it shows the physical design
+   including the under-glow hardware; it does NOT carry live state. The left
+   half follows the base card's anatomy (same as Chris's peripheral cards):
+   top-left = the floating status slot (mode badge here — monitors are wired,
+   so no battery), empty space above, content pinned to the BOTTOM — identity,
+   then the readout line (preset·connection·output), then the slider group.
+   Sliders are half-width. AI-managed sliders carry the DS omen-ai Badge;
+   manual ones are unmarked. Separation is GROUP + gap, not boxes. */
+@container devcard (min-width: 640px) and (min-height: 440px) {
+  .ds-devcard.rich .devw-body {
+    grid-template:
+      'main photo' 1fr
+      'rich photo' auto / 1fr 1fr;
+    column-gap: var(--gutter);
+  }
+  /* no margin-top override here: the base `.devw-textblock { margin-top: auto }`
+     keeps Chris's bottom gravity — top-left stays open like every device card */
+  .ds-devcard.rich .devw-photo {
+    grid-area: photo;
+    width: 100%;
+    background-position: center;
+  }
+  /* current mode — the card's at-a-glance status, in the same floating
+     top-left slot the base card gives the battery */
+  .ds-devcard.rich .devw-mode {
+    display: inline-flex;
+    position: absolute;
+    top: var(--gutter);
+    left: var(--gutter);
+    z-index: 2;
+    /* mode identity colour — Game = warm (under-glow research), so the mode is
+       the card's one prominent status. Proposal ahead of the Thursday mode-
+       colour model (Work = cool, Create = neutral would fill the same slot). */
+    background: var(--orange-dim);
+    color: var(--orange);
+    border: 1px solid color-mix(in srgb, var(--orange), transparent 55%);
+  }
+  .ds-devcard.rich .devr {
+    gap: var(--gutter-sm);
+  }
+  /* readouts stacked vertically, left-aligned (a 2-then-1 wrap read awkwardly);
+     set off from the sliders by a hairline */
+  .ds-devcard.rich .devr-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gutter-xxs);
+    border-top: 1px solid var(--border);
+    padding-top: var(--gutter-xs);
+  }
+  .ds-devcard.rich .devr-conn,
+  .ds-devcard.rich .devr-output,
+  .ds-devcard.rich .devr-contrast,
+  .ds-devcard.rich .devr-volume {
+    display: flex;
+  }
+}

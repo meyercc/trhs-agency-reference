@@ -1,0 +1,22 @@
+/* ── PerformV6 (#/perform-v6) — reading-forms variant over the V5 baseline ──
+   Loads ON TOP of perform-v5.css (the page root carries both .pv5-root and
+   .pv6-root). Adds only the V6 vocabulary: the Metric / Level hero-reading
+   forms. V5 files untouched. (Icon tiles tried and removed 2026-07-23.) */
+
+/* Metric — big mono number + unit (a card's hero reading, bright but neutral:
+   the status word stays the only COLORED reading). */
+.pv6-metrics { display: flex; gap: var(--gutter); }
+.pv6-metric { margin-top: var(--gutter-xs); }
+.pv6-metric-top { display: flex; align-items: baseline; gap: 6px; }
+.pv6-metric-a { color: var(--text-muted); font-size: var(--text-caption); }
+.pv6-metric-v { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 26px; line-height: 1; color: var(--text-primary); }
+.pv6-metric-u { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--text-muted); }
+.pv6-metric-l { font-size: var(--text-caption); color: var(--text-muted); margin-top: 4px; }
+
+/* Level — full-width bar + value (neutral fill, never accent). */
+.pv6-level { margin-top: var(--gutter-xs); }
+.pv6-level-bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.pv6-level-bar i { display: block; height: 100%; border-radius: 3px; background: rgba(255, 255, 255, 0.32); }
+.pv6-level-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 5px; }
+.pv6-level-v { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: var(--text-section); color: var(--text-primary); }
+.pv6-level-l { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); }

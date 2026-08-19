@@ -1,0 +1,230 @@
+/* OMEN AI modal — scoped styles ported from css/prototype.css (.ai-* / .uv-info-*).
+   Kept under .omenai-modal so nothing leaks into the global design system. */
+
+/* Right panel is a fixed header over a scroll region */
+.omenai-modal .modal-right {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.omenai-modal .ai-scroll {
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.07) transparent;
+}
+
+/* Note: the benefits/considerations cards and .modal-left scroll behaviour are
+   shared across feature modals — see feature-modal.css (.feature-modal). */
+
+/* ── Left hero icon ── */
+.omenai-modal .ai-hero-icon {
+  width: 100px;
+  height: 100px;
+  margin: var(--gutter-sm) 0 22px;
+  position: relative;
+  flex-shrink: 0;
+}
+.omenai-modal .ai-hero-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 200, 215, 0.18) 0%, transparent 70%);
+  animation: ai-pulse 3s ease-in-out infinite;
+}
+@keyframes ai-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* ── Left status row ── */
+.omenai-modal .ai-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--gutter-mobile) 14px;
+  background: rgba(0, 200, 215, 0.06);
+  border: 1px solid rgba(0, 200, 215, 0.18);
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+}
+.omenai-modal .ai-status-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.omenai-modal .ai-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--cyan);
+  box-shadow: 0 0 7px rgba(0, 200, 215, 0.7);
+}
+.omenai-modal .ai-status-label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+.omenai-modal .ai-status-detail {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-subtle);
+}
+
+/* ── Right panel header strip ── */
+.omenai-modal .ai-right-header {
+  padding: 14px 20px var(--gutter-tablet);
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+.omenai-modal .ai-right-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--gutter-sm);
+}
+.omenai-modal .ai-right-title {
+  font-family: var(--font-cond);
+  font-size: var(--text-section);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+}
+.omenai-modal .ai-right-meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+  letter-spacing: 0.04em;
+}
+.omenai-modal .ai-right-stat-row {
+  display: flex;
+  gap: 20px;
+}
+.omenai-modal .ai-right-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.omenai-modal .ai-right-stat-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.omenai-modal .ai-right-stat-val {
+  font-family: var(--font-cond);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.omenai-modal .ai-right-stat-val.cyan {
+  color: var(--cyan);
+}
+
+/* ── Game list ── */
+.omenai-modal .ai-games-list {
+  padding: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+/* Active game card gets a subtle cyan border */
+.omenai-modal .ai-active {
+  border-color: rgba(0, 200, 215, 0.14);
+}
+/* Per-game thumb (settings-group icon override) */
+.omenai-modal .ai-game-thumb {
+  width: 38px;
+  height: 51px;
+  border-radius: var(--radius-sm);
+  background-size: cover;
+  background-position: center top;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.omenai-modal .ai-game-sub {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.omenai-modal .ai-version-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  color: var(--text-subtle);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  margin-left: 6px;
+}
+/* Mode toggle-group sits at the right edge of its row */
+.omenai-modal .ai-mode-group {
+  margin-left: auto;
+}
+/* Guided (learner) goal — says what OMEN AI is deciding on your behalf, so
+   "Auto" isn't an unexplained handover. Matches PowerThermal's takeover note. */
+.omenai-modal .ai-auto-note {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ── Supported Games section ── */
+.omenai-modal .ai-supported-games {
+  margin: var(--gutter-sm) auto 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  width: fit-content;
+}
+.omenai-modal .ai-supported-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.omenai-modal .ai-supported-desc {
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-weight: 300;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: var(--gutter);
+}
+.omenai-modal .ai-supported-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--gutter-sm);
+}
+.omenai-modal .ai-supported-grid .ds-tile {
+  width: auto;
+}
+/* Grid tile badge + platform CTA (were inline styles in vanilla) */
+.omenai-modal .ai-grid-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+}
+.omenai-modal .ai-grid-cta {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-size: 7px;
+  padding: 3px var(--gutter-xs);
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+}
