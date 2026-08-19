@@ -140,7 +140,14 @@ async function main() {
   // Clean slate: no onboard state, no sim state, default board (has the
   // Active Profile widget), Gaming profile.
   await load(send, '#/');
-  await evalJs(send, `localStorage.removeItem('device-onboard'); localStorage.removeItem('device-sim'); localStorage.removeItem('board-layout'); localStorage.setItem('activeProfileId', 'gaming')`);
+  // Seed the board rather than inheriting DEFAULT_LAYOUT: this suite drives a
+  // real profile switch through the Active Profile widget and needs the headset
+  // card present, and the default layout is a product decision that moves. A
+  // seeded layout keeps the suite testing device behaviour, not the default.
+  await evalJs(send, `localStorage.removeItem('device-onboard'); localStorage.removeItem('device-sim'); localStorage.setItem('activeProfileId', 'gaming');
+    localStorage.setItem('board-layout', JSON.stringify(
+      [['profile',2,1],['dev-treehouse',3,2],['dev-mouse',3,2],['dev-monitor',3,2],['dev-headset',3,2]]
+        .map(([id, span, rows]) => ({ id, span, rows }))))`);
 
   // ── The simulator is discoverable in the Admin panel and toggles the HUD ──
   await load(send, '#/?modal=admin');

@@ -109,30 +109,19 @@ export interface BoardItem {
   rows: number;
 }
 
-/** The default board layout (subset + order of the catalog). */
+/**
+ * The default board layout (subset + order of the catalog) — what someone sees
+ * on a first landing, before they have curated anything.
+ *
+ * Deliberately small: the four device cards plus what you last played. The rest
+ * of the catalog is not gone, it is one click away in the widget gallery, and
+ * a board that starts sparse reads as something to build rather than something
+ * to prune. A saved layout in localStorage always wins over this.
+ */
 export const DEFAULT_LAYOUT: BoardItem[] = [
-  'vitals',
-  'profile',
-  'cpu-status',
-  'gpu-status',
-  'cpu',
-  'thermal',
-  'fanspeed',
-  'power',
-  'light',
-  'storage',
-  'quicklaunch',
-  'lastplayed',
-  'playnext',
-  'omenai',
-  'booster',
-  'lighting',
-  'weather',
-  'appearance',
-  'gamepass',
-  'deals',
   'dev-treehouse',
   'dev-mouse',
   'dev-monitor',
   'dev-headset',
+  'lastplayed',
 ].map((id) => ({ id, span: META_BY_ID[id].span, rows: META_BY_ID[id].rows }));

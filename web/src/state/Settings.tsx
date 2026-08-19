@@ -50,12 +50,13 @@ const SCHEMA = {
   onboarded: { key: 'onboarded', type: 'bool', default: false },
   // Wallpaper preset id + the blur (px, 0–60) / opacity (%, 0–100) of the
   // background layer. Ported from vanilla js/theme.js.
-  wallpaper: { key: 'wallpaper', type: 'string', default: 'red' },
+  wallpaper: { key: 'wallpaper', type: 'string', default: 'blue' },
   wpBlur: { key: 'wpBlur', type: 'number', default: 44 },
   wpOpacity: { key: 'wpOpacity', type: 'number', default: 100 },
-  // Top-nav visibility (ported from vanilla js/settings.js). Both default off
-  // (labels + icons shown); toggling on hides that element for icon-/text-only nav.
-  hideNavLabels: { key: 'hideNavLabels', type: 'bool', default: false },
+  // Top-nav visibility (ported from vanilla js/settings.js). Labels are hidden
+  // by default, so the nav lands icon-only; icons stay. Turning a flag on hides
+  // that element, so both on would leave nothing — the Settings UI is the guard.
+  hideNavLabels: { key: 'hideNavLabels', type: 'bool', default: true },
   hideNavIcons: { key: 'hideNavIcons', type: 'bool', default: false },
 } satisfies Record<string, Spec>;
 export type SettingName = keyof typeof SCHEMA;
