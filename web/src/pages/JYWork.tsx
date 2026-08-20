@@ -27,6 +27,14 @@ const PROTOTYPES: Item[] = [
       'The stab. Three posture domains; the card anatomy (title + door · status reading · actions), three modal templates, the controlled vocabularies, soft governance + wayfinding, and the growth grammar — all on one running page.',
   },
   {
+    href: '#/personalize-v2',
+    title: 'Personalize V2',
+    tag: 'Proposal',
+    tone: 'variant',
+    blurb:
+      'Five families — Lighting · Audio · Display · Keys & Macros · App. Thesis: device modals own single-device controls; Personalize is each family’s cross-device coordination layer, so synchronization sinks into the families instead of forming a section of its own. Lighting is a desk scene of the real product shots, each device lit by its own colour; Display puts every screen in one view and grows the selected screen’s controls beneath it, with everything BETWEEN screens (layout, KVM, auto-switch) behind the card’s Arrangement door.',
+  },
+  {
     href: '#/perform-v6',
     title: 'Perform V6',
     tag: 'Variant',
@@ -73,6 +81,26 @@ const PROTOTYPES: Item[] = [
 
 // Written work (repo files — reference paths, not routes).
 const DOCS: { path: string; blurb: string }[] = [
+  {
+    path: 'docs/method.md',
+    blurb:
+      'How this work is being done, why, and what it costs — the two methods in the room, the division of labour (feature truth in, template conformance out), and thirteen costs stated as bills rather than as concessions, including the one that hides itself.',
+  },
+  {
+    path: 'docs/control-structure.md',
+    blurb:
+      'The master structure: top nav → card or modal, each with an optional sub-control area. One arrangement (list), one switch (interactive image or not), one lookup from the shape of a value to its control element. Ten real surfaces run through it produce no new patterns; exceptions must name which of four parts fails.',
+  },
+  {
+    path: 'docs/homepage-default.md',
+    blurb:
+      'The day-zero question answered as content rather than layout: a seeding function over detected hardware, consent, games and modules; four first-run defaults by host × peripheral ownership; and the two ways the page grows afterwards.',
+  },
+  {
+    path: 'docs/journeys-and-widgets.md',
+    blurb:
+      'Two plain lists so the placeholder widgets can be replaced against an agreement instead of a guess: twelve journeys with owners, and the homepage widget content with what seeds each one.',
+  },
   { path: 'docs/perform-v5-decision-log.md', blurb: 'Every V5 decision, as rules (R1–R14) + per-feature receipts + the ask/homework split.' },
   { path: 'docs/design-decision-records.md', blurb: 'Architecture register — P1–P8 principles with rationale + the open-question ledger.' },
   { path: 'docs/card-modal-scalability-report.md', blurb: 'The long report both labs draw from — card & modal laws with named precedent.' },

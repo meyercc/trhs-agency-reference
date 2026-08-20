@@ -16,12 +16,29 @@ const STATE_LABEL: Record<CellState, string> = {
   hardware: 'OMEN AI begins managing hardware settings',
 };
 
+/**
+ * Page scope, superset of the OMEN AI era. `v0` exists because the MVP moved
+ * (2026-08-06): baseline Treehouse = hardware enablement, and the optimizer
+ * family — OMEN AI, Booster, Network Booster — is read as outside it
+ * (design-lead judgement, not ratified). 0.0 shows the page without the
+ * family; 1.0 and 2.0 are the existing eras, unchanged.
+ */
+export type Scope = 'v0' | 'v1' | 'v2';
+
 export interface ShowcaseRigProps {
   // simulator axes (identical to MatrixRig)
   laptop: Laptop;
   era: Era;
   onLaptop: (l: Laptop) => void;
   onEra: (e: Era) => void;
+  /**
+   * Optional three-value scope (0.0 / 1.0 / 2.0). When provided it REPLACES
+   * the two-value era row — the row's subject widens from "which OMEN AI"
+   * to "which page scope". Callers that don't pass it (V5/V6) render exactly
+   * as before.
+   */
+  scope?: Scope;
+  onScope?: (s: Scope) => void;
   /** OMEN AI enablement — scaffolding so all enablement states are reviewable
    *  (the real on/off will live in the Settings modal, pending Chris) */
   aiOn: boolean;
@@ -115,30 +132,52 @@ export function ShowcaseRig(props: ShowcaseRigProps) {
           aria-label="Simulated laptop"
         />
       </div>
-      <div className="pv3-rig-row">
-        <span className="pv3-rig-label">OMEN AI</span>
-        <ToggleButtonGroup
-          options={[
-            { label: '1.0 (MVP)', value: 'v1' },
-            { label: '2.0', value: 'v2' },
-          ]}
-          value={era}
-          onChange={(v) => onEra(v as Era)}
-          aria-label="OMEN AI era"
-        />
-      </div>
-      <div className="pv3-rig-row">
-        <span className="pv3-rig-label">Enablement</span>
-        <ToggleButtonGroup
-          options={[
-            { label: 'Enabled', value: 'on' },
-            { label: 'Disabled', value: 'off' },
-          ]}
-          value={props.aiOn ? 'on' : 'off'}
-          onChange={(v) => props.onAiOn(v === 'on')}
-          aria-label="OMEN AI enablement"
-        />
-      </div>
+      {props.scope && props.onScope ? (
+        <div className="pv3-rig-row">
+          <span className="pv3-rig-label">Scope</span>
+          <ToggleButtonGroup
+            options={[
+              // "MVP is not a proper word" (owner, 8/11): MVP = the actual
+              // release (~2028). The end-of-October hardware-enablement state
+              // is 0.5 in the team's numbering — label follows team language.
+              { label: '0.5', value: 'v0' },
+              { label: '1.0', value: 'v1' },
+              { label: '2.0', value: 'v2' },
+            ]}
+            value={props.scope}
+            onChange={(v) => props.onScope!(v as Scope)}
+            aria-label="Page scope"
+          />
+        </div>
+      ) : (
+        <div className="pv3-rig-row">
+          <span className="pv3-rig-label">OMEN AI</span>
+          <ToggleButtonGroup
+            options={[
+              { label: '1.0 (MVP)', value: 'v1' },
+              { label: '2.0', value: 'v2' },
+            ]}
+            value={era}
+            onChange={(v) => onEra(v as Era)}
+            aria-label="OMEN AI era"
+          />
+        </div>
+      )}
+      {/* Enablement is an OMEN AI fact — at 0.0 there is no OMEN AI to enable. */}
+      {props.scope !== 'v0' && (
+        <div className="pv3-rig-row">
+          <span className="pv3-rig-label">Enablement</span>
+          <ToggleButtonGroup
+            options={[
+              { label: 'Enabled', value: 'on' },
+              { label: 'Disabled', value: 'off' },
+            ]}
+            value={props.aiOn ? 'on' : 'off'}
+            onChange={(v) => props.onAiOn(v === 'on')}
+            aria-label="OMEN AI enablement"
+          />
+        </div>
+      )}
       <div className="pv3-rig-row">
         <span className="pv3-rig-label">Session</span>
         <ToggleButtonGroup
@@ -152,21 +191,31 @@ export function ShowcaseRig(props: ShowcaseRigProps) {
         />
       </div>
 
-      <div className="pv5-rig-div">
-        <span className="pv5-rig-sectlabel">Framework showcase</span>
-        <TypologyLegend />
-        <div className="pv5-rig-toggles">
-          {toggles.map((t) => (
-            <label className="pv5-ctrl-row" key={t.label}>
-              <Toggle checked={t.checked} onChange={t.onChange} aria-label={t.label} />
-              <span className="pv5-ctrl-text">
-                <span className="pv5-ctrl-label">{t.label}</span>
-                <span className={`pv5-ctrl-meta pv5-status pv5-status--${t.status}`}>{t.meta}</span>
-              </span>
-            </label>
-          ))}
+      {/* V7 (scope present): the framework-showcase apparatus is retired — no
+          legend, no annotate; spotlight survives as a plain row. V5/V6 keep
+          the original section untouched. */}
+      {props.scope ? (
+        <div className="pv3-rig-row">
+          <span className="pv3-rig-label">Spotlight</span>
+          <Toggle checked={props.spotlight} onChange={props.onSpotlight} aria-label="Spotlight anchor" />
         </div>
-      </div>
+      ) : (
+        <div className="pv5-rig-div">
+          <span className="pv5-rig-sectlabel">Framework showcase</span>
+          <TypologyLegend />
+          <div className="pv5-rig-toggles">
+            {toggles.map((t) => (
+              <label className="pv5-ctrl-row" key={t.label}>
+                <Toggle checked={t.checked} onChange={t.onChange} aria-label={t.label} />
+                <span className="pv5-ctrl-text">
+                  <span className="pv5-ctrl-label">{t.label}</span>
+                  <span className={`pv5-ctrl-meta pv5-status pv5-status--${t.status}`}>{t.meta}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="pv3-rig-foot">
         <span>

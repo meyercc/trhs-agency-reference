@@ -1,0 +1,488 @@
+/* ── PerformV7 (#/perform-v7) — modal shell variant over the V5 baseline ──
+   V5 stays frozen. V7 changes only the modal shell for SINGLE-COLUMN modals:
+   narrow + centred, with the control that governs the whole modal moved from
+   the body into the header's right-hand end.
+
+   The page itself is identical to V5, so this file only carries what the V7
+   modals need. Everything else is inherited via `.pv5-root` (the root stacks
+   `pv5-root pv7-root`). */
+
+/* ── Section rhythm ──
+   The gap between System Vitals and Power Mode measured 103px, and it was
+   double-counted: the section list already puts 36px between sections, then the
+   section header added another 24px of its own margin on top of that — 60px
+   above the label against 24px below it. A header should sit closer to the
+   content it names than to the section before it, so the top margin goes (the
+   list gap is the separator) and the bottom tightens. 103px → ~71px, with the
+   header now clearly attached to what follows. */
+.pv7-root .pg-section {
+  margin-top: 0;
+  margin-bottom: var(--gutter-sm);
+}
+
+/* ── Modal shell sizing (V7) ──────────────────────────────────────────────
+   The base shell sizes its rail as a FRACTION of the modal (`33% 1fr`), so a
+   rail holding five menu rows gets ~450px and the shell has to be huge to fit
+   a body beside it. That is where the jump between a rail-less modal (760px)
+   and a rail modal (1370px) came from: an arbitrary gap rather than a rule.
+
+   V7 sizes both by content instead:
+     · rail = a fixed 220px, which is what a menu needs
+     · shell = the same content width as the narrow class, PLUS one rail
+   so the two width classes differ by exactly one rail, which is the only thing
+   that actually differs between them. Scoped to .pv7-modals so no modal outside
+   this page changes shape. */
+.pv7-modals .modal-body { grid-template-columns: 220px 1fr; }
+
+/* ── Close, outside the panel ──
+   The header's right-hand end is the one slot for controls that govern the
+   modal, and close was permanently occupying part of it. Dismissal is not a
+   control of the thing — it is a control of the window — so it leaves the panel
+   and the slot belongs entirely to the content's own controls.
+   The shell stops clipping so the button can sit outside it; the body already
+   clips its own overflow and now carries the bottom corners. */
+.pv7-modals .modal-shell { overflow: visible; }
+.pv7-modals .modal-body {
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+.pv7-modals .modal-close {
+  position: absolute;
+  top: -18px;
+  right: -18px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(13, 15, 20, 0.92);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  color: var(--text-dim);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.pv7-modals .modal-close:hover {
+  color: var(--text-primary);
+  border-color: var(--border);
+  background: rgba(22, 25, 33, 0.98);
+}
+
+/* Double padding at the top, the same fault as the page's section gap: the
+   header row already ends with 24px, and then the body opened with another 24 —
+   59px of nothing between the title and the first line of content. The header
+   is the separator, so the body starts close under it. Rail and body move
+   together so their first rows stay on one line. */
+.pv7-modals .modal-right,
+.pv7-modals .modal-left { padding-top: var(--gutter-xs); }
+/* First-child margins that assumed something above them. */
+.pv7-omm .pv7-omm-readout .pv5-omm-status { margin-top: 0; }
+/* ── ONE HEIGHT FOR EVERY MODAL ──────────────────────────────────────────────
+   WIDTH carries information: narrow = one subject, wide = parts to navigate
+   between. HEIGHT carried none — it just reported how much content each modal
+   happened to hold (880 / 620 / 520 / hug-your-content), so the window resized
+   every time you opened a different one, and the size told you nothing when it
+   did. A modal is a window onto the app, not a box cut to fit its contents.
+
+   So: one frame, everywhere. Content taller than it scrolls; content shorter
+   leaves room. Three things follow for free —
+     · the frame never moves when you switch tabs or collapse a section
+     · a modal's shape is predictable before it opens
+     · nobody has to re-measure "the tallest tab" when content changes
+
+   The value is one number, here. Do not add per-modal overrides: the moment one
+   modal is special, the rule is gone and we are back to four heights. */
+.pv7-modals { --pv7-modal-h: 640px; }
+.pv7-modals .modal-shell {
+  height: var(--pv7-modal-h);
+  max-height: calc(100vh - 216px);
+}
+.pv7-modals .modal-shell:not(.modal-shell-narrow) {
+  max-width: 980px; /* 760 narrow + 220 rail */
+  inset: 108px 0;
+  margin: auto;
+}
+.pv7-modals .modal-right { overflow-y: auto; display: flex; flex-direction: column; }
+/* Children keep their natural height — a flex column would otherwise squeeze
+   them when the content overflows, which is the one case where it must scroll. */
+.pv7-modals .modal-right > * { flex: none; }
+
+/* ── THE FOOTER IS FRAME FURNITURE, NOT THE LAST ROW OF CONTENT ──
+   A uniform frame means some modals have slack, and where that slack lands is a
+   decision. A footer inside the scroll area drifts twice over: it floats
+   mid-frame when the content is short (a hole under it) and scrolls out of
+   reach when the content is long — Advanced Tuning's Apply sat ~280px below the
+   fold, and Apply is the entire point of that modal.
+
+   So it is not in the scroll area at all: `ModalShell`'s `footer` prop renders
+   it as a sibling of the body, pinned like the header. No sticky background is
+   needed to hide what passes under it, because nothing passes under it — which
+   also keeps the shell's translucency intact, something a sticky bar could not
+   have done without painting an opaque strip over frosted glass.
+
+   It spans the full width, under a left rail included, because it belongs to
+   the frame rather than to either column. */
+.pv7-modals .modal-footer {
+  flex: none;
+  padding: var(--gutter-sm) var(--gutter);
+  border-top: 1px solid var(--border-light);
+}
+/* The band owns the separator and the spacing; the row inside carries none.
+   Same rule as everywhere else here — spacing belongs to the container. */
+.pv7-modals .modal-footer > * {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* A fixed frame alone leaves dead space on a light tab (System Vitals measured
+   158px of empty body). The frame stays fixed AND the space gets used — the
+   trend absorbs every pixel the fixed-height rows do not, so the chart is
+   simply taller on a lighter tab. No cap: a capped plot puts the slack back as
+   a hole between the chart and the footer, which is the thing being fixed. */
+.pv7-svm .modal-right { display: flex; flex-direction: column; }
+.pv7-svm .pv7-trend { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.pv7-svm .pv7-trend-plot { flex: 1; min-height: 120px; height: auto !important; }
+
+/* A navigation-only rail never scrolls. The base `.modal-left` sets
+   `overflow-y: auto` because it used to carry hero art, copy and status as well
+   as the menu; with only a menu in it there is nothing to scroll, and a rail
+   that can scroll independently of its body reads as a second content area. */
+.pv7-modals .modal-left { overflow: visible; }
+/* The menu sizes to its longest label by default, which overflowed the rail once
+   the rail stopped clipping. In a nav-only rail the menu IS the rail, so it fills
+   the column instead of sizing itself. */
+.pv7-modals .modal-left .ds-menu {
+  width: 100%;
+  box-sizing: border-box;
+  /* In a nav-only rail the menu IS the rail, so it drops its own panel chrome.
+     A bordered box that stops two-thirds of the way down a tall column reads as
+     "something is missing below"; without the box the rail simply ends. */
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+}
+.pv7-um-left { display: block; }
+/* The L4 boundary warning, now the first thing in the body. */
+.pv7-um-warn { margin-bottom: var(--gutter); }
+.pv7-svm-left { display: block; }
+
+/* ── System Vitals: the readings ARE the trend's selector ── */
+.pv7-svm-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: var(--gutter-xs);
+  margin-bottom: var(--gutter);
+}
+.pv7-svm-metric {
+  appearance: none;
+  text-align: left;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.pv7-svm-metric:hover:not(.flat) { border-color: var(--border); background: rgba(255, 255, 255, 0.05); }
+.pv7-svm-metric.active {
+  border-color: var(--cyan);
+  background: color-mix(in srgb, var(--cyan), transparent 92%);
+}
+.pv7-svm-metric.flat { cursor: default; opacity: 0.55; }
+.pv7-svm-metric-l {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-subtle);
+}
+.pv7-svm-metric-v {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: var(--text-section);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Trend: a line plus the references that make it readable ──
+   The trace is the only thing inside the stretched SVG. Markers and labels are
+   HTML on top, because non-uniform scaling distorts text and turns circles into
+   ellipses. The plot sits in the same container treatment as the reading tiles
+   above it, so the block reads as one unit rather than a line floating on the
+   modal background. */
+.pv7-trend-plot {
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.pv7-trend-svg { display: block; width: 100%; height: 100%; }
+.pv7-trend-line { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.pv7-trend-rule { stroke-width: 1; stroke-dasharray: 3 3; }
+.pv7-trend-rule-warn { stroke: color-mix(in srgb, var(--orange), transparent 55%); }
+.pv7-trend-rule-danger { stroke: color-mix(in srgb, var(--red), transparent 45%); }
+
+.pv7-trend-peak,
+.pv7-trend-now {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.pv7-trend-peak { border: 1.5px solid var(--text-dim); background: var(--bg-base); }
+.pv7-trend-now { box-shadow: 0 0 0 3px color-mix(in srgb, var(--bg-base), transparent 40%); }
+.pv7-trend-peak-label {
+  position: absolute;
+  transform: translate(-50%, -175%);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.05em;
+  color: var(--text-subtle);
+  pointer-events: none;
+}
+.pv7-trend-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-subtle);
+  margin-top: 6px;
+}
+/* Range picker — the chart's own control, so it sits on the chart. */
+.pv7-trend-ranges { display: inline-flex; gap: 2px; }
+.pv7-trend-range {
+  appearance: none;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--text-subtle);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.pv7-trend-range:hover { color: var(--text-dim); border-color: var(--border-light); }
+.pv7-trend-range.active {
+  color: var(--cyan);
+  border-color: color-mix(in srgb, var(--cyan), transparent 60%);
+  background: color-mix(in srgb, var(--cyan), transparent 92%);
+}
+/* The chart's content, for anyone who cannot see it. No such utility exists in
+   the shared DS yet — worth promoting if a second surface needs one. */
+.ds-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pv7-svm-door { margin-top: var(--gutter); }
+
+/* Modal-scope metadata belongs to the frame, so it sits at its foot. */
+.pv7-svm-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--gutter);
+  padding-top: var(--gutter-sm);
+  border-top: 1px solid var(--border-light);
+  font-size: var(--text-micro);
+  color: var(--text-subtle);
+}
+.pv7-svm-foot-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex: none; }
+.pv7-svm-foot-age { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Scheduler, master toggle off: the body collapses to one line saying what that
+   means, instead of leaving an empty modal. */
+.pv7-sched-off {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  padding: var(--gutter-sm) 0 var(--gutter);
+}
+
+/* ── InfoDisclosure ──
+   Click-activated, light-dismissed, no scrim. Anchored to its trigger so it
+   opens in place: it changes nothing and takes you nowhere. */
+.pv7-disc { position: relative; display: inline-flex; }
+.pv7-disc-trigger {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.pv7-disc-trigger:hover,
+.pv7-disc-trigger.active { color: var(--accent); border-color: var(--accent); }
+.pv7-disc-panel {
+  position: absolute;
+  z-index: 2;
+  width: 360px;
+  padding: var(--gutter);
+  border-radius: var(--radius);
+  background: var(--bg-elevated, rgba(22, 25, 33, 0.98));
+  border: 1px solid var(--border-light);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  text-align: left;
+}
+.pv7-disc-panel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Two anchors. `footer-left` is the standing home — help lives at the bottom
+   left so the header's right-hand end stays reserved for controls, and the two
+   can never collide. `header-right` remains for surfaces with no control there. */
+.pv7-disc-footer-left .pv7-disc-panel { bottom: calc(100% + 8px); left: 0; }
+.pv7-disc-header-right .pv7-disc-panel { top: calc(100% + 8px); right: 0; }
+
+/* The footer bar: help pinned left, the modal's own actions right. Applied to
+   an existing footer row (Unleashed) or as the row itself (OMEN AI). */
+.pv7-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  margin-top: var(--gutter);
+  padding-top: var(--gutter-sm);
+  border-top: 1px solid var(--border-light);
+}
+.pv7-footer .pv7-disc { margin-right: auto; }
+
+/* ── Booster ── */
+.pv7-bm-left { display: block; }
+/* The modal-scope control, in the header's right-hand end. */
+.pv7-bm-arm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  cursor: pointer;
+}
+.pv7-bm-arm-l {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+/* The group's own count, stated on the page it describes and next to the
+   control that changes it — rather than as state inside a nav label. */
+.pv7-bm-grouphead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  padding-bottom: var(--gutter-sm);
+  margin-bottom: var(--gutter-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+.pv7-bm-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.pv7-bm-count b { color: var(--text-primary); font-weight: 700; }
+
+/* Head: the feature's own mark beside its name. The glyph is identity, and
+   identity is education — this is where it earns a place, rather than standing
+   in a rail all session. */
+.pv7-disc-head-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  padding-bottom: var(--gutter-sm);
+  margin-bottom: var(--gutter-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+.pv7-disc-icon { width: 46px; height: 46px; flex: none; display: block; }
+.pv7-disc-icon > svg { width: 100%; height: 100%; display: block; }
+.pv7-disc-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+.pv7-disc-body { font-size: var(--text-caption); color: var(--text-dim); margin: 0; line-height: 1.5; }
+
+/* Lists get a marker that says which kind they are, so the two read apart at a
+   glance instead of relying on the heading alone. */
+.pv7-disc-head {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-subtle);
+  margin-top: var(--gutter);
+  margin-bottom: 6px;
+}
+.pv7-disc-list { margin: 0; padding: 0; list-style: none; font-size: var(--text-caption); color: var(--text-dim); }
+.pv7-disc-list li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 4px;
+  line-height: 1.45;
+}
+.pv7-disc-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.pv7-disc-list-warn li { color: var(--text-muted); }
+.pv7-disc-list-warn li::before {
+  border-radius: 1px;
+  background: none;
+  border: 1px solid var(--orange);
+  width: 5px;
+  height: 5px;
+  transform: rotate(45deg);
+  top: 0.6em;
+}
+
+/* OMEN AI: status + stats move out of the departed rail into the body. */
+.pv7-omm-readout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding-bottom: var(--gutter-sm);
+  margin-bottom: var(--gutter-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+.pv7-omm-readout .pv5-omm-stats { margin: 0; }
+/* Rail gone → the stat block can run wide instead of stacking in 300px. */
+.pv7-omm .pv5-omm-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gutter-xs); }
+.pv7-omm-edited {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-subtle);
+  margin-right: auto;
+}

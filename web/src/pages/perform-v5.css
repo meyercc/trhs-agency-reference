@@ -432,6 +432,16 @@
 
 /* System Vitals detail modal */
 .pv5-svm-left { display: flex; flex-direction: column; gap: var(--gutter-xs); }
+/* HEADER TEST (2026-08-05): navigation as a header band instead of a left rail.
+   Row 1 = the horizontal Menu; row 2 = the identity/status line that used to sit
+   in the rail. A hairline separates the band so it reads as chrome, not content. */
+.pv5-svm-header {
+  display: flex; flex-direction: column; gap: 8px;
+  padding-bottom: var(--gutter-sm); margin-bottom: var(--gutter);
+  border-bottom: 1px solid var(--border-light);
+}
+.pv5-svm-header-meta { display: flex; align-items: center; gap: var(--gutter-sm); }
+.pv5-svm-header-meta .pv5-svm-status { margin-bottom: 0; }
 .pv5-svm-id-sub { font-size: var(--text-micro); color: var(--text-muted); }
 .pv5-svm-status { display: flex; align-items: center; gap: 6px; font-size: var(--text-caption); color: var(--text-dim); margin-bottom: var(--gutter-xs); }
 .pv5-svm-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex: none; }

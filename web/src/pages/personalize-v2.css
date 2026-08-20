@@ -1,0 +1,104 @@
+/* ── PersonalizeV2 (#/personalize-v2) — five-family proposal ──
+   Card anatomy/typography rides on the Perform V5 grammar (perform-v5.css is
+   imported for CardKit's .pv5-card-door / .pv5-facts). Only .pz2-* selectors
+   here; tokens only; Chris's #/personalize untouched. */
+
+.pz2-root .ds-feature-card-header { align-items: center; min-height: 32px; }
+
+/* layout: paired cards / app row — equal heights by construction */
+.pz2-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--gutter); align-items: stretch; }
+/* overflow released so dropdown menus can escape the card; grow areas clip themselves */
+.pz2-card { display: flex; flex-direction: column; cursor: default; overflow: visible; }
+.pz2-app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--gutter); align-items: stretch; }
+.pz2-app-grid > * { min-height: 100%; }
+
+/* hero reading — the V5 status slot carrying a value (neutral, mono) */
+.pz2-hero { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 22px; line-height: 1; color: var(--text-primary); margin: 4px 0 8px; }
+
+/* ── Display main element: every screen in one view ── */
+.pz2-displays { gap: 0; }
+.pz2-desk { display: flex; align-items: flex-end; justify-content: center; gap: clamp(20px, 5%, 56px); padding: 26px 16px 14px; margin-top: var(--gutter-sm); border-bottom: 1px solid var(--border-light); }
+
+.pz2-screen { appearance: none; background: none; border: none; padding: 0; color: inherit; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; position: relative; z-index: 1; }
+.pz2-screen-frame { position: relative; display: block; width: 148px; aspect-ratio: 16 / 9.4; border-radius: 6px; border: 1px solid var(--border); background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)); box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.45); transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease; margin-bottom: 12px; }
+.pz2-screen-frame::after { content: ''; position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%); width: 34px; height: 12px; background: linear-gradient(180deg, var(--border), transparent); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); }
+.pz2-screen-glow { position: absolute; inset: 4px; border-radius: 3px; background: radial-gradient(120% 90% at 30% 20%, color-mix(in srgb, var(--accent-color), transparent 78%), transparent 60%); opacity: 0; transition: opacity var(--dur-fast) ease; }
+
+.pz2-screen--laptop .pz2-screen-frame { width: 104px; margin-bottom: 0; }
+.pz2-screen--laptop .pz2-screen-frame::after { display: none; }
+.pz2-screen-base { width: 128px; height: 7px; margin-bottom: 5px; border-radius: 2px 2px 4px 4px; background: linear-gradient(180deg, var(--border), rgba(255, 255, 255, 0.04)); }
+
+.pz2-screen:hover .pz2-screen-frame { border-color: var(--border); }
+.pz2-screen--sel .pz2-screen-frame { border-color: color-mix(in srgb, var(--accent-color), transparent 30%); box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.45), 0 0 14px color-mix(in srgb, var(--accent-color), transparent 72%); }
+.pz2-screen--sel .pz2-screen-glow { opacity: 1; }
+.pz2-screen:focus-visible .pz2-screen-frame { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+
+.pz2-screen-name { font-size: var(--text-caption); color: var(--text-primary); margin-top: 4px; }
+.pz2-screen--sel .pz2-screen-name { color: var(--accent-color); }
+.pz2-screen-meta { font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.04em; color: var(--text-subtle); }
+
+.pz2-rel-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter); padding: 11px 2px; border-bottom: 1px solid var(--border-light); }
+.pz2-rel-row:last-child { border-bottom: none; padding-bottom: 2px; }
+.pz2-rel-label { font-size: var(--text-caption); color: var(--text-dim); }
+
+/* control row — label left, control right (cards + display sub area) */
+.pz2-ctl-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter); min-height: 34px; }
+.pz2-ctl-row--slider { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: var(--gutter-sm); }
+.pz2-ctl-slider { min-width: 0; }
+.pz2-ctl-auto { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-subtle); }
+
+/* the selected screen's sub area (rides pv5-pm-sub: indent + accent spine) */
+.pz2-sub { margin-top: var(--gutter-sm); margin-bottom: 6px; }
+.pz2-sub-head { font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-subtle); }
+
+/* ── Lighting main element: the desk scene — real product shots in rough
+   spatial position, each device lit by its own light. The bloom is a
+   brightness(0) + drop-shadow copy of the same transparent PNG, so the color
+   hugs the real silhouette. ── */
+.pz2-scene { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 18px 8px 8px; margin-top: var(--gutter-sm); }
+.pz2-scene-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(14px, 4%, 44px); }
+.pz2-scene-row--front { margin-top: -6px; }
+
+.pz2-dev { appearance: none; background: none; border: none; padding: 0; color: inherit; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.pz2-dev:disabled { cursor: default; }
+.pz2-dev-fig { position: relative; display: block; width: var(--w); padding: 4px 6px 0; border-radius: 8px; border: 1px solid transparent; transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease; }
+.pz2-dev-img,
+.pz2-dev-halo { display: block; width: 100%; height: auto; }
+/* hardware reads neutral; the light on it is ours to drive */
+.pz2-dev-img { position: relative; filter: saturate(0.18) brightness(0.92); transition: filter var(--dur-normal) ease; }
+/* the monitor carries screen content — keep it quiet so the scene reads as hardware + light */
+.pz2-dev-fig img[alt='OMEN 27'] { filter: saturate(0.1) brightness(0.62); }
+/* colored bloom hugging the silhouette */
+.pz2-dev-halo { position: absolute; left: 6px; top: 4px; width: calc(100% - 12px); filter: brightness(0) drop-shadow(0 0 5px var(--lamp)) drop-shadow(0 0 13px var(--lamp)); opacity: calc(0.35 + 0.65 * var(--bri, 0.8)); pointer-events: none; }
+/* light pooling on the desk under the device */
+.pz2-dev-pool { position: absolute; left: 50%; bottom: -3px; transform: translateX(-50%); width: 72%; height: 12px; border-radius: 50%; background: var(--lamp); filter: blur(10px); opacity: calc(0.45 * var(--bri, 0.8)); pointer-events: none; }
+
+.pz2-dev--off .pz2-dev-halo,
+.pz2-dev--off .pz2-dev-pool { opacity: 0; }
+.pz2-dev--off .pz2-dev-img { filter: saturate(0) brightness(0.7); }
+/* Rainbow = let the factory RGB through, and cycle it */
+.pz2-dev--rainbow .pz2-dev-img { filter: saturate(1.15) brightness(1); animation: pz2-hue var(--spd, 3s) linear infinite; }
+.pz2-dev--rainbow .pz2-dev-halo { opacity: 0.35; animation: pz2-hue var(--spd, 3s) linear infinite; }
+
+.pz2-dev--sel .pz2-dev-fig,
+.pz2-lighting--sync .pz2-dev-fig { border-color: color-mix(in srgb, var(--accent-color), transparent 55%); background: rgba(255, 255, 255, 0.02); }
+.pz2-dev--sel .pz2-dev-name { color: var(--accent-color); }
+.pz2-dev:focus-visible .pz2-dev-fig { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+.pz2-dev-name { font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.04em; color: var(--text-subtle); margin-top: 5px; }
+
+@keyframes pz2-breathe { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.14; } }
+@keyframes pz2-wave { 0%, 100% { transform: translateX(-72%); } 50% { transform: translateX(-28%); } }
+@keyframes pz2-hue { to { filter: hue-rotate(360deg); } }
+.pz2-dev--breathe .pz2-dev-halo,
+.pz2-dev--breathe .pz2-dev-pool { animation: pz2-breathe var(--spd, 3s) ease-in-out infinite; }
+.pz2-dev--wave .pz2-dev-pool { animation: pz2-wave var(--spd, 3s) ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .pz2-dev-img, .pz2-dev-halo, .pz2-dev-pool { animation: none !important; } }
+
+/* synchronize row — grouped with the strip (the border closes the unit) */
+.pz2-lamp-sync { border-bottom: 1px solid var(--border-light); }
+
+/* color swatches (lighting sub area) */
+.pz2-swatches { display: inline-flex; align-items: center; gap: 7px; }
+.pz2-swatch { appearance: none; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.25); padding: 0; cursor: pointer; transition: transform var(--dur-fast) ease; }
+.pz2-swatch:hover { transform: scale(1.12); }
+.pz2-swatch--sel { outline: 2px solid var(--text-primary); outline-offset: 2px; }

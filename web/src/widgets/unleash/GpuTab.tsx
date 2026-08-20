@@ -11,6 +11,7 @@ export function GpuTab({ defaultOpen = false }: { defaultOpen?: boolean }) {
     mode === 'manual' ? `Manual · Core +${core} MHz · Mem +${mem} MHz` : mode === 'auto' ? 'Auto' : 'Off';
 
   return (
+    <>
     <Collapse title="GPU Overclocking" badge={<TierBadge tier="L3" />} summary={summary} defaultOpen={defaultOpen}>
       <div className="ut-collapse-stack">
         <div className="ut-subsection">
@@ -51,8 +52,9 @@ export function GpuTab({ defaultOpen = false }: { defaultOpen?: boolean }) {
             </>
           )}
         </div>
-        <BenchmarkRow kind="gpu" title="GPU Benchmark" desc="Benchmark overall GPU performance under current settings" />
       </div>
     </Collapse>
+    <BenchmarkRow kind="gpu" title="GPU Benchmark" desc="Benchmark overall GPU performance under current settings" />
+    </>
   );
 }

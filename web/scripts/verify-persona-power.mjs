@@ -1,5 +1,10 @@
 // One-off CDP walkthrough for the persona-differentiated Power & Thermal
 // surface (TH-324). Dev server on :5175, headless Chrome on :9222, run from web/.
+//
+// NOTE (2026-08-19): these checks are about persona curation, which lives on the
+// Perform page that /perform rendered until V7 was promoted over it. That page is
+// now /perform-v1, so the suite follows it. V7 does not implement persona
+// curation — if it ever does, point this back at /perform.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
@@ -65,7 +70,7 @@ async function loadPerform(send, { persona, modules, modal } = {}) {
     ${persona ? `localStorage.setItem('persona', ${JSON.stringify(persona)});` : ''}
     ${modules ? `localStorage.setItem('trhs-modules', ${JSON.stringify(JSON.stringify(modules))});` : ''}
   `);
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#/perform${modal ? '?modal=' + modal : ''}` });
+  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#/perform-v1${modal ? '?modal=' + modal : ''}` });
   await sleep(1100);
   return evalJs(send, SNAPSHOT);
 }

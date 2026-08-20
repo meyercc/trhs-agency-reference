@@ -9,8 +9,6 @@ export function CpuTab({ defaultOpen = false }: { defaultOpen?: boolean }) {
   const [boost, setBoost] = useState(100);
   const [coGlobal, setCoGlobal] = useState(15);
   const [coCores, setCoCores] = useState(CO_DELTAS.map((d) => clamp(15 + d, 0, 30)));
-  const [sustained, setSustained] = useState(45);
-  const [burst, setBurst] = useState(60);
   const coAvg = Math.round(coCores.reduce((a, b) => a + b, 0) / coCores.length);
 
   const handleGlobalCO = (v: number) => {
@@ -21,10 +19,11 @@ export function CpuTab({ defaultOpen = false }: { defaultOpen?: boolean }) {
     setCoCores((prev) => prev.map((p, idx) => (idx === i ? val : p)));
 
   return (
+    <>
     <Collapse
       title="CPU Boost Control"
       badge={<TierBadge tier="L3" />}
-      summary={`Boost +${boost} MHz · CO −${coAvg} · Sustained ${sustained}W`}
+      summary={`Boost +${boost} MHz · CO −${coAvg}`}
       defaultOpen={defaultOpen}
     >
         <div className="ut-collapse-stack">
@@ -78,32 +77,9 @@ export function CpuTab({ defaultOpen = false }: { defaultOpen?: boolean }) {
               ))}
             </div>
           </Collapse>
-          <Separator />
-          <div className="ut-subsection">
-            <h4 className="ut-group-title">Power Limits</h4>
-            <SliderRow
-              label="Sustained Power Limit"
-              sub="Long-run"
-              min={25}
-              max={80}
-              value={sustained}
-              onChange={setSustained}
-              unit="W"
-              note="Long-run power ceiling for the CPU; directly determines how long boost can be maintained"
-            />
-            <SliderRow
-              label="Burst Power Limit"
-              sub="Short burst"
-              min={25}
-              max={120}
-              value={burst}
-              onChange={setBurst}
-              unit="W"
-              note="Allows the CPU to briefly exceed Sustained, typically for seconds to tens of seconds"
-            />
-          </div>
-          <BenchmarkRow kind="cpu" title="CPU Benchmark" desc="Benchmark overall CPU performance under current settings" />
         </div>
       </Collapse>
+    <BenchmarkRow kind="cpu" title="CPU Benchmark" desc="Benchmark overall CPU performance under current settings" />
+    </>
   );
 }

@@ -10,6 +10,8 @@ const LLC_DESC = (llc: number) =>
       : 'Mid — balanced compensation (recommended default)';
 
 export function AdvancedPowerTab({ defaultOpen = false }: { defaultOpen?: boolean }) {
+  const [sustained, setSustained] = useState(45);
+  const [burst, setBurst] = useState(60);
   const [peak, setPeak] = useState(150);
   const [iccMax, setIccMax] = useState(160);
   const [llc, setLlc] = useState('3');
@@ -18,20 +20,34 @@ export function AdvancedPowerTab({ defaultOpen = false }: { defaultOpen?: boolea
     <Collapse
       title="Advanced Power"
       badge={<TierBadge tier="L4" />}
-      summary={`Peak ${peak}W · IccMax ${iccMax}A · LLC ${llc}`}
+      summary={`Sustained ${sustained}W · Burst ${burst}W · Peak ${peak}W`}
       defaultOpen={defaultOpen}
     >
       <div className="ut-collapse-stack">
-        <div className="ut-banner warn">
-          <span className="ut-banner-title">System Electrical Limits</span>
-          <span className="ut-banner-copy">
-            These parameters directly control hardware electrical safety limits. Unsafe values may cause system crashes
-            and will not self-correct.
-          </span>
-        </div>
-
+        {/* One power budget, ordered by the time scale each limit governs:
+            minutes (sustained) → seconds (burst) → milliseconds (peak). */}
         <div className="ut-subsection">
-          <h4 className="ut-group-title">Peak Power Limit</h4>
+          <h4 className="ut-group-title">Power Limits</h4>
+          <SliderRow
+            label="Sustained Power Limit"
+            sub="Long-run"
+            min={25}
+            max={80}
+            value={sustained}
+            onChange={setSustained}
+            unit="W"
+            note="Long-run power ceiling for the CPU; directly determines how long boost can be maintained"
+          />
+          <SliderRow
+            label="Burst Power Limit"
+            sub="Short burst"
+            min={25}
+            max={120}
+            value={burst}
+            onChange={setBurst}
+            unit="W"
+            note="Allows the CPU to briefly exceed Sustained, typically for seconds to tens of seconds"
+          />
           <SliderRow
             label="Peak Power Limit"
             sub="Instantaneous electrical peak (millisecond scale)"
@@ -48,6 +64,15 @@ export function AdvancedPowerTab({ defaultOpen = false }: { defaultOpen?: boolea
 
         <div className="ut-subsection">
           <h4 className="ut-group-title">Current &amp; Voltage Stability</h4>
+          {/* The warning sits on the electrical group it governs, not over the whole tab —
+              power limits are not electrical safety limits. */}
+          <div className="ut-banner warn">
+            <span className="ut-banner-title">System Electrical Limits</span>
+            <span className="ut-banner-copy">
+              These parameters directly control hardware electrical safety limits. Unsafe values may cause system
+              crashes and will not self-correct.
+            </span>
+          </div>
           <SliderRow
             label="IccMax"
             sub="Maximum CPU current"

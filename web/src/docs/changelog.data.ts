@@ -72,6 +72,92 @@ export const KIND_META: Record<ChangeKind, { icon: IconName; label: string }> = 
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.16',
+    date: 'August 19, 2026',
+    committer: 'Chris Meyer',
+    reviewer: 'Chris Meyer',
+    summary:
+      'Perform becomes the V7 page, modals learn to be narrow, and the app opens on a quieter first screen.',
+    tasks: ['TH-359', 'TH-360'],
+    groups: [
+      {
+        kind: 'added',
+        tiers: [
+          {
+            tier: 'Templates',
+            items: [
+              {
+                label: 'ModalShell — width, header control, footer',
+                storyId: 'templates-modalshell--docs',
+                note: 'three optional slots, all opt-in — every existing modal renders exactly as before. `width="narrow"` caps the shell so a modal about a single subject stops spanning the window: a wide shell says there are parts to navigate between, a narrow one says there is one subject. A header control sits at the right-hand end of the title row when something governs the whole modal, and a footer slot holds the actions that close it.',
+              },
+            ],
+          },
+          {
+            tier: 'Organisms',
+            items: [
+              {
+                label: 'Keyboard lighting — custom select',
+                note: 'the lighting rail leads with a marquee tool: arm it and drag a box across the board to select every key it crosses. Shift-drag adds to the selection, a press without a drag still toggles the single key under it, and Escape puts the tool away without closing the device. It covers the selections the WASD/QWER/Numbers presets do not.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: 'changed',
+        tiers: [
+          {
+            tier: 'Pages',
+            items: [
+              {
+                label: 'Performance',
+                note: 'the page is now the V7 design at scope 1.0 — Monitoring, Performance and Maintenance as three posture domains, Power Mode anchoring its own row, and the optimizer family (OMEN AI, Booster, Network Booster) beneath it. The page it replaced is still reachable at /perform-v1, and /perform-v7 keeps the simulator rig for exploring the other scopes. Worth knowing: the V7 page is one fixed composition, so Performance no longer varies by the stored persona the way the previous page did.',
+              },
+            ],
+          },
+          {
+            tier: 'Foundations',
+            items: [
+              {
+                label: 'First-landing defaults',
+                note: 'a new install now opens icon-only in the nav, on the blue wallpaper, with a five-widget board — the four device cards plus Last Played — instead of the full catalog. A board that starts sparse reads as something to build rather than something to prune, and everything else is one click away in the widget gallery. Any saved layout still wins over the default.',
+              },
+            ],
+          },
+          {
+            tier: 'Organisms',
+            items: [
+              {
+                label: 'Profile bar — the onboard note',
+                note: 'the confirmation under the bar now retires itself after about five seconds. It says how the device got onto this slot, which stops being news — and the bar keeps carrying the standing state (the kicker, the running dot, "Running" in the slot list), so nothing is lost when it goes. It fades in place rather than unmounting, so the hero below never moves on a timer. The unsaved-changes warning never retires: it is actionable and belongs with its buttons.',
+              },
+              {
+                label: 'ReorderableSections',
+                storyId: 'organisms-reorderablesections--docs',
+                note: 'a section that disappears and comes back now returns to its canonical position instead of the bottom of the page. Reordering is still remembered; only the placement of sections the saved order has never seen changed.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: 'fixed',
+        tiers: [
+          {
+            tier: 'Conventions',
+            items: [
+              {
+                label: 'Alpha tokens do not flip with the theme',
+                note: 'worth knowing before you reach for one: the white and black alpha scales are fixed ink, not theme-aware. White 10% on a surface that flips with the theme vanishes in light mode — which is what happened to a hairline divider on a panel that does flip. Either use a themed border token, or pair the alpha value with a light-theme override the way the text field does.',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: '0.2.15',
     date: 'August 18, 2026',
     committer: 'Chris Meyer',

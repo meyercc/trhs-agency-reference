@@ -22,11 +22,20 @@ export interface ReorderableSectionsProps {
   storageKey?: string;
 }
 
-// Keep saved ids that still exist, then append any new ones (stable reconcile).
+// Keep saved ids that still exist; a new (or returning) id is INSERTED at the
+// position it holds in the canonical `ids` order, not appended. Appending made
+// a section that leaves and comes back (e.g. one that empties out under a
+// simulator state and later refills) land at the bottom instead of its place.
 function reconcile(saved: string[] | null, ids: string[]): string[] {
-  const known = (saved ?? []).filter((id) => ids.includes(id));
-  const extra = ids.filter((id) => !known.includes(id));
-  return [...known, ...extra];
+  const next = (saved ?? []).filter((id) => ids.includes(id));
+  ids.forEach((id, canonical) => {
+    if (next.includes(id)) return;
+    // Insert before the first already-placed id that canonically follows it.
+    const after = ids.slice(canonical + 1).find((later) => next.includes(later));
+    const at = after ? next.indexOf(after) : next.length;
+    next.splice(at, 0, id);
+  });
+  return next;
 }
 function loadOrder(key: string | undefined, ids: string[]): string[] {
   if (!key) return ids;

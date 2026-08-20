@@ -33,23 +33,47 @@ export function SystemVitalsModal({ initialTab = 'cpu', onClose }: SystemVitalsM
   const [tab, setTab] = useState(initialTab);
   const active = TABS.find((t) => t.id === tab) ?? TABS[0];
 
-  const left = (
-    <div className="pv5-svm-left">
+  // Header-nav variant, kept switchable for demonstration only. Measured
+  // 2026-08-05: header nav gives the body 1047px against the rail's 702px (+49%)
+  // at the same shell height, because the 346px rail runs taller than its own
+  // content. Ruled AGAINST adopting it: this modal genuinely navigates between
+  // five readings, and a rail is what says so. The rail keeps navigation; what
+  // leaves the rail is non-navigation content (identity, status, education).
+  const HEADER_NAV = false;
+
+  const nav = (
+    <Menu
+      orientation={HEADER_NAV ? 'horizontal' : 'vertical'}
+      aria-label="Readings"
+      items={TABS.map((t) => ({ id: t.id, label: t.label, active: t.id === tab, onClick: () => setTab(t.id) }))}
+    />
+  );
+
+  const identity = (
+    <>
       <div className="pv5-svm-id-sub">Live hardware telemetry — read-only.</div>
       <div className="pv5-svm-status">
         <span className="pv5-svm-dot" />
         Nominal · updated 2s ago
       </div>
-      <Menu
-        orientation="vertical"
-        aria-label="Readings"
-        items={TABS.map((t) => ({ id: t.id, label: t.label, active: t.id === tab, onClick: () => setTab(t.id) }))}
-      />
+    </>
+  );
+
+  const left = HEADER_NAV ? undefined : (
+    <div className="pv5-svm-left">
+      {identity}
+      {nav}
     </div>
   );
 
   return (
     <ModalShell title="System Vitals" onClose={onClose} className="pv5-svm" left={left}>
+      {HEADER_NAV && (
+        <div className="pv5-svm-header">
+          {nav}
+          <div className="pv5-svm-header-meta">{identity}</div>
+        </div>
+      )}
       <div className="pv5-svm-head">{active.label}</div>
       <div className="pv5-svm-stats">
         {active.stats.map(([k, v]) => (

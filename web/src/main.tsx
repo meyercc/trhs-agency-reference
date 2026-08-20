@@ -24,7 +24,9 @@ import { PerformV3 } from './pages/PerformV3';
 import { PerformV4 } from './pages/PerformV4';
 import { PerformV5 } from './pages/PerformV5';
 import { PerformV6 } from './pages/PerformV6';
+import { PerformV7 } from './pages/PerformV7';
 import { Personalize } from './pages/Personalize';
+import { PersonalizeV2 } from './pages/PersonalizeV2';
 import { Shop } from './pages/Shop';
 import { CardLab } from './pages/CardLab';
 import { ModalLab } from './pages/ModalLab';
@@ -46,7 +48,14 @@ createRoot(document.getElementById('root')!).render(
           <Route element={<AppShell />}>
             <Route index element={<Home />} />
             <Route path="play" element={<Play />} />
-            <Route path="perform" element={<Perform />} />
+            {/* Perform IS V7 at scope 1.0 (promoted 2026-08-19, agreed with Junchao):
+                the same component the exploration route renders, minus the Simulator.
+                The rig's axes become fixed here — scope 1.0, HyperX machine, OMEN AI
+                enabled, no game running. */}
+            <Route path="perform" element={<PerformV7 showcase={false} />} />
+            {/* The page Perform was until the promotion, kept reachable rather than
+                deleted — the V-numbering had no v1 because the baseline was /perform. */}
+            <Route path="perform-v1" element={<Perform />} />
             {/* Parallel redesign preview (OGH audit reorg) — original Perform untouched. */}
             <Route path="perform-v2" element={<PerformV2 />} />
             {/* IA-spec preview (OMEN AI top-level, three forms) — see performance-page-ia-spec. */}
@@ -57,7 +66,12 @@ createRoot(document.getElementById('root')!).render(
             <Route path="perform-v5" element={<PerformV5 />} />
             {/* Reading-forms variant over the V5 baseline: hero readings (Metric/Level) + identity icons. */}
             <Route path="perform-v6" element={<PerformV6 />} />
+            {/* Modal-shell variant over the V5 baseline: single-column modals go narrow +
+                centred, and the control that governs the whole modal moves into the header. */}
+            <Route path="perform-v7" element={<PerformV7 />} />
             <Route path="personalize" element={<Personalize />} />
+            {/* Five-family scaffold (Audio/Display/Keys/Lighting/App) — the alignment starting point. */}
+            <Route path="personalize-v2" element={<PersonalizeV2 />} />
             {/* SKU tooling (admin): browsable registry + spec configurator. */}
             <Route path="registry" element={<Registry />} />
             <Route path="configurator" element={<Configurator />} />

@@ -4437,6 +4437,26 @@ html.light .ds-card.overlay:hover {
   pointer-events: all;
 }
 
+/* Narrow shell — opt-in via ModalShell's `width="narrow"`.
+   A modal with a single subject should not span the whole window: a wide shell
+   says "there are parts to navigate between", a narrow one says "one subject".
+   Height hugs its content, and `margin: auto` against four insets centres it on
+   both axes — which keeps the open/close transform free for the animation. */
+.modal-shell-narrow {
+  max-width: 760px;
+  inset: 108px 0;
+  height: fit-content;
+  max-height: calc(100vh - 216px);
+  margin: auto;
+}
+
+/* Header row, right-hand end: surface-scope control (optional) then close. */
+.modal-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+
 /* When the modal is closed, every descendant must also stop capturing clicks.
    pointer-events does not inherit — any child with an explicit `auto` (SVG
    hotspots, hero overlays, etc.) would otherwise still hijack clicks even

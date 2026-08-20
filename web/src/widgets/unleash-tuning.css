@@ -261,6 +261,8 @@
 .ut-fc {
   display: grid;
   gap: var(--gutter-xs);
+  /* The SVG keeps its 340x210 aspect ratio; uncapped it inflates to modal width. */
+  max-width: 460px;
 }
 .ut-fc-head {
   display: flex;

@@ -1,5 +1,9 @@
 // CDP walkthrough for persona surfaces round 2 — the OMEN AI modal's per-persona
 // defaults and the persona-varied Perform subtitle.
+// NOTE (2026-08-19): these checks are about persona curation, which lives on
+// the Perform page that /perform rendered until V7 was promoted over it. That
+// page is now /perform-v1, so the suite follows it. V7 does not implement
+// persona curation — if it ever does, point this back at /perform.
 // Dev server :5175, headless Chrome :9222, run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
@@ -77,7 +81,7 @@ const AI_SNAP = `(() => {
 })()`;
 
 let loadN = 0;
-async function load(send, { persona, route = '/perform', modal } = {}) {
+async function load(send, { persona, route = '/perform-v1', modal } = {}) {
   await evalJs(send, `
     localStorage.removeItem('persona');
     localStorage.removeItem('perform-sections');
