@@ -4,18 +4,58 @@
    .ds-ng3-* primitives. Only headset-specific layout lives here. */
 
 /* Audio tab: Volume/Mic · Equalizer · Mic Presets/Effects columns.
-   Gap stays sourced from .ds-ng3-grid — only the column template is ours. */
+   Gap stays sourced from .ds-ng3-grid — only the column template is ours.
+   No `align-items` of its own: the DS default (stretch) is what makes the
+   columns run to the panel floor, and .ds-ng3-col's last section absorb the
+   slack. This used to be `start`, which is why the panel had holes under
+   Mic Volume and Mic Effects. */
 .hc-audio {
   display: grid;
   grid-template-columns: 1fr 1.1fr 1fr;
-  align-items: start;
+  /* One row exactly the grid's height, so a section can be shorter than its
+     content when the panel is held to the canvas — that is what lets the
+     preset list scroll instead of the panel running off the bottom. */
+  grid-template-rows: minmax(0, 1fr);
+}
+.hc-audio > * {
+  min-height: 0;
 }
 
-/* Equalizer preset list */
+/* Equalizer preset list. The panel's height belongs to the Volume and Mic
+   columns (Figma Audio 8931:20990); the EQ section stretches to it and the
+   presets scroll inside — a long list never grows the panel and never eats
+   the hero above it. That takes a list with no intrinsic height: .hc-eq-scroll
+   is the in-flow box that fills the section's remaining room, and the
+   radiogroup is absolutely positioned inside it, so its rows add nothing to
+   what the grid measures. "Add" stays in flow above, pinned. The `flex: 1`
+   on .hc-eq is for the locked SoftwareOnly wrapper, where the section is a
+   flex item rather than the grid's. */
+.hc-eq {
+  flex: 1;
+  min-height: 0;
+}
 .hc-eq-list {
   display: flex;
   flex-direction: column;
   gap: var(--gutter-xxs);
+  flex: 1;
+  min-height: 0;
+}
+.hc-eq-list > .ds-list-item {
+  flex: none;
+}
+.hc-eq-scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.hc-eq-presets {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  overflow-y: auto;
 }
 .hc-eq-curve {
   width: 40px;
@@ -35,9 +75,45 @@
   gap: var(--gutter-xs);
 }
 
-/* Settings uses fewer, wider columns */
+/* ── Settings tab (Figma Device Settings 10461:54650) ──
+   A fixed device rail beside a flexible notifications panel. Card surface,
+   border, padding and the 8px gutter all come from .ds-ng3-grid /
+   .ds-ng3-section; only the column shape and the type rhythm are ours. */
 .hc-settings {
-  grid-template-columns: 1fr 1fr;
+  /* The designed rail width — component geometry, like .pdm-keys-rail's 200. */
+  --hc-rail-w: 266px;
+}
+.hc-set-rail {
+  flex: 0 0 var(--hc-rail-w);
+}
+
+/* The device card (name, firmware, buttons, credit) is DeviceSettingsCard —
+   shared with the microphone canvas; see device-settings.css. */
+.hc-set-copy {
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.hc-set-handoff {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Notifications: header at the top, controls under it, the OS hand-off on the
+   floor — so the panel reads top-to-bottom and the button never floats
+   mid-card whatever the copy length. */
+.hc-notify {
+  flex: 1;
+  min-width: 0;
+}
+.hc-notify-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.hc-set-handoff {
+  margin-top: auto;
 }
 
 /* ── Spatial Audio tab (Figma Audio 14725:221255) ──
@@ -64,8 +140,8 @@
   position: absolute;
   inset: 0;
   border-radius: var(--radius-full);
-  background: var(--ksg-b30);
-  border: 1px solid var(--ksg-w10);
+  background: var(--scrim-soft);
+  border: 1px solid var(--border-light-m);
 }
 /* faint concentric ring + the lighter compass disc */
 .hc-stage-disc::before {
@@ -73,15 +149,15 @@
   position: absolute;
   inset: 16px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--ksg-w5);
+  border: 1px solid var(--border-light);
 }
 .hc-stage-disc::after {
   content: '';
   position: absolute;
   inset: 35px;
   border-radius: var(--radius-full);
-  background: var(--ksg-w5);
-  border: 1px solid var(--ksg-w10);
+  background: var(--surface);
+  border: 1px solid var(--border-light-m);
 }
 .hc-compass {
   position: absolute;
@@ -109,8 +185,8 @@
   width: 50px;
   height: 50px;
   border-radius: var(--radius-full);
-  background: var(--ksg-b80);
-  border: 1px solid var(--ksg-w20);
+  background: var(--scrim-strong);
+  border: 1px solid var(--border);
   color: var(--text-primary);
   box-shadow: var(--shadow-lv-2);
 }
@@ -128,8 +204,8 @@
   height: 24px;
   padding: 0;
   border-radius: var(--radius-full);
-  background: var(--ksg-b60);
-  border: 1px solid var(--ksg-w20);
+  background: var(--scrim);
+  border: 1px solid var(--border);
   color: var(--text-dim);
   cursor: pointer;
   transition:
@@ -186,7 +262,7 @@
   width: 198px;
   padding: var(--gutter-mobile);
   background: var(--ksg-b20);
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
 .hc-io-cell {
@@ -204,7 +280,7 @@
 .hc-io-rule {
   width: 1px;
   align-self: stretch;
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
   border-radius: var(--radius-full);
 }
 

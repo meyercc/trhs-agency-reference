@@ -25,7 +25,7 @@ type Story = StoryObj<typeof VuSlider>;
 /** Drag (or focus + arrows) to see the value popup. */
 export const Default: Story = {};
 
-/** The four meter colourings. */
+/** The four meter colorings. */
 export const Variants: Story = {
   parameters: { controls: { disable: true } },
   render: () => {

@@ -1,0 +1,333 @@
+/* Personalize › Quick Control — page glue only. Tiles, badges and controls are
+   DS components; this file only lays them out. Token-only. */
+
+/* Title, then the context strip directly under it. */
+.qc-title {
+  margin-bottom: var(--gutter-sm);
+}
+
+/* A wrapping row of chips / badges / swatches inside a tile. */
+.qc-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.qc-meta {
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+/* Tiles that open a modal on click (Mode, Lighting). */
+.qc-opens {
+  cursor: pointer;
+}
+/* Quick choices in a small tile: one row, equal columns, pinned above the
+   footer — so every small tile lines up row for row. */
+/* Choices share the row in equal columns, but a column never gets narrower
+   than its label ("Valorant"): plain 1fr tracks keep their content size. */
+/* One row of equal chips while they fit; past that they wrap and keep their
+   own width. A five-preset EQ cannot be five equal columns in a 1x1 tile. */
+.qc-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+  margin-top: auto;
+}
+.qc-choices > .ds-chip {
+  flex: 1 1 auto;
+  min-width: max-content;
+  justify-content: center;
+  padding-inline: var(--gutter-xs);
+}
+/* The Mode tile's one-line summary under the mode name. */
+.qc-mode-summary {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+/* Pinned to the bottom of a tall tile's body (the Mode tile's mode chips). */
+.qc-bottom {
+  margin-top: auto;
+}
+
+/* Context strip — cover art wash on the left, signals with their icons in the
+   middle, the auto-switch result, then the Auto / Manual choice. */
+/* Two classes so it wins over the DS row tile's own tighter spacing. */
+.ds-quick-tile.qc-strip {
+  gap: var(--gutter);
+  padding: var(--gutter-sm) var(--gutter);
+}
+/* Bigger art so the strip reads as the page's context, not a toolbar. */
+.qc-strip .ds-quick-tile-media {
+  width: calc(var(--control-height) * 2);
+  height: calc(var(--control-height) * 2);
+}
+/* No cover art: the context's icon exactly as Perform's feature cards draw
+   theirs (.ds-feature-card-icon) — a faint accent tint on the dark card, a
+   hairline border, the icon in the accent color at half the box. */
+.qc-strip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius);
+  background: var(--accent-dimmest);
+  /* One step stronger than Perform's 28px chip: at this size the hairline
+     reads fainter, and the media box clips anything outside it. */
+  border: 1px solid var(--border-med);
+  color: var(--accent-color);
+}
+.qc-strip-icon .ds-icon {
+  width: 50%;
+  height: 50%;
+}
+.qc-strip .ds-quick-tile-media:has(> .qc-strip-icon) {
+  background: none;
+}
+.qc-strip .ds-quick-tile-text {
+  gap: var(--gutter-xxs);
+}
+.qc-strip.has-art::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--qc-art) center 30% / cover no-repeat;
+  opacity: 0.22;
+  -webkit-mask-image: linear-gradient(to right, black, transparent);
+  mask-image: linear-gradient(to right, black, transparent);
+  pointer-events: none;
+}
+.qc-strip .ds-quick-tile-title {
+  font-size: var(--text-section-lg);
+}
+.qc-strip .ds-quick-tile-reason {
+  font-size: var(--text-caption);
+}
+.qc-strip-effect {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  margin-left: auto;
+  padding: var(--gutter-xxs) var(--gutter-xs);
+  border-radius: var(--radius-full);
+  background: var(--accent-dimmest);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.qc-strip-effect > .ds-icon {
+  color: var(--accent-color);
+}
+
+/* Suggestions — slim rows under the context strip. */
+/* A level control: the slider and the number it is at. The number sits with
+   the control rather than in a headline, because it IS the control's value. */
+.qc-level {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.qc-level .ds-slider {
+  flex: 1;
+  min-width: 0;
+}
+.qc-level-value {
+  flex: none;
+  min-width: calc(var(--gutter) * 2);
+  text-align: right;
+  font-size: var(--text-sm-title);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+/* The pin. Pinning is a tile action, not a mode: the pinned ones say so all
+   the time, the rest only when you are on them. */
+.qc-pin {
+  opacity: 0;
+  /* Icon-only, so the hit area has to come from padding — 16px of star would
+     be under the 24px minimum target. The negative margin keeps the footer
+     rhythm unchanged. */
+  padding: var(--gutter-xxs);
+  margin: calc(-1 * var(--gutter-xxs));
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.qc-pin.on,
+.ds-quick-tile:hover .qc-pin,
+.ds-quick-tile:focus-within .qc-pin {
+  opacity: 1;
+}
+/* No hover to reveal it with, and pinning is the only way to arrange this
+   grid — so on a touch screen it is simply there. */
+@media (hover: none) {
+  .qc-pin {
+    opacity: 1;
+  }
+}
+.qc-pin.on {
+  color: var(--accent-color);
+}
+
+/* Devices: the two non-device links sit under the cards, not against them. */
+.qc-else {
+  margin-top: var(--gutter);
+}
+.qc-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  margin-top: var(--gutter-sm);
+}
+.ds-quick-tile.qc-suggestion {
+  gap: var(--gutter-sm);
+  padding: var(--gutter-xs) var(--gutter);
+}
+.qc-suggestion .ds-quick-tile-row-icon {
+  color: var(--accent-color);
+}
+/* × = Not now: a quiet icon button beside the answer. */
+.qc-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.qc-dismiss:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.qc-dismiss:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+/* Ranked tiles follow the strip (and a suggestion) with the page's gutter. */
+.qc-ranked {
+  margin-top: var(--gutter);
+}
+
+/* Arranging tiles (EditableGrid) — the dashboard's cells (widgets/board.css:
+   .wb-cell, .dragging placeholder, .wb-remove, .wb-add, .wb-drag-overlay) on the
+   tile grid. Each cell carries its tile's span; the tile inside is inert. */
+.qc-arrange-cell {
+  display: flex;
+  min-width: 0;
+  border-radius: var(--radius-card);
+  cursor: grab;
+  touch-action: none;
+}
+.qc-arrange-cell > .ds-quick-tile {
+  flex: 1;
+  pointer-events: none;
+}
+.qc-arrange-cell.span-l {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+.qc-arrange-cell.span-full {
+  grid-column: 1 / -1;
+}
+.qc-arrange-cell.span-m {
+  grid-column: span 2;
+}
+@media (max-width: 600px) {
+  .qc-arrange-cell.span-l,
+  .qc-arrange-cell.span-m {
+    grid-column: span 1;
+  }
+}
+/* In Edit the remove is always visible — touch has no hover. */
+.qc-arrange-cell .wb-remove {
+  opacity: 1;
+}
+.qc-arrange-cell:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+.qc-arrange-add {
+  grid-column: span 2;
+  min-height: calc(var(--control-height) * 4);
+}
+.wb-drag-overlay > .ds-quick-tile {
+  pointer-events: none;
+}
+
+/* Mode + Lighting — the mode and its switcher on top (lighting on/off at the
+   head's right, behind a divider), the desk full width, views at the bottom. */
+.qc-desk-mode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  align-self: flex-start;
+  min-width: 0;
+  border-radius: var(--radius);
+}
+.qc-desk-modes {
+  margin-top: var(--gutter-sm);
+}
+.qc-desk-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  /* Reads as the desk's own footer: close to the image above them, but with a
+     little air so the view buttons don't touch it. */
+  margin-top: var(--gutter-xxs);
+}
+.qc-desk-bottom > .ds-quick-tile-actions {
+  margin-left: auto;
+}
+/* The views and the Customize link belong to the desk above them, so they sit
+   right under it — and keep a full small gutter to the tile's bottom edge. */
+.ds-quick-tile.qc-desk {
+  padding-bottom: var(--gutter-sm);
+}
+.qc-mode-name {
+  font-size: var(--text-title);
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.qc-desk-light {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  margin-top: var(--gutter-sm);
+  border-radius: var(--radius);
+}
+.qc-desk-light > .ls.compact,
+.qc-desk-light > .qc-desk-fallback {
+  flex: 1;
+}
+.qc-desk-light-head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+.qc-desk-light .ls.compact .ls-viewport {
+  min-height: calc(var(--control-height) * 12);
+}
+.qc-desk .ds-quick-tile-foot {
+  margin-top: 0;
+}
+.qc-desk-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(var(--control-height) * 5);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}

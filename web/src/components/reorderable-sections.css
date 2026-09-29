@@ -1,5 +1,8 @@
 /* Reorderable page sections — vertical list with a gutter grip handle. */
 .rs-group {
+  /* How far left of the content the grip sits. Narrowed below, where the page
+     has no room outside its own edge padding. */
+  --rs-grip-col: 26px;
   display: flex;
   flex-direction: column;
   gap: calc(var(--gutter) * 1.5);
@@ -7,15 +10,30 @@
 .rs-section {
   position: relative;
 }
-/* Grip lives in the left gutter, fading in on section hover / focus. The whole
-   section drags from it (Reorder.Item dragListener=false). */
+/* The header row, with the grip in a column of its own to the left of it. The
+   negative margin puts that column in the page gutter, so the header and the
+   cards under it stay on the same left edge — the grip never sits on the label
+   and never indents it. `align-items: center` keeps it level with the label
+   whether or not the header carries a button. */
+.rs-head {
+  display: grid;
+  grid-template-columns: var(--rs-grip-col) minmax(0, 1fr);
+  align-items: center;
+  margin-left: calc(-1 * var(--rs-grip-col));
+}
+.rs-head > *:not(.rs-grip) {
+  grid-column: 2;
+  grid-row: 1;
+}
+/* Grip fades in on section hover / focus. The whole section drags from it
+   (Reorder.Item dragListener=false). */
 .rs-grip {
-  position: absolute;
-  top: 20px;
-  left: -26px;
+  grid-column: 1;
+  grid-row: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  justify-self: center;
   width: 22px;
   height: 24px;
   padding: 0;
@@ -29,6 +47,12 @@
   transition:
     opacity var(--dur-fast) var(--ease-default),
     color var(--dur-fast) var(--ease-default);
+}
+/* A section with no header: the grip is the whole row, so give it the height a
+   header would have had rather than letting it sit on the first card. */
+.rs-head.bare {
+  min-height: var(--control-height-sm);
+  margin-bottom: var(--gutter-xs);
 }
 .rs-section:hover .rs-grip,
 .rs-grip:focus-visible {
@@ -47,10 +71,19 @@
   cursor: grabbing;
 }
 
-/* Narrow viewports: tuck the grip just inside the section instead of the gutter. */
+/* Narrow viewports: there is no room outside the content column, so the grip
+   column narrows to the page's own edge padding — still in front of the label,
+   the way the catalog draws it. It also stays visible: a touch screen has no
+   hover to reveal it with. */
 @media (max-width: 1180px) {
+  .rs-group {
+    --rs-grip-col: var(--gutter);
+  }
   .rs-grip {
-    left: 0;
-    background: var(--surface);
+    width: 100%;
+    opacity: 1;
+  }
+  .rs-grip svg {
+    max-width: 100%;
   }
 }

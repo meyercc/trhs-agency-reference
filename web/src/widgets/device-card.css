@@ -26,6 +26,8 @@
   align-items: stretch;
 }
 .ds-devcard .devw-main {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -45,6 +47,18 @@
   color: var(--text-primary);
   line-height: 1.1;
 }
+/* What the device is doing right now. Sits under the type, above the way in. */
+.ds-devcard .devw-status {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxxs);
+  margin-top: var(--gutter-xxxs);
+  color: var(--text-dim);
+  font-size: var(--text-caption);
+}
+.ds-devcard .devw-status.attention {
+  color: var(--accent-yellow);
+}
 .ds-devcard .devw-sub {
   font-family: var(--font-display);
   font-size: var(--text-caption);
@@ -59,9 +73,29 @@
   flex-shrink: 0;
   align-self: stretch;
   background-size: contain;
-  background-position: center right;
+  /* Products stand on one line, like a shelf: different sizes read as a set,
+     centred ones read as a mess. */
+  background-position: right bottom;
   background-repeat: no-repeat;
+  /* Every render is framed to its own edges, so fitting each one to the same
+     box makes a mouse as big as a tower. A per-type factor puts the desk back
+     in proportion — order matters more than literal millimetres, so the range
+     is compressed enough to keep the small things legible.
+     ⚠️ Scale DOWN only. `contain` already fills the box in one dimension, so
+     any factor above 1 can only run off the card (the shell clips at its
+     radius) — on the wide dashboard card a 1.45 keyboard lost its right end
+     (2026-09-29). Small things get smaller; nothing gets bigger than its box. */
+  transform: scale(var(--dev-photo-scale, 1));
+  transform-origin: bottom right;
+  /* A photo that runs past its box runs UNDER the name, never over it. */
+  position: relative;
+  z-index: 0;
   filter: drop-shadow(0 4px 18px color-mix(in srgb, var(--accent-color), transparent 80%));
+}
+/* Keyboard, headset, desktop and mic fill their box (scale 1); the mouse is
+   the one render that reads too big at box size. */
+.ds-devcard[data-kind='mouse'] {
+  --dev-photo-scale: 0.75;
 }
 
 /* ── Centered photo: square/taller-than-wide, OR the compact ~1×1 size ── */
@@ -76,11 +110,31 @@
     min-height: 0;
     background-position: center center;
   }
+  /* Centered tier: whatever a type asks for, growth is from the middle here —
+     the photo is the card, so it must not drift to one side. */
+  .ds-devcard[data-kind] .devw-photo {
+    transform-origin: bottom center;
+  }
   .ds-devcard .devw-main {
     flex: 0 0 auto;
   }
   .ds-devcard .devw-textblock {
     margin-top: 0;
+  }
+}
+
+/* ── Short but not compact (e.g. the 2×1 footprint) — drop the battery ──
+   The battery is absolutely positioned top-left while `.devw-textblock` pins to
+   the bottom, so nothing reserves space for it. Once the card is only one row
+   tall the title rises into that corner and the two collide — at 2×1 the title
+   also wraps to two lines, which is what puts it on top of the reading.
+   Height alone is the wrong test: the compact tile below is short too, but it
+   drops the subtitle and shortcuts and centres its photo, leaving the corner
+   free — there the battery is the tile's whole point. So this targets short
+   cards that are NOT that tile, mirroring the compact query's width half. */
+@container devcard (max-height: 230px) and (not (max-width: 260px)) {
+  .ds-devcard .dev-battery {
+    display: none;
   }
 }
 
@@ -136,35 +190,130 @@
   display: none; /* Compact (1 row): launcher content only */
 }
 
-/* AI-managed state is shown by the slider's TRACK COLOUR (not a trailing tag,
-   so the slider keeps full width). Orange = OMEN AI / auto; the default accent =
-   manual. The Slider paints its fill with var(--accent-color), so overriding
-   that one variable on the managed cell recolours the track WITHOUT touching the
-   shared Slider component (rule 11). Dragging flips it to manual (RichPanel) and
-   the track returns to the accent colour. Tier-agnostic on purpose — the same
-   state must read the same at Standard and Expanded. */
-/* AI-auto slider = the OMEN brand GRADIENT track (red→orange→yellow), painted by
-   the Slider's `gradient` prop — proposed managed variant for the DS (Chris
-   agenda). A gradient (not a solid) so it reads as AI/auto and never collides
-   with the user's solid accent. Here we only tint the THUMB warm to match the
-   track; the Auto switch stays the normal accent (blue). Scoped to .ds-slider so
-   the switch is unaffected. */
-.ds-devcard.rich .devr-cell.managed .ds-slider {
-  --accent-color: var(--omen-orange);
-}
+/* Auto state (the display setting itself — Auto Brightness / Auto Contrast) is
+   shown by the slider's SHAPE, not by colour: no handle, a meter-faint track, and
+   the Auto switch on. The fill keeps the ordinary accent.
+   ⚠️ NOT the OMEN brand gradient. That gradient is this app's one AI signal, and
+   Auto Brightness is a plain display setting, not OMEN AI — spending the AI colour
+   here would leave nothing to say "AI" with when a genuinely AI-held control ships
+   (Chris 1:1, 2026-08-04; this reverses our earlier gradient proposal).
+   Because colour no longer separates the two states, the structural cues carry it
+   alone — do not add opacity/greying on top, that reads as "disabled" instead.
+   Tier-agnostic on purpose — the same state must read the same at Standard and
+   Expanded. Switch Auto off to take manual control (the handle returns).
 
-/* Auto (managed) = READ-ONLY slider: hide the thumb + make it non-interactive,
-   while the gradient fill stays bright to show the AI-set level. No handle =
-   clear "you don't grab this, OMEN AI owns it"; switch Auto OFF (the toggle) to
-   get a manual handle back. Proposed managed-slider variant (Chris agenda D-3),
-   scoped to our monitor managed sliders so Chris's base slider is unchanged. */
-.ds-devcard.rich .devr-cell.managed .ds-slider input[type='range'] {
+   Spec = design-assets/component-specs.md `SPEC: managed-slider`. The read-only
+   treatment speaks the same vocabulary as this app's other read-only bars
+   (`.ds-prog-fill`, `.ds-rail-fill`, booster RAM `.wbst-ram-fill`): the fill is its
+   OWN layer carrying its OWN radius, the track has no stroke, and nothing is
+   dimmed. Only the HANDLE is hidden.
+
+   ── Keyed on `.ds-slider.is-managed`, NOT on the card wrapper (2026-08-04). The
+   Display tab shows the same Brightness with the same Ambient Sensor, so the card
+   and the modal have to draw the auto state identically; a card-scoped selector
+   would have meant transcribing this block into monitor-tabs.css (rule 15). One
+   definition, two consumers — and this is the shape Chris said he'd formalize as a
+   `managed` variant, so it is one selector for him to lift, not two.
+   The `html:root` prefix is not decoration: shared/components.css:6311+ re-states
+   the whole slider under `html:root`, which out-specifies a bare
+   `.ds-slider.is-managed`. Same prefix, same idiom, one class ahead. */
+
+/* Fill as a layer, not a colour stop — a stop can only end in a 90° cut, and every
+   read-only bar here ends rounded. Geometry mirrors the input's own track: 8px tall
+   at the same --radius-sm, centred the way `.ds-rail-fill` does it (top 50% +
+   translateY) rather than offset by a guessed margin — the input's vertical margin
+   is NOT --gutter-sm here (10px vs 16px, measured), and centring tracks it whatever
+   it is. Assumes the managed cell's `.ds-slider` holds the input alone; adding a
+   `.ds-slider-value` row would move the wrapper's centre off the track. `--pct`
+   (unitless 0–100) comes from Slider's opt-in mode, per the `.ds-rail`
+   convention. The layer sits ABOVE the input because the input paints the empty
+   track; it needs no clipping parent (unlike `.wbst-ram-track`) since it is the
+   track's sibling, not its child, and carries the radius itself. */
+html:root .ds-slider.is-managed {
+  position: relative;
+}
+/* Empty track = the METER-BAR track, not the slider's. The slider's --border-med
+   track is the "grab me" surface; every read-only bar here sits on the faint
+   meter track instead (`.ds-prog-track` — rgba(255,255,255,.06) dark at
+   shared/components.css:437, rgba(0,0,0,.06) light at :2650). In managed mode the
+   input paints nothing (Slider.tsx returns transparent), so this layer IS the
+   track. Below the fill (z 0 < 1). Confirmed direction: Chris's monitor-merge
+   replies 2026-08-04 — "once your read-only treatment lands on the meter-bar
+   vocabulary we'll formalize it as a managed variant". */
+html:root .ds-slider.is-managed::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 0;
+  height: 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
   pointer-events: none;
 }
-.ds-devcard.rich .devr-cell.managed .ds-slider input[type='range']::-webkit-slider-thumb {
+html[data-theme='light']:root .ds-slider.is-managed::after,
+html.light:root .ds-slider.is-managed::after {
+  background: rgba(0, 0, 0, 0.06);
+}
+html:root .ds-slider.is-managed::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  height: 8px;
+  width: calc(var(--pct, 0) * 1%);
+  border-radius: var(--radius-sm);
+  /* The ordinary accent — NOT the OMEN brand gradient. Auto Brightness/Contrast is
+     a plain display setting, not OMEN AI, and the brand gradient is the app's one
+     AI signal; spending it here would blur the line the moment a real AI-held
+     control ships. (Chris 1:1, 2026-08-04.) The auto state is carried by
+     STRUCTURE instead: no handle, meter-faint track, Auto switch on. */
+  background: var(--accent-color);
+  pointer-events: none;
+}
+
+/* No stroke on a read-only slider — a 1px inset ring reads as "grab me", and none
+   of the read-only bars carry one. It has to be cleared in TWO places: the DS puts
+   `inset 0 0 0 1px rgba(255,255,255,.1)` on the track, and current Chrome adds its
+   own UA ring on the input itself (measured: white .2 ring + a black .2 inner
+   shadow, present with no CSS rule matching the element). Clearing only the track
+   leaves the UA pair painting a visible edge on the empty part of the bar. */
+html:root .ds-slider.is-managed input[type='range'] {
+  box-shadow: none;
+}
+html:root .ds-slider.is-managed input[type='range']::-webkit-slider-runnable-track {
+  box-shadow: none;
+}
+html:root .ds-slider.is-managed input[type='range']::-moz-range-track {
+  box-shadow: none;
+  /* Firefox paints the slider track in this pseudo — cleared so the meter track
+     layer is the only track either engine shows. */
+  background: transparent;
+}
+/* Firefox fills natively via ::-moz-range-progress; cleared so both engines show
+   the one layer above and can't disagree about the fill's shape. */
+html:root .ds-slider.is-managed input[type='range']::-moz-range-progress {
+  background: transparent;
+}
+
+/* Auto on = READ-ONLY slider: hide the thumb + make it non-interactive, while the
+   fill stays at full strength so the current level still reads. No handle = "this
+   one isn't yours to drag right now"; switch Auto OFF (the toggle) to get the
+   handle back. With colour no longer distinguishing the states, the missing handle
+   is the primary cue — keep it. Proposed read-only variant for the DS (Chris will
+   formalize it once it sits on the meter-bar vocabulary — replies 2026-08-04),
+   scoped to our monitor auto sliders so Chris's base slider is unchanged. */
+html:root .ds-slider.is-managed input[type='range'] {
+  pointer-events: none;
+}
+html:root .ds-slider.is-managed input[type='range']::-webkit-slider-thumb {
   opacity: 0;
 }
-.ds-devcard.rich .devr-cell.managed .ds-slider input[type='range']::-moz-range-thumb {
+html:root .ds-slider.is-managed input[type='range']::-moz-range-thumb {
   opacity: 0;
 }
 
@@ -181,7 +330,7 @@
 }
 
 /* Auto on/off switch (DS Toggle) + label — fixed-width slot so every slider
-   track lines up. The switch flips both ways; the track colour is the
+   track lines up. The switch flips both ways; the track color is the
    at-a-glance state. */
 /* FIXED width (not min-width) so the empty (Volume) slot reserves the same space
    as the Auto-switch slots → all three tracks come out exactly equal length. */
@@ -203,10 +352,23 @@
 /* Ambient / under-glow behind the monitor render — a FAINT warm pool (Game
    under-glow = warm, research), not a cyan halo washing the whole product, and
    deliberately subtle so the card isn't all-orange (2026-07-23 Cindy). Gated to
-   .rich so Chris's peripheral photos keep their default accent glow. Final hue
-   should follow the active mode's under-glow colour (Thursday model). */
+   .rich (monitor cards only — DeviceCard.tsx:87 returns undefined for any other
+   type) so Chris's peripheral photos keep their default accent glow. */
 .ds-devcard.rich .devw-photo {
   filter: drop-shadow(0 16px 30px color-mix(in srgb, var(--orange), transparent 84%));
+}
+/* 2026-08-05 — the "final hue should follow the under-glow colour" note that sat
+   in the block above is now done, but only for hardware that HAS the strip:
+   `.rich` covers every monitor card, and a monitor without under-glow (OMEN
+   OLED 27 — features.underGlow absent) must not repaint itself when the
+   Treehouse's lamp changes. That card keeps the literal pool above.
+   `--ug-color` / `--ug-fade` are published on :root by SettingsProvider from the
+   actual control (Overview tab), so this card and the modal hero's desk map draw
+   one lamp instead of two guesses. Fade reaches 100% when the strip is off,
+   which is what hides it — no separate off rule to keep in sync. */
+.ds-devcard.rich.has-underglow .devw-photo {
+  filter: drop-shadow(0 16px 30px color-mix(in srgb, var(--ug-color, var(--orange)), transparent var(--ug-fade, 84%)));
+  transition: filter var(--dur-mid, 240ms) ease;
 }
 
 /* Standard (2 rows = ≥280px content): color-preset readout + brightness slider */
@@ -335,9 +497,9 @@
     top: var(--gutter);
     left: var(--gutter);
     z-index: 2;
-    /* mode identity colour — Game = warm (under-glow research), so the mode is
+    /* mode identity color — Game = warm (under-glow research), so the mode is
        the card's one prominent status. Proposal ahead of the Thursday mode-
-       colour model (Work = cool, Create = neutral would fill the same slot). */
+       color model (Work = cool, Create = neutral would fill the same slot). */
     background: var(--orange-dim);
     color: var(--orange);
     border: 1px solid color-mix(in srgb, var(--orange), transparent 55%);
@@ -359,5 +521,58 @@
   .ds-devcard.rich .devr-contrast,
   .ds-devcard.rich .devr-volume {
     display: flex;
+  }
+}
+
+/* ── Card face chooser (scope 1.0) ──────────────────────────────────────────
+   `Customize →` sits at the right-hand end of the card's title row — the slot
+   `Manage →` uses on every WidgetShell card — so it reads as a control over the
+   card rather than a fourth row of content. `margin-left: auto` pushes it past
+   the title and the mode chip without either of them needing a width.
+   It follows the rich panel's own visibility: hidden at Compact, where no rows
+   are drawn and so there is nothing to choose. */
+.ds-devcard.rich {
+  position: relative;
+}
+.ds-devcard.rich .devw-face-link {
+  display: none;
+  position: absolute;
+  top: var(--gutter);
+  right: var(--gutter);
+  z-index: 2;
+  white-space: nowrap;
+}
+.devr-face-note {
+  margin: 0 0 var(--gutter) 0;
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+.devr-face-list {
+  display: flex;
+  flex-direction: column;
+}
+.devr-face-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+  padding: var(--gutter-sm) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.devr-face-row:last-child {
+  border-bottom: none;
+}
+
+/* Shown at the two tiers that draw the rich panel. Kept here, after the base
+   rule above, because both selectors have the same specificity — source order
+   is what decides, and an earlier `display: inline-flex` would simply lose. */
+@container devcard (min-height: 280px) {
+  .ds-devcard.rich .devw-face-link {
+    display: inline-flex;
+  }
+}
+@container devcard (min-width: 640px) and (min-height: 440px) {
+  .ds-devcard.rich .devw-face-link {
+    display: inline-flex;
   }
 }

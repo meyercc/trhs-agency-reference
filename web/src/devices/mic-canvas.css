@@ -1,6 +1,13 @@
 /* Microphone canvas — Audio/Effects/Lighting/Settings on the shared
    device-canvas chrome + .ds-ng3-* primitives. Only mic-specific layout. */
 
+.mic-canvas {
+  /* The Lights tab's panel height, matched to the Audio tab's content-driven
+     section (248px at the current Audio composition) so the product image is
+     the same size on every tab. Re-measure if the Audio tab's rows change. */
+  --lights-h: 248px;
+}
+
 .mic-grid > .ds-ng3-section {
   flex: 1;
   min-width: 0;
@@ -17,4 +24,141 @@
   .mic-grid {
     flex-direction: column;
   }
+}
+
+/* ── SoloCast 2 Pro: the Audio tab's FlipCast panel (Figma Audio 13953:597433).
+      A wide mic column beside a narrower equalizer/effects column, near the
+      design's 340:256 — the right column takes a little more so "Input
+      Equalizer", its info glyph and its toggle share one line in our type. Gap
+      and surfaces come from .ds-ng3-grid / .ds-ng3-section. ── */
+.mic-audio > .ds-ng3-section {
+  flex: 11;
+}
+/* Descendant, not child: the column sits inside SoftwareOnly's
+   `display: contents` wrapper, which the child combinator cannot see through. */
+.mic-audio .ds-ng3-col,
+.mic-audio > .ds-sw-only.locked {
+  flex: 9;
+}
+.mic-fx-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+/* Mic — mix — headphones: the two glyphs frame the balance slider. */
+.mic-mix .ds-icon {
+  flex: none;
+  color: var(--text-dim);
+}
+
+/* ── SoloCast 2 Pro: the ring lights (Figma Lights 6831:40762, Audio 13852:26924).
+      The nine lights sit ON the photo, over the ring, so they read as lit LEDs
+      rather than a tint through the band — bright, and the same boxes are the
+      pick targets on the Lights tab. A bloom of their average color sits behind
+      the photo, the keyboard hero's glow. Everything is anchored to the rendered
+      photo box (.dc-hero-fig), so the lights track the photo at any hero size. ── */
+.mic-hero {
+  position: relative;
+  /* A size container so the photo can take the hero's height in container
+     units: a percentage max-height on the image would resolve against the
+     figure, whose height is the image's — circular, so it is ignored, and the
+     photo ran off behind the panel. With the image held to 100cqh the figure
+     shrink-wraps it, and the lights (percent-anchored to the figure) land on
+     the photo at any hero size. */
+  container-type: size;
+}
+.mic-fig img {
+  max-height: 100cqh;
+  position: relative;
+  z-index: 1;
+}
+/* The Microphone Test button floats at the top of the hero on the Audio tab. */
+.mic-hero-cta {
+  position: absolute;
+  top: var(--gutter-xs);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+}
+.mic-ring {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  /* Power and brightness both drive the ring's level; off = the photo alone. */
+  opacity: var(--ring-level, 1);
+  transition: opacity var(--dur-normal) var(--ease-default);
+  filter: blur(4px);
+}
+/* Unlit: dark glass over the ring. Lit: the light's color, glowing. */
+.mic-ring-light {
+  position: absolute;
+  border-radius: var(--radius-sm);
+  background: var(--ksg-w10);
+  box-shadow: inset 0 0 0 1px var(--ksg-b30);
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    box-shadow var(--dur-fast) var(--ease-default);
+}
+.mic-ring-light.lit {
+  background: var(--rgb);
+  box-shadow:
+    0 0 10px 2px var(--rgb),
+    inset 0 0 0 1px var(--ksg-w25);
+}
+/* The light the ring casts — a soft ellipse of the lit colors' average behind
+   the photo, the keyboard's .kbd-hero-glow treatment scaled to a band. */
+.mic-ring-bloom {
+  position: absolute;
+  left: 50%;
+  top: 79%;
+  width: 140%;
+  height: 24%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, var(--glow, transparent) 0%, transparent 65%);
+  filter: blur(18px);
+  opacity: var(--ring-level, 1);
+  transition: opacity var(--dur-normal) var(--ease-default);
+  pointer-events: none;
+}
+/* Pick targets on the Lights tab, one per light over its segment. Selection
+   is a drawn border plus aria-checked; a faint outline says pickable. The
+   layer covers the photo so a marquee can start anywhere on it. */
+.mic-ring-picks {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  cursor: crosshair;
+  user-select: none;
+  /* A touch drag has to draw the box, not pan the canvas. */
+  touch-action: none;
+}
+.mic-light-pick {
+  position: absolute;
+  padding: 0;
+  background: transparent;
+  border: 2px solid var(--ksg-w25);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-default);
+}
+.mic-light-pick:hover {
+  border-color: var(--ksg-w50);
+}
+.mic-light-pick.selected {
+  border-color: var(--text-primary);
+}
+.mic-light-pick:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+/* The marquee box — the keyboard's .kbd-marquee. */
+.mic-marquee {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  border: 1px dashed var(--accent-color);
+  border-radius: var(--radius-sm);
+  background: var(--accent-dimmest);
 }

@@ -51,11 +51,11 @@
 .gauge-n {
   font-size: 20px;
   font-weight: 700;
-  color: #e4e8f0;
+  color: var(--text-primary);
 }
 .gauge-u {
   font-size: 8px;
-  color: rgba(228, 232, 240, 0.38);
+  color: var(--text-muted);
   margin-left: 1px;
 }
 
@@ -180,6 +180,68 @@
   }
   .wv-net-label {
     padding-top: 4px;
+  }
+}
+
+/* ── Narrow 2-column layout ──
+   Four cells side by side want roughly 150px each. Below that they cannot sit
+   on one row without running off the card, and `.ds-widget` hides its overflow,
+   so the RAM and Network cells were simply cut off — which the board could
+   already do on its own, since a widget resizes down to two columns (MIN_SPAN,
+   WidgetBoard.tsx) and this card ships four columns wide.
+
+   So they wrap into 2 × 2 and the gauge takes its size from the cell rather
+   than a fixed one, which keeps the temperature and capacity badges the height
+   compaction has to drop.
+
+   The min-height guard hands a card that is BOTH narrow and short back to the
+   compaction above: two rows of cells need a card at least two rows tall, and
+   below that the one-row treatment is the only one that fits. */
+@container wvw (max-width: 520px) and (min-height: 221px) {
+  .wv-gauges {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .wv-cell {
+    padding: var(--gutter-xxs) var(--gutter-xs) var(--gutter-xs);
+    justify-content: center;
+  }
+  /* The divider now runs between the two columns and between the two rows. */
+  .wv-cell:nth-child(2n) {
+    border-right: none;
+  }
+  .wv-cell:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border-light);
+  }
+  /* Half the cell, but never taller than the half-card row it sits in — a
+     one-column page makes the cells wide and the card no taller, so width
+     alone would push the bottom pair out through the card. Both limits are
+     ratios of the card, so the gauge tracks whatever size the board gives it
+     instead of naming a third fixed number. */
+  .gauge-wrap {
+    width: min(50%, 30cqh);
+    height: auto;
+    aspect-ratio: 1;
+    margin-bottom: var(--gutter-xxs);
+  }
+  .gauge-n {
+    font-size: var(--text-section);
+  }
+  .gauge-temp-badge {
+    margin-top: var(--gutter-xxs);
+    padding: 0 var(--gutter-xs);
+  }
+  .wv-net {
+    gap: var(--gutter-xs);
+    padding-top: 0;
+  }
+  .net-speed {
+    font-size: var(--text-section);
+  }
+  .net-unit {
+    font-size: var(--text-micro);
+  }
+  .wv-net-label {
+    padding-top: var(--gutter-xxs);
   }
 }
 

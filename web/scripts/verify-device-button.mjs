@@ -10,13 +10,16 @@
 // Slot numbering: deviceSlot/activeSlot are 0-based; labels are 1-based
 // ("Slot 1" = index 0). A fresh device idles on index 0 as its fallback, so
 // the FIRST live press cycles 0 → 1 and lands on "Slot 2".
-// Dev server :5175, headless Chrome :9222, run from web/.
+// Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
 const OUT = process.argv[2] || '/tmp';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
 let msgId = 0;
 function makeSend(ws) {
@@ -66,22 +69,34 @@ const SNAP = `(() => {
   const hudRows = [...document.querySelectorAll('.sim-hud-row')].map(r => ({
     name: r.querySelector('.sim-hud-name')?.textContent.trim(),
     state: r.querySelector('.sim-hud-state')?.textContent.trim(),
+    // Which acts this row offers — a display has no profile button and no
+    // battery, so the row is expected to be shorter (2026-09-01).
+    acts: [...r.querySelectorAll('.sim-hud-actions button')].map(b => b.textContent.trim()),
+    hasBattery: !!r.querySelector('.sim-hud-batt-pct'),
   }));
   return {
     hud: !!document.querySelector('.sim-hud'),
     hudRows,
     chip: document.querySelector('.dc-chip-val')?.textContent.trim() ?? null,
     chipDotOn: !!document.querySelector('.dc-chip-dot-on'),
-    // Two halves: software profile, then the device's onboard memory. Scope is
-    // derived from what the device runs, so the selected half and the running
-    // slot are the same fact.
-    opts: [...document.querySelectorAll('.pb-half')].map(h => ({
-      name: h.querySelector('.pb-opt-name')?.textContent.trim(),
-      selected: h.querySelector('.pb-opt')?.getAttribute('aria-checked') === 'true',
-      onDevice: h.classList.contains('on-device'),
-    })),
-    barDisabled: !!document.querySelector('.pb-row.disabled'),
-    optsInert: [...document.querySelectorAll('.pb-opt, .pb-chev')].every(b => b.disabled),
+    // One dropdown: group 1 is the software profile, group 2 the onboard
+    // slots. Scope is derived from what the device runs, so the selected row
+    // and the running slot are the same fact. Read as the old two-half view:
+    // [software, onboard], name on the onboard side being the slot the
+    // trigger shows while on a slot.
+    opts: (() => {
+      const sel = document.querySelector('.pb-select');
+      const label = sel?.querySelector('.ds-dropdown-label')?.textContent.trim() ?? null;
+      const g = [...(sel?.querySelectorAll('.ds-list-group') ?? [])];
+      const sw = g[0]?.querySelector('.ds-list-item-label')?.textContent.trim();
+      const onboard = !!g[1]?.querySelector('.ds-list-item[aria-selected="true"]');
+      return [
+        { name: sw, selected: !onboard, onDevice: false },
+        { name: onboard ? label : null, selected: onboard, onDevice: onboard },
+      ];
+    })(),
+    barDisabled: !!document.querySelector('.pb-select.disabled'),
+    optsInert: !!document.querySelector('.pb-select .ds-dropdown-trigger')?.disabled,
     note: document.querySelector('.pb-note')?.textContent.replace(/\\s+/g,' ').trim() ?? null,
     buttons: [...document.querySelectorAll('.pb-actions .ds-btn')].map(b => b.textContent.trim()),
     locks: document.querySelectorAll('.ds-sw-only.locked').length,
@@ -91,24 +106,39 @@ const SNAP = `(() => {
 
 let loadN = 0;
 async function load(send, path) {
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}${path}` });
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}${path}` });
   await waitFor(send, `document.readyState === 'complete' && document.querySelector('#root')?.firstElementChild`);
 }
 
 const snap = (send) => evalJs(send, SNAP);
-const clickSoftware = (send) => evalJs(send, `document.querySelector('.pb-half .pb-opt').click()`);
-/** Choose slot `i` (0-based) from the onboard half's collapsed list. */
-const pickSlot = async (send, i) => {
-  await evalJs(send, `document.querySelector('.pb-chev').click()`);
-  await waitFor(send, `document.querySelector('.pb-pop .ds-list-item')`);
-  await evalJs(send, `document.querySelectorAll('.pb-pop .ds-list-item')[${i}].click()`);
-  await waitFor(send, `!document.querySelector('.pb-pop')`);
+const TRIGGER = `document.querySelector('.pb-select .ds-dropdown-trigger')`;
+const GROUP = (n) => `document.querySelector('.pb-select .ds-list-group:nth-child(${n})')`;
+/** Wait-expression: the device is on an onboard slot (a slot row is the selected row). */
+const ON_DEVICE = `${GROUP(2)}?.querySelector('.ds-list-item[aria-selected="true"]')`;
+const SW_NAME = `${GROUP(1)}?.querySelector('.ds-list-item-label')?.textContent.trim()`;
+const openPop = async (send) => {
+  // Under lane contention a pick can land before the canvas has re-rendered;
+  // wait for the trigger rather than clicking null.
+  await waitFor(send, TRIGGER);
+  await evalJs(send, `${TRIGGER}.click()`);
+  await waitFor(send, `document.querySelector('.pb-select.open')`);
 };
-/** Wait-expression: the onboard half is showing slot `n` (1-based) as running. */
+const closed = (send) => waitFor(send, `!document.querySelector('.pb-select.open')`);
+const clickSoftware = async (send) => {
+  await openPop(send);
+  await evalJs(send, `${GROUP(1)}.querySelector('.ds-list-item').click()`);
+  await closed(send);
+};
+/** Choose slot `i` (0-based) from the Onboard group. */
+const pickSlot = async (send, i) => {
+  await openPop(send);
+  await evalJs(send, `${GROUP(2)}.querySelectorAll('.ds-list-item')[${i}].click()`);
+  await closed(send);
+};
+/** Wait-expression: the trigger shows slot `n` (1-based) as what the device runs. */
 const runningSlot = (n) => `(() => {
-  const h = document.querySelector('.pb-onboard');
-  return h?.classList.contains('on-device')
-    && h.querySelector('.pb-opt-name')?.textContent.trim() === 'Slot ${n}';
+  const on = ${ON_DEVICE};
+  return !!on && document.querySelector('.pb-select .ds-dropdown-label')?.textContent.trim() === 'Slot ${n}';
 })()`;
 /** Snapshot assertion for the same thing. */
 const onSlot = (s, n) => s.opts[1]?.onDevice === true && s.opts[1]?.name === `Slot ${n}`;
@@ -143,7 +173,7 @@ async function main() {
   // Seed the board rather than inheriting DEFAULT_LAYOUT: this suite drives a
   // real profile switch through the Active Profile widget and needs the headset
   // card present, and the default layout is a product decision that moves. A
-  // seeded layout keeps the suite testing device behaviour, not the default.
+  // seeded layout keeps the suite testing device behavior, not the default.
   await evalJs(send, `localStorage.removeItem('device-onboard'); localStorage.removeItem('device-sim'); localStorage.setItem('activeProfileId', 'gaming');
     localStorage.setItem('board-layout', JSON.stringify(
       [['profile',2,1],['dev-treehouse',3,2],['dev-mouse',3,2],['dev-monitor',3,2],['dev-headset',3,2]]
@@ -163,11 +193,36 @@ async function main() {
   s = await snap(send);
   check('admin: Show opens the HUD and closes the modal (watch the app react)',
     s.hud === true && !(await evalJs(send, `!!document.querySelector('.admin-modal')`)));
-  check('hud: one row per device with onboard memory (no monitor, no long tail)',
-    s.hudRows.length === 4 && !s.hudRows.some((r) => /OLED|monitor/i.test(r.name ?? '')),
+  // Every connected device, displays included (2026-09-01, Cindy). This used to
+  // assert the opposite — 4 rows and no monitor — because the roster was
+  // "devices with onboard memory", and a monitor has none. That left both
+  // displays out of the only screen that plays hardware, so nobody could see
+  // what the app does when a display is unplugged.
+  check('hud: one row per connected device, displays included',
+    s.hudRows.length === 6 && s.hudRows.some((r) => /Treehouse 32/.test(r.name ?? ''))
+      && s.hudRows.some((r) => /OLED/.test(r.name ?? '')),
     s.hudRows.map((r) => r.name).join(' / '));
-  check('hud: rows carry the hardware truth (software-driven + fallback slot)',
-    s.hudRows.every((r) => /software-driven, falls back to Slot 1/.test(r.state ?? '')), s.hudRows[0]?.state);
+  // A row offers only what that device can do. Offering a dead control on the
+  // screen we CHECK dead controls from would be the same lie one layer up.
+  check('hud: a display gets Unplug only — no profile button, no battery',
+    s.hudRows.filter((r) => /Treehouse 32|OLED/.test(r.name ?? ''))
+      .every((r) => r.acts.join() === 'Unplug' && !r.hasBattery),
+    JSON.stringify(s.hudRows.filter((r) => /Treehouse 32|OLED/.test(r.name ?? '')).map((r) => r.acts)));
+  check('hud: slot devices still carry the hardware truth (software-driven + fallback slot)',
+    s.hudRows.filter((r) => r.acts.includes('Profile button'))
+      .every((r) => /software-driven, falls back to Slot 1/.test(r.state ?? '')),
+    s.hudRows[0]?.state);
+  // A display has no slots, so the slot sentence would be noise — it says the
+  // short true thing instead.
+  check('hud: a display says just Connected, not a slot it does not have',
+    s.hudRows.filter((r) => /Treehouse 32|OLED/.test(r.name ?? '')).every((r) => r.state === 'Connected'),
+    s.hudRows.find((r) => /Treehouse 32/.test(r.name ?? ''))?.state);
+  // The battery the card's low treatment needs — only the mouse has one on this
+  // desk (the registry gives Cloud III `wired`), so one row and only one.
+  check('hud: the one device with a battery gets the slider, nobody else',
+    s.hudRows.filter((r) => r.hasBattery).length === 1
+      && /Saga Pro/.test(s.hudRows.find((r) => r.hasBattery)?.name ?? ''),
+    s.hudRows.filter((r) => r.hasBattery).map((r) => r.name).join(' / '));
 
   // ── Live press with the canvas open: the app follows and says why ─────────
   await evalJs(send, `location.hash = '#/?sku=origins-65&tab=lighting'`);
@@ -177,7 +232,7 @@ async function main() {
   check('fresh state: nothing locked, software scope selected', s.locks === 0 && s.opts[0]?.selected === true);
 
   await hudAction(send, 'Origins', 'Profile button');
-  await waitFor(send, `document.querySelector('.pb-half.on-device')`);
+  await waitFor(send, ON_DEVICE);
   s = await snap(send);
   check('press: the device is the truth — it cycles 0→1, the live dot lands on Slot 2',
     onSlot(s, 2) && s.kb?.activeSlot === 1, JSON.stringify(s.kb));
@@ -198,9 +253,9 @@ async function main() {
   check('press cycles: Slot 2 → Slot 3, the app keeps following', onSlot(s, 3) && s.kb?.activeSlot === 2);
 
   await clickSoftware(send);
-  await waitFor(send, `!document.querySelector('.pb-half.on-device')`);
+  await waitFor(send, `!${ON_DEVICE}`);
   s = await snap(send);
-  check('the software half is the way back: software drives again, no write',
+  check('the software profile row is the way back: software drives again, no write',
     s.locks === 0 && s.kb?.activeSlot === null && Object.keys(s.kb?.slots ?? {}).length === 0, JSON.stringify(s.kb));
   check('hud: the fallback slot survives handing back to software',
     /software-driven, falls back to Slot 3/.test(hudState(s, 'Origins')), hudState(s, 'Origins'));
@@ -218,18 +273,18 @@ async function main() {
   check('away presses: the hardware moves (…→ Slot 2), the app cannot see it',
     /Away · on Slot 2/.test(hudState(s, 'Origins')) && s.kb?.activeSlot === null, hudState(s, 'Origins'));
   check('away: no slot claims to be running in the bar', s.opts.every((o) => !o.onDevice));
-  check('away: the bar is disabled — a device that is not here cannot be switched',
+  check('away: the selector is disabled — a device that is not here cannot be switched',
     s.barDisabled === true && s.optsInert === true, `disabled=${s.barDisabled} inert=${s.optsInert}`);
 
   const awayState = JSON.stringify(s.kb);
-  await evalJs(send, `document.querySelector('.pb-onboard .pb-opt').click()`);
+  await evalJs(send, `${TRIGGER}.click()`);
   await sleep(300);
   s = await snap(send);
-  check('away: clicking the bar changes nothing at all', JSON.stringify(s.kb) === awayState, awayState);
+  check('away: clicking the selector changes nothing at all', JSON.stringify(s.kb) === awayState, awayState);
 
   // ── Reconnect, changed: the device wins and the app teaches ──────────────
   await hudAction(send, 'Origins', 'Plug in');
-  await waitFor(send, `document.querySelector('.pb-half.on-device')`);
+  await waitFor(send, ON_DEVICE);
   s = await snap(send);
   check('reconnect (changed): adopts the slot it came back running',
     onSlot(s, 2) && s.kb?.activeSlot === 1 && s.kb?.slotSource === 'reconnect', JSON.stringify(s.kb));
@@ -241,7 +296,7 @@ async function main() {
 
   // ── Reconnect, unchanged: silence — only disagreements speak ──────────────
   await clickSoftware(send);
-  await waitFor(send, `!document.querySelector('.pb-half.on-device')`);
+  await waitFor(send, `!${ON_DEVICE}`);
   await hudAction(send, 'Origins', 'Unplug');
   await waitFor(send, `[...document.querySelectorAll('.dc-chip-val')].some(c => c.textContent === 'Disconnected')`);
   await hudAction(send, 'Origins', 'Plug in');
@@ -276,23 +331,23 @@ async function main() {
   // are still clickable programmatically. With bindings gone, a profile switch
   // must leave the hardware exactly where it is.
   await switchProfile(send, 'Work');
-  await waitFor(send, `document.querySelector('.pb-opt-name')?.textContent.trim() === 'Work'`);
+  await waitFor(send, `${SW_NAME} === 'Work'`);
   s = await snap(send);
   check('profile switch leaves the device on its slot — no pin, nothing asserted',
     s.kb?.activeSlot === 1 && onSlot(s, 2), JSON.stringify(s.kb));
-  check('bar names the profile it shows: Work in the software half',
+  check('the menu names the profile it offers: Work in the Software group',
     s.opts[0]?.name === 'Work', s.opts[0]?.name);
   check('profile switch writes nothing', Object.keys(s.kb?.slots ?? {}).length === 0, JSON.stringify(s.kb?.slots));
 
   await switchProfile(send, 'Gaming');
-  await waitFor(send, `document.querySelector('.pb-opt-name')?.textContent.trim() === 'Gaming'`);
+  await waitFor(send, `${SW_NAME} === 'Gaming'`);
   s = await snap(send);
   check('switching back is equally inert — the keyboard is still on Slot 2',
     s.kb?.activeSlot === 1 && onSlot(s, 2), JSON.stringify(s.kb));
 
   // Hand it back so the board/flyout checks below start from software.
   await clickSoftware(send);
-  await waitFor(send, `!document.querySelector('.pb-half.on-device')`);
+  await waitFor(send, `!${ON_DEVICE}`);
 
   // ── Unplugging takes the device's board card with it (hidden, not deleted) ──
   // The board sits behind the open canvas on the Home route; same pattern as
@@ -330,7 +385,10 @@ async function main() {
     return { count: tabs.length, offline: tabs.map(t => t.classList.contains('offline')), titles: tabs.map(t => t.title) };
   })()`);
   check('flyout: unplugged headset stays listed — inventory, not hidden',
-    fly.count === 5 && fly.offline.filter(Boolean).length === 1 && /Cloud III \(disconnected\)/.test(fly.titles[2]),
+    // 6, not 5 — this count was stale before the 2026-09-01 work and failed on
+    // the parent commit too (measured by running this file on both). The panel
+    // lists CONNECTED_DEVICE_IDS, which has six entries.
+    fly.count === 6 && fly.offline.filter(Boolean).length === 1 && /Cloud III \(disconnected\)/.test(fly.titles[2]),
     JSON.stringify(fly.titles));
   await evalJs(send, `document.querySelectorAll('.devp-tab')[2].click()`);
   await waitFor(send, `[...document.querySelectorAll('.devp-badge')].some(b => b.textContent.trim() === 'Disconnected')`);

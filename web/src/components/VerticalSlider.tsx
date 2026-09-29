@@ -16,6 +16,13 @@ export interface VerticalSliderProps
   formatValue?: (value: number) => string;
   /** Always show the value popup, not just while active. */
   showValue?: boolean;
+  /**
+   * Bipolar rail: the fill grows from the CENTER line toward the handle rather
+   * than up from the bottom, and a notch marks the midpoint. For values where
+   * zero is the middle and the sign carries meaning — an EQ band's cut/boost —
+   * the vertical twin of `BalanceSlider`.
+   */
+  center?: boolean;
   disabled?: boolean;
 }
 
@@ -40,6 +47,7 @@ export const VerticalSlider = forwardRef<HTMLInputElement, VerticalSliderProps>(
     length = 204,
     formatValue,
     showValue,
+    center,
     disabled,
     className,
     ...rest
@@ -54,14 +62,21 @@ export const VerticalSlider = forwardRef<HTMLInputElement, VerticalSliderProps>(
   const pct = max > min ? ((v - min) / (max - min)) * 100 : 0;
   const label = formatValue ? formatValue(v) : String(v);
 
-  const classes = ['ds-rail', 'vertical', active || showValue ? 'is-active' : '', disabled ? 'disabled' : '', className]
+  const classes = ['ds-rail', 'vertical', center ? 'centered' : '', active || showValue ? 'is-active' : '', disabled ? 'disabled' : '', className]
     .filter(Boolean)
     .join(' ');
 
   return (
     <div className={classes} style={{ ['--pct']: pct, ['--rail-len']: `${length}px` } as React.CSSProperties}>
       <div className="ds-rail-track" />
-      <div className="ds-rail-fill" style={{ height: `${pct}%` }} />
+      <div
+        className="ds-rail-fill"
+        style={
+          center
+            ? { bottom: `${Math.min(pct, 50)}%`, height: `${Math.abs(pct - 50)}%` }
+            : { height: `${pct}%` }
+        }
+      />
       <input
         ref={ref}
         type="range"

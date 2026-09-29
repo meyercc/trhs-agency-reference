@@ -32,7 +32,7 @@ const PROTOTYPES: Item[] = [
     tag: 'Proposal',
     tone: 'variant',
     blurb:
-      'Five families — Lighting · Audio · Display · Keys & Macros · App. Thesis: device modals own single-device controls; Personalize is each family’s cross-device coordination layer, so synchronization sinks into the families instead of forming a section of its own. Lighting is a desk scene of the real product shots, each device lit by its own colour; Display puts every screen in one view and grows the selected screen’s controls beneath it, with everything BETWEEN screens (layout, KVM, auto-switch) behind the card’s Arrangement door.',
+      'Five families — Lighting · Audio · Display · Keys & Macros · App. Thesis: device modals own single-device controls; Personalize is each family’s cross-device coordination layer, so synchronization sinks into the families instead of forming a section of its own. Lighting is a desk scene of the real product shots, each device lit by its own color; Display puts every screen in one view and grows the selected screen’s controls beneath it, with everything BETWEEN screens (layout, KVM, auto-switch) behind the card’s Arrangement door.',
   },
   {
     href: '#/perform-v6',

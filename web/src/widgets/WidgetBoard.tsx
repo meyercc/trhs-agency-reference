@@ -6,6 +6,8 @@ import { RENDERERS, DEFAULT_LAYOUT, META_BY_ID, DEVICE_WIDGET_SKU, type BoardIte
 import { WidgetPicker } from './WidgetPicker';
 import { useModules } from '../state/Modules';
 import { useDeviceSim } from '../state/DeviceSim';
+import { useSettings } from '../state/Settings';
+import { isOnDesk } from '../devices/connectedDevices';
 import { WIDGET_MODULE } from '../modules/registry';
 import './board.css';
 
@@ -102,6 +104,7 @@ interface DragState {
 export function WidgetBoard({ spring = 'snappy' }: { spring?: SpringName }) {
   const { has } = useModules();
   const { simState } = useDeviceSim();
+  const { deskDevices } = useSettings();
   const [items, setItems] = useState<Item[]>(loadLayout);
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -113,7 +116,10 @@ export function WidgetBoard({ spring = 'snappy' }: { spring?: SpringName }) {
     const mod = WIDGET_MODULE[it.id];
     if (mod && !has(mod)) return false;
     const sku = DEVICE_WIDGET_SKU[it.id];
-    return !sku || simState(sku).connected;
+    // Two separate absences, both hide the card: a device the Admin row took off
+    // this desk was never here (2026-09-18 — the OMEN OLED 27 card outlived its
+    // removal), and a device on the desk can be unplugged (simulator).
+    return !sku || (isOnDesk(sku, deskDevices) && simState(sku).connected);
   });
   const [drag, setDrag] = useState<DragState | null>(null);
   const [pointer, setPointer] = useState({ x: 0, y: 0 });

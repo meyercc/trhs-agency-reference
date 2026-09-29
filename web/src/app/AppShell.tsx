@@ -7,10 +7,12 @@ import { FeatureModalHost } from '../modals/FeatureModalHost';
 import { useSettings } from '../state/Settings';
 import { useModules } from '../state/Modules';
 import { NAV_MODULE } from '../modules/registry';
-import { ProfileMenu } from './ProfileMenu';
+import { AccountMenu } from './AccountMenu';
+import { ProfileSwitcher } from './ProfileSwitcher';
 import { HyperXLogo } from './HyperXLogo';
 import { DevicePanel } from './DevicePanel';
 import { WallpaperLayer } from './WallpaperLayer';
+import { PersonalizeProvider } from '../pages/personalize/state';
 import './shell.css';
 
 const TABS: MenuItem[] = [
@@ -29,6 +31,8 @@ export function AppShell() {
   // persists across page navigation (page NavLinks drop the query string).
   const [searchParams, setSearchParams] = useSearchParams();
   const [devicesOpen, setDevicesOpen] = useState(() => searchParams.get('devices') === '1');
+  // Device the panel should select when Devices closes a device modal (below).
+  const [panelFocus, setPanelFocus] = useState<string | undefined>(undefined);
 
   const openModules = () => {
     const p = new URLSearchParams(searchParams);
@@ -58,11 +62,34 @@ export function AppShell() {
       label: 'Devices',
       icon: <Icon name="devices" />,
       active: devicesOpen,
-      onClick: () => setDevicesOpen((o) => !o),
+      onClick: () => {
+        // With a device modal open (?sku=), the panel sits BELOW the modal
+        // (device-panel.css: z-40 vs z-51 — deliberate for the panel→modal
+        // flow, where the panel waits behind). The reverse flow was unhandled:
+        // clicking Devices lit the tab and opened the panel invisibly behind
+        // the full-screen canvas — a dead-looking click (Cindy, 2026-08-03).
+        // Devices means "take me to my devices", so it closes the modal the
+        // same way DeviceModalHost.close() does, and shows the panel.
+        const modalOpen = ['sku', 'device', 'spec'].some((k) => searchParams.has(k));
+        if (modalOpen) {
+          // Carry the device you were just looking at into the panel — landing
+          // on the roster's first device would read as losing your place.
+          setPanelFocus(searchParams.get('sku') ?? undefined);
+          const p = new URLSearchParams(searchParams);
+          ['sku', 'device', 'spec', 'tab'].forEach((k) => p.delete(k));
+          setSearchParams(p, { replace: true });
+          setDevicesOpen(true);
+        } else {
+          setDevicesOpen((o) => !o);
+        }
+      },
     },
   ];
 
+  // Personalize's desk state is app-wide: a profile switched anywhere (nav,
+  // Home widget, a device modal) re-ranks the Quick Control page.
   return (
+    <PersonalizeProvider>
     <div className={'shell' + (devicesOpen ? ' devices-open' : '')}>
       <WallpaperLayer />
       <nav className="shell-nav">
@@ -84,7 +111,8 @@ export function AppShell() {
               <Icon name="puzzle" size={16} />
             </IconButton>
           </Tooltip>
-          <ProfileMenu />
+          <ProfileSwitcher />
+          <AccountMenu />
         </div>
       </nav>
       <div className="shell-scroll">
@@ -92,12 +120,13 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
-      <DevicePanel open={devicesOpen} onClose={() => setDevicesOpen(false)} />
+      <DevicePanel open={devicesOpen} focusSku={panelFocus} onClose={() => setDevicesOpen(false)} />
       <DeviceModalHost />
       <FeatureModalHost />
       {/* Admin/testing: the hardware side of the onboard-profile model, floated
           above the canvases so device-side acts can be watched live. */}
       <DeviceSimHud />
     </div>
+    </PersonalizeProvider>
   );
 }

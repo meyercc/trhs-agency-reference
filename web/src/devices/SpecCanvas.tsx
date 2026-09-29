@@ -5,6 +5,7 @@ import {
   Icon,
   Badge,
   Ng3Panel,
+  Ng3Tool,
   Ng3Grid,
   Ng3Section,
   Ng3Row,
@@ -16,6 +17,7 @@ import {
   Slider,
 } from '../components';
 import { type ResolvedSku, type Features, deviceImageUrl, heroImageFile, getSku } from './skus';
+import { useDeviceProfileBar, type ProfileBarState } from './ProfileBar';
 import {
   TYPE_LABEL,
   TYPE_ICON,
@@ -52,12 +54,13 @@ import { deviceTabs } from './deviceTabs';
 function SpecField({
   features,
   def,
-  state,
+  getValue,
   setState,
 }: {
   features: Features;
   def: SpecFieldDef;
-  state: Record<string, any>;
+  /** Scope-backed read — `undefined` means "never set", so the SKU default wins. */
+  getValue: (key: string) => any;
   setState: (key: string, value: any) => void;
 }) {
   switch (def.kind) {
@@ -66,7 +69,7 @@ function SpecField({
 
     case 'toggle': {
       const initial = read(features, def.path).v === true;
-      const checked = state[def.path] ?? initial;
+      const checked = getValue(def.path) ?? initial;
       return (
         <Ng3Row>
           <Ng3Label plain>{def.label}</Ng3Label>
@@ -83,7 +86,12 @@ function SpecField({
           <Ng3Label strong info>
             {def.label}
           </Ng3Label>
-          <Dropdown aria-label={def.label} defaultValue={options[0]?.value} options={options} />
+          <Dropdown
+            aria-label={def.label}
+            value={getValue(def.path) ?? options[0]?.value}
+            onChange={(v) => setState(def.path, v)}
+            options={options}
+          />
         </Ng3Field>
       );
     }
@@ -115,7 +123,7 @@ function SpecField({
         init = range.default ?? Math.round((min + max) / 2);
       }
       const key = def.path ?? def.label;
-      const value = state[key] ?? init;
+      const value = getValue(key) ?? init;
       return (
         <>
           <Ng3Row>
@@ -134,9 +142,32 @@ function SpecField({
   }
 }
 
-function SpecTabBody({ features, sections }: { features: Features; sections: SpecSectionDef[] }) {
-  const [state, setState] = useState<Record<string, any>>({});
-  const set = (key: string, value: any) => setState((s) => ({ ...s, [key]: value }));
+/**
+ * One state bag backs every long-tail device's controls, so scope-backing it
+ * here covers the whole tail at once rather than a canvas at a time.
+ *
+ * These devices have no onboard memory, so they render no profile bar — but
+ * "no bar" only ever meant no hardware slots to choose between. Their settings
+ * are software settings, and software settings belong to the profile.
+ *
+ * Keys are namespaced with the tab id (`utilities.power.autoSleep`) rather than
+ * used raw: the profile manifest groups by the segment before the first dot, so
+ * a bare feature path like `power.autoSleep` would invent a "Power" group that
+ * corresponds to no tab.
+ */
+function SpecTabBody({
+  features,
+  sections,
+  profile,
+  tabId,
+}: {
+  features: Features;
+  sections: SpecSectionDef[];
+  profile: ProfileBarState;
+  tabId: string;
+}) {
+  const getValue = (key: string) => profile.value<any>(`${tabId}.${key}`, undefined);
+  const set = (key: string, value: any) => profile.setValue(`${tabId}.${key}`, value);
 
   return (
     <Ng3Grid className="sc-grid">
@@ -152,7 +183,7 @@ function SpecTabBody({ features, sections }: { features: Features; sections: Spe
             {section.fields
               .filter((def) => fieldVisible(features, def))
               .map((def, j) => (
-                <SpecField key={j} features={features} def={def} state={state} setState={set} />
+                <SpecField key={j} features={features} def={def} getValue={getValue} setState={set} />
               ))}
           </Ng3Section>
         ))}
@@ -209,6 +240,9 @@ export function SpecCanvas({
   initialTab?: string;
 }) {
   const f = sku.features;
+  // These devices have no onboard slots, so no bar renders — but the hook is
+  // still how a software setting reaches the active profile.
+  const profile = useDeviceProfileBar(sku);
   const tabs = deviceTabs(sku) as SpecTabDef[];
   const usingFallback = tabs.length === 0;
   const shown = usingFallback ? [FALLBACK_TAB] : tabs;
@@ -257,18 +291,16 @@ export function SpecCanvas({
       {/* Bottom Ng3 product panel */}
       <div className="dc-panel-wrap">
         <Ng3Panel
+          width={active.width}
           header={active.title}
           tools={shown.map((t) => (
-            <button
+            <Ng3Tool
               key={t.id}
-              type="button"
-              className={['ds-ng3-tool', t.id === active.id ? 'active' : ''].filter(Boolean).join(' ')}
-              aria-label={t.title}
-              aria-pressed={t.id === active.id}
+              icon={t.icon}
+              title={t.title}
+              active={t.id === active.id}
               onClick={() => setTabId(t.id)}
-            >
-              <Icon name={t.icon} />
-            </button>
+            />
           ))}
           actions={
             <button type="button" className="ds-ng3-action" aria-label="Duplicate">
@@ -280,7 +312,13 @@ export function SpecCanvas({
           {usingFallback ? (
             <FallbackTab features={f} />
           ) : (
-            <SpecTabBody key={active.id} features={f} sections={active.sections} />
+            <SpecTabBody
+              key={`${active.id}:${profile.revision}`}
+              features={f}
+              sections={active.sections}
+              profile={profile}
+              tabId={active.id}
+            />
           )}
         </Ng3Panel>
       </div>

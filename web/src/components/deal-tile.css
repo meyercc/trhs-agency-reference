@@ -74,7 +74,7 @@
 }
 .ds-deal-plat {
   flex: 0 0 auto;
-  color: var(--text-primary);
+  color: var(--text-on-image);
 }
 .ds-deal-meta {
   margin-left: auto;

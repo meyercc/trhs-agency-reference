@@ -27,12 +27,16 @@
   --orange-dim: rgba(255, 107, 43, 0.12);
   --green: #22c55e;
   --green-dim: rgba(34, 197, 94, 0.15);
-  --purple: #a855f7;
-  --purple-dim: rgba(168, 85, 247, 0.12);
+  /* Nudged up in lightness (was #a855f7 / #3b82f6), hue and saturation held.
+     Both fell short of 4.5:1 as text on the lighter dark cards (rgb(37,37,37)):
+     purple 3.87, blue 4.17. The shift is a few percent and clears both. Note
+     --red (4.07), --indigo (3.43) and --pink (4.35) still miss on that ground. */
+  --purple: #b36af8;
+  --purple-dim: rgba(179, 106, 248, 0.12);
   --red: #ef4444;
   --yellow: #eab308;
-  --blue: #3b82f6;
-  --blue-dim: rgba(59, 130, 246, 0.12);
+  --blue: #498bf7;
+  --blue-dim: rgba(73, 139, 247, 0.12);
   --pink: #ec4899;
   --indigo: #6366f1;
   --white: #ffffff;
@@ -48,6 +52,19 @@
   --accent-green: #22c55e;
   --accent-red: #ef4444;
   --accent-yellow: #eab308;
+  /* Parametric EQ band colors — one per fixed band, low to high, a hue sweep
+     from red through green and blue to violet so the ten points read as an
+     ordered series on the graph in either theme. */
+  --eq-band-1: #ff2d2d;
+  --eq-band-2: #ff7a1a;
+  --eq-band-3: #f5c400;
+  --eq-band-4: #8ad400;
+  --eq-band-5: #22c48a;
+  --eq-band-6: #21b3e0;
+  --eq-band-7: #2f8cff;
+  --eq-band-8: #3d5bff;
+  --eq-band-9: #7a4dff;
+  --eq-band-10: #c44dff;
   --accent-pink: #ec4899;
   --accent-white: #ffffff;
 
@@ -100,17 +117,22 @@
   --control-height: 32px;
   --control-height-sm: 28px;
 
+  /* One row of the dashboard grid. A widget's height is always a whole number
+     of these plus the gutters between them, which is what makes two widgets of
+     different content line up. Read by the home board (`.wb-grid`) and by any
+     other surface that lays widgets out on the same grid. */
+  --widget-row: 160px;
+
   /* ─── Radius ─── */
   --radius-card: 16px;
   --radius: 8px;
   --radius-sm: 4px;
   --radius-full: 999px;
 
-  /* ─── Shadows ─── */
-  --shadow-lv-1: 0 2px 4px rgba(0, 0, 0, 0.14);
-  --shadow-lv-2: 0 4px 8px rgba(0, 0, 0, 0.28);
-  --shadow-lv-3: 0 8px 16px rgba(0, 0, 0, 0.28);
-  --shadow-lv-4: 0 32px 64px rgba(0, 0, 0, 0.4), 0 2px 21px rgba(0, 0, 0, 0.4);
+  /* ─── Shadows ───
+     `--shadow-lv-1..4` live in the Kintsugi block below, tokenized off the
+     alpha black scale. They used to be declared here too, in raw rgba, and
+     were overridden every time — don't re-add them. */
   --focus-ring: 2px solid var(--accent-color);
 
   /* ─── Accent system (overridden at runtime by setAccent / setAccentColor) ─── */
@@ -205,11 +227,7 @@ html.light,
   --text-on-accent: #ffffff;
   --text-on-fill: #ffffff;
 
-  /* Shadows */
-  --shadow-lv-1: 0 2px 4px rgba(0, 0, 0, 0.07);
-  --shadow-lv-2: 0 4px 8px rgba(0, 0, 0, 0.1);
-  --shadow-lv-3: 0 8px 16px rgba(0, 0, 0, 0.1);
-  --shadow-lv-4: 0 32px 64px rgba(0, 0, 0, 0.14), 0 2px 21px rgba(0, 0, 0, 0.1);
+  /* Shadows — see the Kintsugi light block below. */
 
   /* Nav */
   --nav-bg: rgba(255, 255, 255, 0.7);
@@ -276,6 +294,7 @@ html.light,
 
   /* Alpha white scale */
   --ksg-w0:  rgba(255, 255, 255, 0);
+  --ksg-w2:  rgba(255, 255, 255, 0.02);
   --ksg-w5:  rgba(255, 255, 255, 0.05);
   --ksg-w10: rgba(255, 255, 255, 0.1);
   --ksg-w18: rgba(255, 255, 255, 0.18);
@@ -289,13 +308,23 @@ html.light,
   --ksg-w80: rgba(255, 255, 255, 0.8);
   --ksg-w90: rgba(255, 255, 255, 0.9);
 
-  /* Alpha black scale */
+  /* Alpha black scale
+     b14 / b28 are off-ladder rungs, added so the shadow scale can be
+     tokenized at the exact alphas the HP/Avalonia ShadowLevel dictionary
+     uses (#24 / #47). Shadows only — reach for a neighbouring rung for
+     anything else. */
   --ksg-b6:  rgba(0, 0, 0, 0.06);
+  /* Off-ladder, like the b14/b28 shadow rungs: the black ladder starts at b6,
+     but the white one starts at w2, so light had no mirror for the faintest
+     surface tint (--surface-lightest). */
+  --ksg-b3:  rgba(0, 0, 0, 0.03);
   --ksg-b10: rgba(0, 0, 0, 0.1);
+  --ksg-b14: rgba(0, 0, 0, 0.14);
   --ksg-b15: rgba(0, 0, 0, 0.15);
   --ksg-b18: rgba(0, 0, 0, 0.18);
   --ksg-b20: rgba(0, 0, 0, 0.2);
   --ksg-b25: rgba(0, 0, 0, 0.25);
+  --ksg-b28: rgba(0, 0, 0, 0.28);
   --ksg-b30: rgba(0, 0, 0, 0.3);
   --ksg-b35: rgba(0, 0, 0, 0.35);
   --ksg-b40: rgba(0, 0, 0, 0.4);
@@ -321,13 +350,31 @@ html.light,
   --bg-elevated: var(--ksg-n800);
 
   /* ─── Surfaces ─── */
+  --surface-lightest:  var(--ksg-w2);
   --surface:        var(--ksg-w5);
   --surface-light:  var(--ksg-w5);
   --surface-hover:  var(--ksg-w10);
   --surface-active: var(--ksg-w20);
+  /* Sunken — the one surface that reads *darker* than its ground rather than
+     lighter, for controls meant to recede (the .ds-chip filter pills). It is
+     the only step that cannot be expressed on the white ladder, which is why
+     consumers had been reaching for --ksg-b40 raw and losing the light theme. */
+  --surface-sunken: var(--ksg-b40);
+
+  /* Scrims — a veil laid OVER content rather than a surface sat under it: the
+     recessed well of the spatial stage, the pucks on it, the floating message
+     that explains why a region is locked. Dark veils in black, light veils in
+     white, so in both themes the element separates from its ground in the
+     direction the theme allows. Consumers reaching for --ksg-b30/55/80 raw is
+     what left these unreadable in light — a black veil under theme-following
+     ink turns the ink's own color. */
+  --scrim-soft:   var(--ksg-b30);
+  --scrim:        var(--ksg-b60);
+  --scrim-strong: var(--ksg-b80);
 
   /* ─── Borders ─── */
   --border:      var(--ksg-w20);
+  --border-light-m: var(--ksg-w10);
   --border-light: var(--ksg-w5);
   --border-med:  var(--ksg-w30);
 
@@ -352,6 +399,13 @@ html.light,
   --text-primary:    var(--ksg-n200);
   --text-dim:        var(--ksg-w80);
   --text-muted:      var(--ksg-w50);
+  /* NOT FOR TEXT, and currently unused. It fails 4.5:1 in BOTH themes — 2.27:1
+     dark, 2.36:1 light — so every consumer it had (95 `color:` rules, a state
+     dot, an SVG axis label) was rendering real content below the bar; all of
+     them now read --text-muted. Kept defined because the ramp is also the
+     Avalonia/Figma spec, but reach for it only where nothing has to be read:
+     a hairline, a decorative glyph. If you want quiet *text*, --text-muted is
+     the quietest rung that stays legible. */
   --text-subtle:     var(--ksg-w25);
   --text-on-accent:  var(--ksg-n950);
   --text-on-fill:    #ffffff;
@@ -381,14 +435,24 @@ html.light,
   --radius:      8px;
   --radius-sm:   4px;
 
-  /* ─── Shadows ─── */
-  --shadow-lv-1: 0 1px 8px 0 var(--ksg-b30), 0 2px 24px 0 var(--ksg-b15);
-  --shadow-lv-2: 0 2px 12px 0 var(--ksg-b40), 0 4px 32px 0 var(--ksg-b20);
-  --shadow-lv-3: 0 4px 16px 0 var(--ksg-b50, rgba(0,0,0,0.5)), 0 8px 40px 0 var(--ksg-b25);
-  --shadow-lv-4: 0 8px 32px 0 var(--ksg-b60), 0 2px 24px 0 var(--ksg-b30);
+  /* ─── Shadows — THE elevation scale, one definition per theme ───
+     Matches the HP/Avalonia `ShadowLevel-1..4` dictionary value-for-value,
+     so the two systems render the same depth. Kintsugi briefly ran a
+     two-layer variant of each level (tight contact + wide ambient); that is
+     collapsed back to these single-layer drops. Light softens all four —
+     see the light block below. Don't hand-roll a drop shadow: use a level. */
+  --shadow-lv-1: 0 2px 4px var(--ksg-b14);
+  --shadow-lv-2: 0 4px 8px var(--ksg-b28);
+  --shadow-lv-3: 0 8px 16px var(--ksg-b28);
+  --shadow-lv-4: 0 32px 64px var(--ksg-b40), 0 2px 21px var(--ksg-b40);
 
   /* ─── Nav ─── */
   --nav-bg: rgba(28, 28, 29, 0.92);
+
+  /* ─── Carousel aura ─── */
+  --carousel-aura-opacity: 0.4;
+  --carousel-aura-filter: blur(80px) saturate(1.55) brightness(1.05);
+  --carousel-aura-blend: normal;
 
   /* ─── Widget tint ─── */
   --widget-tint-bg:     linear-gradient(135deg, var(--ksg-w10) 0%, var(--ksg-w5) 60%);
@@ -448,6 +512,14 @@ html.light,
   --ksg-panel-border-inner: var(--ksg-w20);
   --ksg-panel-border-outer: var(--ksg-b80);
 
+  /* Canvas — the ground of a full-bleed device modal. Distinct from
+     --ksg-panel-surface: a canvas stays translucent enough to read the blurred
+     app through it, so it is a light *shade* of the page rather than an opaque
+     sheet. Both themes shade away from their own ground, hence the ladder swap
+     in light; keeping it black there is what left every device canvas dark
+     while its text flipped. */
+  --ksg-canvas-surface: var(--ksg-b60);
+
   /* Scrollbar */
   --ksg-scrollbar-surface: var(--ksg-b60);
   --ksg-scrollbar-border:  var(--ksg-w30);
@@ -467,35 +539,89 @@ html[data-theme-mode='light'],
   --bg-elevated: #f4f3f3;
 
   /* Surfaces */
+  --surface-lightest: var(--ksg-b3);
   --surface:        var(--ksg-b6);
   --surface-light:  rgba(0, 0, 0, 0.02);
   --surface-hover:  var(--ksg-b10);
   --surface-active: var(--ksg-b15);
+  /* Sunken inverts with the theme like the rest of the scale: on a light ground
+     it is a *deeper* shade, not a lighter one, so a receding control still
+     recedes. */
+  --surface-sunken: var(--ksg-b10);
+  --scrim-soft:   var(--ksg-w50);
+  --scrim:        var(--ksg-w80);
+  --scrim-strong: var(--ksg-w90);
 
   /* Borders */
   --border:      var(--ksg-b18);
+  --border-light-m: var(--ksg-b15);
   --border-light: var(--ksg-b10);
   --border-med:  var(--ksg-b25);
 
-  /* Text */
+  /* Canvas — mirrors the dark rung across the ladder: a white veil over the
+     blurred light app, exactly as dark lays a black one over the dark app. */
+  --ksg-canvas-surface: var(--ksg-w60);
+
+  /* Text — on the black alpha ladder, mirroring how dark sits on the white one.
+     Measured against the real light surfaces (the darkest is the ng3 panel at
+     ~rgb(210,208,208), not --bg-elevated), every rung here clears 4.5:1:
+     primary 9.6 · dim 5.9 · muted 5.0. The previous ramp missed on two counts —
+     dim/muted sat at 3.9/4.2, and because dim was a #282828 tint at .65 while
+     muted was pure black at .55, muted rendered *darker than* dim, inverting the
+     hierarchy. Light has less headroom than dark: above 4.5:1 there is only room
+     for these three steps, so dim and muted sit closer together than their dark
+     counterparts. Widening that gap needs lighter surfaces, not lighter ink. */
   --text-primary: #282828;
-  --text-dim:     rgba(40, 40, 40, 0.65);
-  --text-muted:   var(--ksg-b55);
+  --text-dim:     var(--ksg-b65);
+  --text-muted:   var(--ksg-b60);
   --text-subtle:  var(--ksg-b35);
   --text-on-accent: #ffffff;
 
+  /* ─── Semantic colors ───
+     The ramp declared in the base :root is tuned for a dark ground and had no
+     light value at all, so status text ran at 1.2–2.6:1 in light — the registry
+     badges (IN-DESIGN / SHIPPING / EOL) were the visible symptom. 77 of the 152
+     uses are `color:`, so these are pitched as *text* first: each is its own
+     hue, held at its original saturation, darkened to the lightest value that
+     clears 4.5:1 both on a plain light surface and on its own `-dim` tint. Fills
+     inherit the same values and carry white (--text-on-accent) at 8.1–8.6:1.
+     Saturated hues cannot stay vivid and be readable as ink on a light ground —
+     yellow necessarily lands as an olive, cyan as a deep teal. */
+  --cyan: #00585e;
+  --cyan-dim: color-mix(in srgb, var(--cyan), transparent 88%);
+  --orange: #902b00;
+  --orange-dim: color-mix(in srgb, var(--orange), transparent 88%);
+  --green: #0f582a;
+  --green-dim: color-mix(in srgb, var(--green), transparent 85%);
+  --purple: #6a09c6;
+  --purple-dim: color-mix(in srgb, var(--purple), transparent 88%);
+  --red: #9c0d0d;
+  --yellow: #644c03;
+  --blue: #0847af;
+  --blue-dim: color-mix(in srgb, var(--blue), transparent 88%);
+  --pink: #961052;
+  --indigo: #1e23eb;
+
   /* Nav */
   --nav-bg: rgba(220, 218, 218, 0.88);
+
+  /* Carousel aura — multiplied, so it tints rather than washes out.
+     See .ds-carousel-aura-layer for why the two themes differ. */
+  --carousel-aura-opacity: 0.45;
+  --carousel-aura-filter: blur(80px) saturate(1.8) brightness(1.1);
+  --carousel-aura-blend: multiply;
 
   /* Widget tint */
   --widget-tint-bg:     linear-gradient(135deg, var(--ksg-b6) 0%, rgba(0,0,0,0.01) 60%);
   --widget-tint-border: var(--ksg-b15);
 
-  /* Shadows — softer on light */
-  --shadow-lv-1: 0 1px 4px var(--ksg-b10), 0 2px 12px var(--ksg-b6);
-  --shadow-lv-2: 0 2px 8px var(--ksg-b15), 0 4px 20px var(--ksg-b10);
-  --shadow-lv-3: 0 4px 12px var(--ksg-b20), 0 8px 28px var(--ksg-b10);
-  --shadow-lv-4: 0 8px 24px var(--ksg-b25), 0 2px 16px var(--ksg-b15);
+  /* Shadows — same geometry as dark, softened alphas.
+     Ink that reads as depth on a dark page reads as a smudge on a light one,
+     so only the alpha changes; the offsets and blurs stay put. */
+  --shadow-lv-1: 0 2px 4px var(--ksg-b6);
+  --shadow-lv-2: 0 4px 8px var(--ksg-b10);
+  --shadow-lv-3: 0 8px 16px var(--ksg-b10);
+  --shadow-lv-4: 0 32px 64px var(--ksg-b15), 0 2px 21px var(--ksg-b10);
 
   /* Button secondary — translucent ink on light */
   --ksg-btn-secondary-surface:       var(--ksg-b6);

@@ -70,6 +70,7 @@
 
   "headset": {
     "onboard": { "slots": 2 },
+    "firmware": "1.0.4",
     "audio": {
       "volumeControl": true,
       "mic": {
@@ -286,6 +287,7 @@
 
   "microphone": {
     "onboard": { "slots": 2 },
+    "firmware": "1.0.2",
     "audio": {
       "pickupPatterns": ["cardioid", "omnidirectional", "bidirectional", "stereo"],
       "gain": true,

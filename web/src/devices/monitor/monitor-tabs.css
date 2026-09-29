@@ -3,7 +3,7 @@
 
    Everything with a library home is used from there instead of being restyled:
    sections/rows/fields/labels/specs = the Ng3 primitives, values = `.dc-mono-val`,
-   rules = `.dc-divider`, button rows = `.dc-btns`, colour dots = `.ds-swatch(-row)`,
+   rules = `.dc-divider`, button rows = `.dc-btns`, color dots = `.ds-swatch(-row)`,
    inputs = `.ds-input`. What is left here has no shared equivalent (checked
    shared/components.css in full): a caption paragraph — Chris scopes those per
    component too (`kvm-caveat`, `pdm-settings-desc`) — a chip row (only the
@@ -11,14 +11,36 @@
    and the master-toggle gate.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* Card and group titles are not smaller than the rows they head.
+   `.ds-ng3-label` ships at `--text-micro` (12px) while the rows under it are
+   `--text-caption` (14px), so a card's title read SMALLER than its own content
+   and the eye lost the card boundary. Measured against Play on 2026-08-19:
+   Play draws more text than this tab (401 chars to 334) and does not feel busy,
+   because it uses two type sizes; this modal used five. Lifting these to the
+   row size takes 12px out of the screen entirely, leaving 14px and the panel
+   title's 16px — the same two-size system Play runs on.
+
+   Size only. Caps, mono face and the three colour steps stay exactly as the DS
+   set them, and they are what still separates a card title (`--text-primary`)
+   from a group label (`--text-muted`) from a row (`--text-dim`) — hierarchy by
+   weight and colour rather than by shrinking things.
+
+   Scoped to this panel: `.ds-ng3-label` is Chris's and every other device
+   canvas uses it at its shipped size (rule 11 — device-specific behaviour only
+   inside the section we own). `.plain` is untouched — it declares its own size
+   at higher specificity and already sits at 14px. */
+.mc-panel-wrap .ds-ng3-label {
+  font-size: var(--text-caption);
+}
+
 /* Caption under a section title. */
 .mt-note {
-  margin: 0;
+  margin:0;
   font-size: var(--text-caption);
   color: var(--text-dim);
   display: flex;
   align-items: center;
-  gap: var(--gutter-xs, 6px);
+  gap:var(--gutter-xs, 6px);
 }
 
 /* Trailing qualifier on a row label ("Mouse · USB dongle"). */
@@ -32,7 +54,7 @@
 .mt-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap:5px;
 }
 
 /* RGB gain: channel letter · slider · value. */
@@ -40,12 +62,12 @@
   display: grid;
   grid-template-columns: 14px 1fr 32px;
   align-items: center;
-  gap: var(--gutter-sm, 12px);
+  gap:var(--gutter-sm, var(--gutter-tablet));
 }
 .mt-gain .dc-mono-val {
   text-align: right;
 }
-/* Channel letters use the DS semantic colour tokens (tokenized 2026-08-02 —
+/* Channel letters use the DS semantic color tokens (tokenized 2026-08-02 —
    were Tailwind-400 hardcodes #f87171/#4ade80/#60a5fa, one shade lighter than
    the library's --red/--green/--blue). */
 .mt-ch-r {
@@ -60,7 +82,18 @@
 
 /* Controls a master toggle owns: dimmed AND inert when the toggle is off, so
    "off" is not contradicted by controls that still respond (the treatment the
-   Gear Switch widget established). */
+   Gear Switch widget established).
+
+   The wrapper has to re-declare the section's own column layout: it is a single
+   flex child of `.ds-ng3-section`, so without this its children lose the
+   section's `--gutter-sm` rhythm and butt against each other at 0px while
+   every ungated row in the same panel breathes at 16px. Grouping rows for a
+   *behavior* must not change their *spacing*. */
+.mt-gate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
 .mt-gate.is-off {
   opacity: 0.45;
   pointer-events: none;
@@ -72,3 +105,241 @@
   min-width: 0;
   max-width: 60%;
 }
+
+/* Every row the same height. Left alone, the trailing slot sets it — measured
+   27px for a text-only row, 36px with a `Reset` button, 40px with the 32px ⋮
+   icon button — so a list of the same kind of thing stepped three different
+   sizes. The tallest control is the floor; nothing is resized, the row just
+   stops shrinking below it. */
+.mp-sec .ds-list-item {
+  min-height: 40px;
+}
+
+/* Title ⓘ trigger (InfoTip) — DS `.ds-tooltip-trigger` button inside the DS
+   Tooltip wrap; only the inline spacing is ours, matching the gap the label's
+   own `info` glyph slot used, so kept and dropped ⓘ never shift a title's
+   baseline. */
+.mt-infotip {
+  margin-left: var(--gutter-xxs);
+}
+
+/* …and the popup it opens reads as a sentence, not as a title.
+   No new tooltip here — this is the DS Tooltip (`.ds-tooltip-wrap` +
+   `.ds-tooltip-popup`, components.css TOOLTIP) used as shipped. The bug is
+   inheritance: the ⓘ sits INSIDE `.ds-ng3-label`, which is mono + uppercase +
+   tracked, and the DS renders the popup as a child of that wrap — so every card
+   tooltip in this modal printed two or three lines of body copy in ALL CAPS
+   (measured 2026-08-19: 246×118px of it). The same component on Chris's tab
+   strip reads normally, because his triggers are not nested in a caps label —
+   so this is ours to undo, in our scope, and his files stay untouched.
+   All three properties come back: reverting `text-transform` alone would leave
+   a sentence tracked and set in the label's mono face. */
+.mt-infotip .ds-tooltip-popup {
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Fold row — a card row (label ↔ value) that also opens a group.
+   Geometry is `.ds-ng3-row`'s, so the fold sits in the same column of labels and
+   values as every other row in the card; only the button reset and the chevron
+   are added here. The chevron follows the DS's own disclosure convention value
+   for value — 14px, `--text-muted`, rotate 90° over `--dur-normal`
+   (components.css:2844-2853) — rather than `.ds-settings-group`, which carries a
+   surface and radius of its own and would draw a card inside this card.
+
+   ✅ The warning that used to stand here is spent (2026-08-19). It said a card
+   growing on click pushed the Display tab's last card into a fourth column and
+   outside the panel, because `.mc-grid` was a fixed 380px with `column-count`.
+   `d293be6` took that height off — the panel is content-height and the canvas
+   scrolls — so the fold now simply makes the panel taller. Re-measured at
+   1512x950 with Protections opened: panel 499px -> 569px, zero cards outside
+   the panel on any of the five tabs.
+
+   So folds are open for use again, and that matters beyond this row: Cindy's
+   direction on 2026-08-19 is that a screen with too much on it gets solved by
+   collapsing, not by cutting features (CLAUDE.md rule 10 ⓑ). Measured the same
+   day, the cards worth folding are the READ-ONLY ones — chars per control runs
+   88 on GEAR SWITCH and 68 on the TREEHOUSE 32 spec card against 9 on COLOR —
+   so the text this modal carries is reference, not controls. Still re-measure
+   the tab after adding one; the budget moved, it did not disappear. */
+.mt-fold {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mt-fold > .dc-mono-val {
+  margin-left: auto;
+}
+/* Same push as the line above, for the fold whose summary slot holds badges
+   rather than a mono value (This Connection's `Link`). Without it `space-between`
+   parks the badges mid-row while every other value in that card is flush right. */
+.mt-fold > .xr-badges {
+  margin-left: auto;
+}
+.mt-fold svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform var(--dur-normal) ease;
+}
+.mt-fold.is-open svg {
+  transform: rotate(90deg);
+}
+
+/* ── Viewing Mode tiles ────────────────────────────────────────────────────
+   The layout picker as diagrams (2026-08-20, Cindy). Geometry is Cindy's own
+   `Screen Layout` component, read out of Figma and drawn by ViewingModeTiles;
+   this file only places the tiles and maps her three greys onto our tokens.
+
+   Colour mapping, and why not the exported SVGs' own hexes: an asset with
+   `#007DD6` baked in does not follow an accent change (the port map's `#346ED1`
+   was tokenized on 2026-08-02 for exactly this).
+
+   ⚠️ The idle colour was `--ksg-w80` for one pass, justified as "the white this
+   tab already outlines empty ports with". Cindy asked whether lowering it was
+   the library's style — it is, and w80 was the outlier. The port map's 75% white
+   is a Figma-verbatim marker drawn ON A PHOTOGRAPH, not the library's grammar
+   for a control you pick from. That grammar is one ramp, and it is the very
+   control these tiles replaced: `.ds-toggle-group-btn` goes `--text-muted` at
+   rest -> `--text-dim` on hover -> accent when selected, and `.ds-card-select`
+   sits at `--border-light` (4% white) until it is chosen. So the tile follows
+   the text ramp, not the border one — here the outline IS the content, and a 4%
+   line would be a diagram you cannot read. */
+.vm-groups { display: flex; flex-direction: column; gap: var(--gutter-sm); }
+/* `Full screen` beside `Picture by picture`, one line (2026-09-23). The gap is the
+   one between groups, so the two captions read as two groups on one line. */
+.vm-line { display: flex; gap: var(--gutter-sm); }
+.vm-group { display: flex; flex-direction: column; gap: var(--gutter-xxs); }
+/* The full name of each family, said once — `PBP` and `PIP` are spelled here so
+   no tooltip has to spell them (copy-rules 7). */
+.vm-group-name { font-size: var(--text-micro); color: var(--text-dim); }
+/* Gap = the library's own swatch-row rhythm (`.ds-swatch-row`, 7px): the nearest
+   existing "row of small selectable things" in the DS. */
+.vm-row { display: flex; flex-wrap: wrap; gap: 7px; }
+/* Four corners in ONE row (2026-08-20, Cindy: the group left too much of the
+   column empty). The 2x2 was measured against the 72px drawing — four in a row
+   needed 312px into a 282px column. The tiles render at 54px since the same day,
+   so four now measure 54*4 + 7*3 = 237px and fit, and the group stops spending a
+   second line while still leaving 100px of the column blank.
+   Cost, recorded because it was a reason and not an accident: as a 2x2 the block
+   read as the screen it describes, so which corner a tile meant was legible from
+   the block's shape as well as the drawing. In a row that job falls to the
+   drawing alone (the inset rect is still in its corner, so nothing is lost that
+   the tile does not say itself). */
+.vm-row.is-quad { display: grid; grid-template-columns: repeat(4, max-content); }
+/* No chrome of its own — the drawing says selected by going 2px white to 3px
+   accent, and a plate or halo behind it would say the same thing twice. */
+.vm-tile {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: block;
+  line-height: 0;
+}
+.vm-tile:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+/* Waiting for hardware, not broken: the drawing stays legible (a reviewer opens
+   the fold to see WHAT would arrive) but reads as inactive. All three values are
+   the library's, not invented — `.ds-toggle[disabled]` (components.css:1549) is
+   opacity .4 / not-allowed / pointer-events none, and that is the control the
+   locked rows in GEAR SWITCH already use one card away, so a locked tile and a
+   locked toggle look equally out of reach. */
+.vm-tile:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Hover answers on locked tiles too (2026-08-28, Cindy: users will flounder on
+   seven silent tiles). The answer itself moved to the DS `Tooltip` on
+   2026-08-31 — this rule is what lets the pointer reach it at all.
+   `pointer-events: none` came along when the toggle's
+   disabled trio was copied here, but on a tile it also swallowed the two things
+   that explain the state — the cursor and the title tip. A disabled button
+   already ignores clicks on its own, so the only thing the rule removed was
+   the answer. The lift on hover is feedback, not invitation: opacity only, and
+   the rule below keeps the drawing's live-hover stroke away from these. */
+.vm-tile:disabled:hover { opacity: 0.55; }
+
+/* Rows that a fold opens only to SHOW what a connected second computer would
+   bring. The library styles a disabled dropdown (`.ds-dropdown.disabled`) but
+   our wrapper has no prop to disable its trigger, so the container takes the
+   clicks away for the whole block — one rule here beats editing a component
+   every other screen shares (rule 11). */
+/* Rendered at three quarters of Cindy's 72x40, which keeps her proportions
+   exactly (the viewBox is untouched, so every coordinate above still holds) and
+   stops the tile being the loudest element in its column. Measured in the live
+   panel: segmented group 32px, text field 34, row 28, toggle 20 — the tile at 40
+   was taller than all of them; at 30 it sits inside that range. Cindy:
+   "사이즈도 너무 큰거같애". */
+.vm-glyph { display: block; width: 54px; height: auto; }
+/* The screen: dark fill, outlined. Grey 80 #333333 in Cindy's file reads as "the
+   panel is off"; on our own dark card that is the surface token, not a solid
+   grey patch. */
+/* Corners are the one thing NOT taken from Cindy's vector (2026-08-20, her
+   question: "코너 래디언스 그런 거 다 확인한 거니?"). Her HPDC path is square
+   (`M70.5 1.5V38.5H1.5V1.5H70.5Z`, no arcs), but a square rectangle is not this
+   library's grammar — `--radius-sm` appears 35 times in components.css and
+   `--radius` 16, and the same app draws the same subject rounded: the desk map's
+   display tile (`.dsa-bounds`) is `--radius-sm`. This is rule 14's reskin split
+   — structure 1:1, skin remapped — and the port map in this same tab already did
+   it, keeping Figma's geometry and taking the library's radius for its window.
+   `--radius-sm`, not `--radius`: 8px on a 40px-tall tile is a fifth of its
+   height and reads as a lozenge, not a screen. */
+.vm-screen { fill: var(--surface); stroke: var(--text-muted); rx: var(--radius-sm); }
+.vm-split { stroke: var(--text-muted); stroke-linecap: round; }
+/* Half the frame's radius, the way a smaller box inside a rounded one keeps the
+   curve proportional (the library does the same with
+   `calc(var(--radius-sm) - 1px)` on its own nested boxes). */
+.vm-pip { fill: var(--text-muted); rx: calc(var(--radius-sm) / 2); }
+/* Selected: the same marks in accent. Stroke WIDTHS come from the component and
+   live in the TSX (2 -> 3), because they change the geometry, not the skin. */
+.vm-tile.is-on .vm-screen,
+.vm-tile.is-on .vm-split { stroke: var(--accent-color); }
+.vm-tile.is-on .vm-pip { fill: var(--accent-color); }
+/* Hover = the middle state of her three (Default / Hover / Selected): the marks
+   brighten, nothing moves. */
+.vm-tile:hover:not(.is-on):not(:disabled) .vm-screen,
+.vm-tile:hover:not(.is-on):not(:disabled) .vm-split { stroke: var(--text-dim); }
+.vm-tile:hover:not(.is-on):not(:disabled) .vm-pip { fill: var(--text-dim); }
+/* The grid hint stays grey in every state — it is not a boundary, it is how many
+   units the panel is being counted in (Cindy 2026-08-20: "점선을 놔서 이게 화면을
+   4등분 한 거예요, 3등분 한 거예요 그걸 표현"). */
+.vm-hint {
+  stroke: var(--border-med);
+  stroke-linecap: square;
+  stroke-dasharray: 4 4;
+}
+
+/* The preset count sits in the value column, not at the left margin: with the
+   sentence gone (2026-08-24) a bare "1 / 3" on the left reads as a label with
+   nothing to label, while on the right it continues the column the rows above
+   it already use. Scoped to this card — `.mt-note` is eight other notes that
+   are prose and belong left. */
+.mp-sec .mp-count {
+  /* `justify-content`, not `text-align`: `.mt-note` is a flex row, so the text
+     property lands on nothing (measured — the number stayed at the margin). */
+  justify-content: flex-end;
+}
+
+/* A dropdown inside a `.ds-ng3-row` takes its natural width, not the row's.
+   The library's `.ds-dropdown` is `width: 100%` for the stacked `.ds-ng3-field`
+   it usually sits in; inside a label-left / control-right row that 100% left
+   the label 55px, so `Left screen`, `Sound from` and `Switch hotkey` wrapped to
+   two lines while every sibling row sat on one (2026-09-22, Cindy: "다른 건 다
+   한 줄씩인데 이건 왜 또 두 줄씩이니"). `min-width: 160px` still comes from the
+   library, so the control keeps the same width it had in the stacked form. */
+.mc-canvas .ds-ng3-row > .ds-dropdown {
+  width: auto;
+}
+
+/* The rows the one-PC Gear Switch fold opens onto sit in a wrapper, so they did
+   not get the section's own gap and stacked with none — three rows in 36px on
+   the OMEN OLED 27 (2026-09-23, Cindy's review). The card's own row gap. */
+.mt-locked-rows { display: flex; flex-direction: column; gap: var(--gutter-sm); }

@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import './device-canvas.css';
 import './headset-canvas.css';
+import { EQ_PRESETS, EqCurve } from './eqData';
+import { presetCurve } from './eqParametric';
+import { SimpleEqModal } from './SimpleEqModal';
+import { AdvancedEqModal } from './AdvancedEqModal';
+import { ChooseEqModal, type EqKind } from './ChooseEqModal';
+import { useSettings } from '../state/Settings';
 import {
   Icon,
   Ng3Panel,
+  Ng3Tool,
   Ng3Grid,
   Ng3Col,
   Ng3Section,
@@ -18,14 +25,16 @@ import {
   VuSlider,
   BalanceSlider,
   Button,
+  ToggleButtonGroup,
   SoftwareOnly,
   type IconName,
 } from '../components';
 import { type ResolvedSku, deviceImageUrl, heroImageFile, connectionStatus } from './skus';
 import { deviceTabs } from './deviceTabs';
-import { ProfileBar, ProfileScopeBody, useDeviceProfileBar } from './ProfileBar';
+import { DeviceSettingsCard } from './DeviceSettingsCard';
+import { ProfileBar, ProfileActions, ProfileScopeBody, useDeviceProfileBar, useProfileValue, type ProfileBarState } from './ProfileBar';
 import { SurroundStage } from './SurroundStage';
-import { MIC_PRESET_LABEL } from './audioLabels';
+import { MIC_EFFECT_LABEL, MIC_PRESET_LABEL } from './audioLabels';
 
 /**
  * Full-canvas headset modal — the NGENUITY "Audio" design (Audio file, node
@@ -51,54 +60,38 @@ function batteryIcon(level: number, charging: boolean): IconName {
 // Preset id → display label + a tiny response-curve glyph (the Figma "EQ
 // Thumbnail" variants), drawn as a polyline over a 40×14 box. Geometry only —
 // color comes from the row state via currentColor.
-const EQ_PRESETS: Record<string, { label: string; points: string }> = {
-  balanced: { label: 'Balanced', points: '1,7 10,7 20,7 30,7 39,7' },
-  gaming: { label: 'Gaming', points: '1,4 10,7 20,8 30,7 39,3' },
-  voice: { label: 'Voice Chat', points: '1,10 10,8 20,3 30,8 39,10' },
-  bassboost: { label: 'Bass Boost', points: '1,3 10,4 20,8 30,9 39,9' },
-  basscut: { label: 'Bass Cut', points: '1,12 10,10 20,7 30,6 39,6' },
-  trebleboost: { label: 'Treble Boost', points: '1,9 10,9 20,8 30,4 39,3' },
-  treblecut: { label: 'Treble Cut', points: '1,6 10,6 20,7 30,10 39,12' },
-};
-
-function EqCurve({ points }: { points: string }) {
-  return (
-    <svg className="hc-eq-curve" viewBox="0 0 40 14" fill="none" aria-hidden="true">
-      <polyline
-        points={points}
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 // Mic effect ids → display labels (NGENUITY wording).
-const MIC_EFFECT_LABEL: Record<string, string> = {
-  'noise-reduction': 'AI Noise Reduction',
-  compressor: 'Compressor',
-  limiter: 'Limiter',
-};
-
 // ── Audio tab ────────────────────────────────────────────────────────────────
-function AudioTab({ features }: { features: Features }) {
+function AudioTab({ features, profile }: { features: Features; profile: ProfileBarState }) {
   const audio = features.audio || {};
   const mic = audio.mic && typeof audio.mic === 'object' ? audio.mic : null;
   const eqPresets: string[] = Array.isArray(audio.equalizer?.presets) ? audio.equalizer.presets : [];
   const micPresets: string[] = mic && Array.isArray(mic.presets) ? mic.presets : [];
   const micEffects: string[] = mic && Array.isArray(mic.effects) ? mic.effects : [];
 
-  const [volume, setVolume] = useState(62);
+  // Settings the device runs are scope-backed. Mute is NOT one of them — it is
+  // live status, and a profile that silently muted you on activation would be a
+  // bug rather than a feature.
+  const [volume, setVolume] = useProfileValue(profile, 'audio.volume', 62);
+  const [micVolume, setMicVolume] = useProfileValue(profile, 'audio.micVolume', 70);
   const [muted, setMuted] = useState(false);
   const [micMuted, setMicMuted] = useState(false);
-  const [monitoring, setMonitoring] = useState(false);
-  const [eqOn, setEqOn] = useState(false);
-  const [eqPreset, setEqPreset] = useState(eqPresets[0]);
-  const [micPresetsOn, setMicPresetsOn] = useState(false);
-  const [micFxOn, setMicFxOn] = useState(false);
-  const [fx, setFx] = useState<Record<string, boolean>>({});
+  const [monitoring, setMonitoring] = useProfileValue(profile, 'audio.micMonitoring', false);
+  const [eqOn, setEqOn] = useProfileValue(profile, 'audio.equalizer', false);
+  const [eqPreset, setEqPreset] = useProfileValue(profile, 'audio.eqPreset', eqPresets[0]);
+  // User-made presets live in Settings; factory ones stay SKU data. The list
+  // shows both, so a preset you drew sits beside the ones that shipped.
+  const { eqPresets: customPresets } = useSettings();
+  // "Add Equalizer Preset" asks Simple or Advanced first, then opens that editor.
+  const [eqEditor, setEqEditor] = useState<'choose' | EqKind | null>(null);
+  const [micPresetsOn, setMicPresetsOn] = useProfileValue(profile, 'audio.micPresetsOn', false);
+  const [micPreset, setMicPreset] = useProfileValue(profile, 'audio.micPreset', micPresets[0] ?? '');
+  const [micFxOn, setMicFxOn] = useProfileValue(profile, 'audio.micEffectsOn', false);
+  // Per key, not one bag: the effect list is SKU-driven, so a hook per row would
+  // break the rules of hooks — and one key each is what gives every effect its
+  // own line in the profile's manifest.
+  const fxOn = (id: string) => profile.value<boolean>(`audio.micEffect.${id}`, false);
+  const setFxOn = (id: string, v: boolean) => profile.setValue(`audio.micEffect.${id}`, v);
 
   return (
     <Ng3Grid className="hc-audio">
@@ -125,7 +118,7 @@ function AudioTab({ features }: { features: Features }) {
           <Ng3Section>
             <Ng3Label strong info>Mic Volume</Ng3Label>
             <div className="dc-slider-row">
-              <VuSlider defaultValue={70} variant={mic.vuMeter ? 'peak' : 'default'} aria-label="Mic volume" />
+              <VuSlider value={micVolume} onChange={setMicVolume} variant={mic.vuMeter ? 'peak' : 'default'} aria-label="Mic volume" />
               <button
                 type="button"
                 className={'dc-mute' + (micMuted ? ' active' : '')}
@@ -157,8 +150,19 @@ function AudioTab({ features }: { features: Features }) {
             <Ng3Label strong info>Audio Equalizer</Ng3Label>
             <Toggle checked={eqOn} onChange={setEqOn} aria-label="Audio equalizer" />
           </Ng3Row>
-          <div className="hc-eq-list" role="radiogroup" aria-label="Equalizer preset">
-            <ListItem label="Add Equalizer Preset" leading={<Icon name="add-small" size={16} />} />
+          <div className="hc-eq-list">
+            <ListItem
+              label="Add Equalizer Preset"
+              leading={<Icon name="add-small" size={16} />}
+              onClick={() => setEqEditor('choose')}
+            />
+            {/* The presets never size the panel (Figma Audio 8931:20990: the
+                Volume and Mic columns set its height, the list fills what is
+                left and scrolls). .hc-eq-scroll has no height of its own —
+                the radiogroup is absolutely positioned inside it — so adding a
+                preset can only add a row to scroll to. "Add" stays put above. */}
+            <div className="hc-eq-scroll">
+            <div className="hc-eq-presets" role="radiogroup" aria-label="Equalizer preset">
             {eqPresets.map((id) => {
               const p = EQ_PRESETS[id];
               if (!p) return null;
@@ -174,10 +178,26 @@ function AudioTab({ features }: { features: Features }) {
                 />
               );
             })}
+            {customPresets.map((p) => (
+              <ListItem
+                key={p.id}
+                role="radio"
+                aria-checked={eqPreset === p.id}
+                label={p.label}
+                leading={<EqCurve points={presetCurve(p)} />}
+                selected={eqPreset === p.id}
+                onClick={() => setEqPreset(p.id)}
+              />
+            ))}
+            </div>
+            </div>
           </div>
         </Ng3Section>
         </SoftwareOnly>
       )}
+      {eqEditor === 'choose' && <ChooseEqModal onClose={() => setEqEditor(null)} onPick={setEqEditor} />}
+      {eqEditor === 'simple' && <SimpleEqModal onClose={() => setEqEditor(null)} />}
+      {eqEditor === 'advanced' && <AdvancedEqModal onClose={() => setEqEditor(null)} />}
 
       {/* Mic Presets / Mic Effects */}
       {(micPresets.length > 0 || micEffects.length > 0) && (
@@ -191,7 +211,8 @@ function AudioTab({ features }: { features: Features }) {
               <div>
                 <Dropdown
                   aria-label="Mic preset"
-                  defaultValue={micPresets[0]}
+                  value={micPreset}
+                  onChange={setMicPreset}
                   options={micPresets.map((id) => ({ label: MIC_PRESET_LABEL[id] ?? id, value: id }))}
                 />
               </div>
@@ -208,8 +229,8 @@ function AudioTab({ features }: { features: Features }) {
                   <Checkbox
                     key={id}
                     label={MIC_EFFECT_LABEL[id] ?? id}
-                    checked={!!fx[id]}
-                    onChange={(e) => setFx((f) => ({ ...f, [id]: e.target.checked }))}
+                    checked={fxOn(id)}
+                    onChange={(e) => setFxOn(id, e.target.checked)}
                   />
                 ))}
               </div>
@@ -226,10 +247,10 @@ function AudioTab({ features }: { features: Features }) {
 // The master toggle lives in the panel HEADER (headerExtra, like the keyboard's
 // Lights toggle). Toggled off, the tab stays fully operable — off stops the
 // feature, not your editing — so the toggle itself is the off signal.
-function SpatialTab({ features }: { features: Features }) {
+function SpatialTab({ features, profile }: { features: Features; profile: ProfileBarState }) {
   const s = features.spatial || {};
-  const [experience, setExperience] = useState(50);
-  const [distance, setDistance] = useState(50);
+  const [experience, setExperience] = useProfileValue(profile, 'spatial.experience', 50);
+  const [distance, setDistance] = useProfileValue(profile, 'spatial.distance', 50);
   const output: string = s.surroundFormat || '7.1';
   return (
     <SoftwareOnly reason="the surround mix is rendered on the PC">
@@ -254,7 +275,7 @@ function SpatialTab({ features }: { features: Features }) {
         {s.experienceSlider && (
           <Ng3Field>
             <Ng3Label strong info>Experience</Ng3Label>
-            {/* Centre-anchored: the mix pulls toward raw performance or full
+            {/* Center-anchored: the mix pulls toward raw performance or full
                 immersion from a balanced middle — that's BalanceSlider's shape. */}
             <BalanceSlider min={0} max={100} value={experience} onChange={setExperience} aria-label="Experience" />
             <div className="hc-scale" aria-hidden="true">
@@ -297,37 +318,86 @@ const POWER_OFF_LABEL: Record<string, string> = {
 };
 const NOTIFY_LABEL: Record<string, string> = { voice: 'Voice', tone: 'Tone', none: 'None' };
 
-function SettingsTab({ features }: { features: Features }) {
+/**
+ * Settings tab — Figma "Cloud III S Control Panel" (Device Settings
+ * 10461:54650). A fixed-width device rail beside a flexible notifications
+ * panel: identity, firmware and the two support actions on the left over Auto
+ * Power-Off; the notification mode, what it does, and the OS hand-off on the
+ * right.
+ *
+ * Every row is SKU data — firmware, the support pair, the power-off steps, the
+ * notification modes and the audio credit all come from the resolved features,
+ * so a sparse headset simply shows fewer rows rather than empty chrome.
+ */
+function SettingsTab({ sku, features, profile }: { sku: ResolvedSku; features: Features; profile: ProfileBarState }) {
   const autoOff: string[] = Array.isArray(features.power?.autoPowerOff) ? features.power.autoPowerOff : [];
   const notify: string[] = Array.isArray(features.notifications?.modes) ? features.notifications.modes : [];
+  const support = (features.support && typeof features.support === 'object' ? features.support : {}) as Record<string, unknown>;
+  const firmware = typeof features.firmware === 'string' ? features.firmware : null;
+  const audioCredit = typeof features.spatial?.audioCredit === 'string' ? features.spatial.audioCredit : null;
+  const [mode, setMode] = useProfileValue(profile, 'settings.notifications', notify[0] ?? 'voice');
+  const [autoPowerOff, setAutoPowerOff] = useProfileValue(
+    profile,
+    'settings.autoPowerOff',
+    autoOff.includes('20min') ? '20min' : (autoOff[0] ?? ''),
+  );
+
+  const hasDevice = firmware || support.deviceManager !== false || support.getSupport !== false;
+  if (!hasDevice && autoOff.length === 0 && notify.length === 0) {
+    return <div className="dc-placeholder">No device settings available.</div>;
+  }
+
   return (
-    <Ng3Grid className="hc-audio hc-settings">
-      {autoOff.length > 0 && (
-        <Ng3Section>
-          <Ng3Field>
-            <Ng3Label strong info>Auto Power-Off</Ng3Label>
-            <Dropdown
-              aria-label="Auto power-off"
-              defaultValue={autoOff.includes('10min') ? '10min' : autoOff[0]}
-              options={autoOff.map((v) => ({ label: POWER_OFF_LABEL[v] ?? v, value: v }))}
-            />
-          </Ng3Field>
-        </Ng3Section>
-      )}
+    <Ng3Grid className="hc-settings">
+      <Ng3Col className="hc-set-rail">
+        {hasDevice && (
+          <DeviceSettingsCard
+            name={sku.name}
+            firmware={firmware}
+            deviceManager={support.deviceManager !== false}
+            getSupport={support.getSupport !== false}
+            audioCredit={audioCredit}
+          />
+        )}
+        {autoOff.length > 0 && (
+          <Ng3Section>
+            <Ng3Field>
+              <Ng3Label strong info>Auto Power-Off</Ng3Label>
+              <Dropdown
+                aria-label="Auto power-off"
+                value={autoPowerOff}
+                onChange={setAutoPowerOff}
+                options={autoOff.map((v) => ({ label: POWER_OFF_LABEL[v] ?? v, value: v }))}
+              />
+            </Ng3Field>
+          </Ng3Section>
+        )}
+      </Ng3Col>
+
       {notify.length > 0 && (
-        <Ng3Section>
-          <Ng3Field>
-            <Ng3Label strong info>Notifications</Ng3Label>
-            <Dropdown
-              aria-label="Notification mode"
-              defaultValue={notify[0]}
+        <Ng3Section className="hc-notify">
+          <Ng3Label strong>Notifications</Ng3Label>
+          <div className="hc-notify-body">
+            <ToggleButtonGroup
+              fullWidth
+              aria-label="Notifications"
+              value={mode}
+              onChange={setMode}
               options={notify.map((v) => ({ label: NOTIFY_LABEL[v] ?? v, value: v }))}
             />
-          </Ng3Field>
+            <p className="hc-set-copy">
+              Like the idea of audio notifications but need a bit more info than beeps can
+              provide? Say less! Our voice prompts will notify you of any status changes to
+              your headset.
+            </p>
+          </div>
+          {/* The OS owns output routing, so this hands off rather than pretending
+              to set it here. Sits on the panel floor, away from the controls. */}
+          <Button className="hc-set-handoff">
+            <Icon name="audio-headset" size={16} />
+            Windows Sound Devices
+          </Button>
         </Ng3Section>
-      )}
-      {autoOff.length === 0 && notify.length === 0 && (
-        <div className="dc-placeholder">No device settings available.</div>
       )}
     </Ng3Grid>
   );
@@ -353,7 +423,7 @@ export function HeadsetCanvas({
 
   // Spatial audio master power — panel-header toggle (like the keyboard's
   // Lights), so the whole tab body reads as one switched surface.
-  const [spatialOn, setSpatialOn] = useState(true);
+  const [spatialOn, setSpatialOn] = useProfileValue(profile, 'spatial.power', true);
 
   const heroSrc = deviceImageUrl(heroImageFile(sku));
   const conn = connectionStatus(f);
@@ -380,14 +450,15 @@ export function HeadsetCanvas({
         <Icon name="close" />
       </button>
 
-      <ProfileBar state={profile} />
-
       {/* Hero */}
       <div className="dc-hero">{heroSrc && <img src={heroSrc} alt={sku.name} />}</div>
 
       {/* Bottom Ng3 product panel */}
       <div className="dc-panel-wrap">
         <Ng3Panel
+          leading={<ProfileBar state={profile} />}
+          trailing={<ProfileActions state={profile} />}
+          width={active.width}
           header={active.title}
           headerExtra={
             active.id === 'spatial' && f.spatial ? (
@@ -402,16 +473,13 @@ export function HeadsetCanvas({
             ) : undefined
           }
           tools={tabs.map((t) => (
-            <button
+            <Ng3Tool
               key={t.id}
-              type="button"
-              className={['ds-ng3-tool', t.id === active.id ? 'active' : ''].filter(Boolean).join(' ')}
-              aria-label={t.title}
-              aria-pressed={t.id === active.id}
+              icon={t.icon}
+              title={t.title}
+              active={t.id === active.id}
               onClick={() => setTabId(t.id)}
-            >
-              <Icon name={t.icon} />
-            </button>
+            />
           ))}
           actions={
             <button type="button" className="ds-ng3-action" aria-label="Duplicate">
@@ -422,11 +490,11 @@ export function HeadsetCanvas({
         >
           <ProfileScopeBody state={profile}>
           {active.id === 'audio' ? (
-            <AudioTab key={profile.revision} features={f} />
+            <AudioTab key={profile.revision} features={f} profile={profile} />
           ) : active.id === 'spatial' ? (
-            <SpatialTab key={profile.revision} features={f} />
+            <SpatialTab key={profile.revision} features={f} profile={profile} />
           ) : (
-            <SettingsTab features={f} />
+            <SettingsTab key={profile.revision} sku={sku} features={f} profile={profile} />
           )}
           </ProfileScopeBody>
         </Ng3Panel>

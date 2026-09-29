@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../components';
 
-// ── Clean progress Dialogue (PerformV5) ──
-// The third modal template = Dialogue: a small, centered, transient surface for
+// ── Clean progress Dialog (PerformV5) ──
+// The third modal template = Dialog: a small, centered, transient surface for
 // a PROCESS (not a control console, not content). Shows the clean running with
 // animation (spinner ring + bar), then the result. Both cleaners use it.
 

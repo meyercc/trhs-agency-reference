@@ -1,0 +1,43 @@
+/* Device settings card — DeviceSettingsCard.tsx, the section every Settings
+   tab opens with. Surface, border, padding and the row gap come from
+   .ds-ng3-section; only the card's own type steps and stacks live here. */
+
+/* Firmware line and the partner credit are secondary to the device name, so
+   they take the dim step rather than a fixed gray — it flips with the theme. */
+.dsc-fw {
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.dsc-btns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.dsc-btns .ds-btn,
+.dsc-handoff {
+  width: 100%;
+  justify-content: center;
+}
+/* Credit line: text + wordmark on one baseline. */
+.dsc-credit {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+/* The wordmark is not a glyph — it keeps its own 61x12 aspect instead of the
+   Icon component's square box, and inherits the credit line's color. */
+.dsc-hear360 {
+  width: 61px;
+  height: 12px;
+  flex-shrink: 0;
+}
+/* The OS owns what the hand-off opens, so it sits on the card's floor, away
+   from the card's own controls, whatever the copy above it runs to. */
+.dsc-handoff {
+  margin-top: auto;
+}

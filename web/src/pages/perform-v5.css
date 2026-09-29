@@ -46,7 +46,7 @@
 
 /* title bar = drag handle (grip hint), plus a fold control */
 .pv5-rig .pv3-rig-head { gap: var(--gutter-xs); justify-content: flex-start; }
-.pv5-rig-grip { color: var(--text-subtle); font-size: 13px; letter-spacing: -1px; cursor: grab; user-select: none; }
+.pv5-rig-grip { color: var(--text-muted); font-size: 13px; letter-spacing: -1px; cursor: grab; user-select: none; }
 .pv5-rig .pv4-rig-state { margin-left: auto; }
 .pv5-rig-fold { flex: none; width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: none; color: var(--text-dim); cursor: pointer; font-size: 11px; line-height: 1; }
 .pv5-rig-fold:hover { background: var(--surface-hover); }
@@ -82,11 +82,11 @@
 /* Standardized status "reading" — the state IS the card's headline reading:
    a big bold highlighted word, weighted like the System Vitals gauge value
    (.gauge-n, 20px/700). Words + tones come from CardKit's controlled vocabulary:
-   positive = green (Active/Ready/Good/Quiet) · muted = grey (Inactive, a
+   positive = green (Active/Ready/Good/Quiet) · muted = gray (Inactive, a
    choice not an error) · attention = orange (N heavy). */
 .pv5-feat-status { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 22px; line-height: 1; margin: 4px 0 8px; }
 .pv5-feat-status--positive { color: var(--green); }
-.pv5-feat-status--muted { color: var(--text-subtle); }
+.pv5-feat-status--muted { color: var(--text-muted); }
 .pv5-feat-status--attention { color: var(--orange); }
 .pv5-legend-item { display: inline-flex; align-items: center; gap: 6px; }
 .pv5-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
@@ -107,7 +107,7 @@
   font-size: var(--text-nano);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .pv5-rig-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter-xs) var(--gutter); }
 @media (max-width: 520px) { .pv5-rig-toggles { grid-template-columns: 1fr; } }
@@ -168,15 +168,15 @@
 .pv5-nbm-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; padding-bottom: var(--gutter-sm); border-bottom: 1px solid var(--border-light); }
 .pv5-nbm-sum-v { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 30px; color: var(--text-primary); }
 .pv5-nbm-sum-u { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--text-muted); }
-.pv5-nbm-sum-meta { margin-left: auto; font-size: var(--text-micro); color: var(--text-subtle); align-self: center; }
+.pv5-nbm-sum-meta { margin-left: auto; font-size: var(--text-micro); color: var(--text-muted); align-self: center; }
 
-.pv5-nbm-sect { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-subtle); margin: var(--gutter) 0 var(--gutter-xs); }
+.pv5-nbm-sect { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-muted); margin: var(--gutter) 0 var(--gutter-xs); }
 .pv5-nbm-sect:first-child { margin-top: 0; }
 .pv5-nbm-ifaces { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); }
 @media (max-width: 640px) { .pv5-nbm-ifaces { grid-template-columns: 1fr; } }
 .pv5-nbm-iface { background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: var(--gutter-sm); }
 .pv5-nbm-iface-head { display: flex; align-items: center; gap: 8px; margin-bottom: var(--gutter-xs); }
-.pv5-nbm-iface-kind { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); border: 1px solid var(--border-light); border-radius: 4px; padding: 1px 5px; flex: none; }
+.pv5-nbm-iface-kind { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border: 1px solid var(--border-light); border-radius: 4px; padding: 1px 5px; flex: none; }
 .pv5-nbm-iface-name { font-size: var(--text-caption); color: var(--text-primary); }
 .pv5-nbm-kv { display: flex; justify-content: space-between; gap: var(--gutter); font-size: var(--text-micro); color: var(--text-muted); padding: 2px 0; }
 .pv5-nbm-kv b { color: var(--text-dim); font-weight: 500; font-family: var(--font-mono); }
@@ -188,14 +188,14 @@
 
 .pv5-nbm-table { display: flex; flex-direction: column; }
 .pv5-nbm-row { display: grid; grid-template-columns: 2fr 1fr 1fr 84px 48px; align-items: center; gap: var(--gutter-sm); padding: 8px 0; border-bottom: 1px solid var(--border-light); font-size: var(--text-caption); }
-.pv5-nbm-row-head { color: var(--text-subtle); font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.06em; }
+.pv5-nbm-row-head { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.06em; }
 .pv5-nbm-app { color: var(--text-primary); }
 .pv5-nbm-num { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--text-muted); }
 .pv5-nbm-prio { font-family: var(--font-mono); font-size: var(--text-micro); font-weight: 600; }
 .pv5-nbm-prio--high { color: var(--orange); }
 .pv5-nbm-prio--medium { color: var(--text-dim); }
 .pv5-nbm-prio--low { color: var(--text-muted); }
-.pv5-nbm-note { font-size: var(--text-micro); color: var(--text-subtle); margin-top: var(--gutter-sm); }
+.pv5-nbm-note { font-size: var(--text-micro); color: var(--text-muted); margin-top: var(--gutter-sm); }
 .pv5-nbm-modeswitch { margin-top: var(--gutter-sm); }
 
 /* ── Booster Manage modal (left rail — it navigates 4 groups, R8) ── */
@@ -233,7 +233,7 @@
   font-weight: 600;
   white-space: nowrap;
   background: var(--purple);
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   cursor: pointer;
   box-shadow: var(--shadow-lv-2);
@@ -260,12 +260,12 @@
 .pv5-omm-stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter-xs); margin: var(--gutter-xs) 0; }
 .pv5-omm-stat { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 10px; }
 .pv5-omm-stat-v { display: block; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: var(--text-section); color: var(--text-primary); }
-.pv5-omm-stat-l { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-subtle); }
-.pv5-omm-list-head { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle); margin-top: var(--gutter-xs); }
+.pv5-omm-stat-l { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.pv5-omm-list-head { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-top: var(--gutter-xs); }
 .pv5-omm-notes { margin: 4px 0 0; padding-left: 16px; font-size: var(--text-micro); color: var(--text-muted); line-height: 1.6; }
 .pv5-omm-notes-warn { color: var(--orange); }
 
-.pv5-omm-sect { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-subtle); margin: var(--gutter) 0 var(--gutter-xs); }
+.pv5-omm-sect { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-muted); margin: var(--gutter) 0 var(--gutter-xs); }
 .pv5-omm-sect:first-child { margin-top: 0; }
 .pv5-omm-games { display: flex; flex-direction: column; gap: var(--gutter-xs); }
 .pv5-omm-game { background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: var(--gutter-sm); }
@@ -274,7 +274,7 @@
 .pv5-omm-game-thumb { width: 30px; height: 30px; border-radius: var(--radius-sm); background: rgba(0, 0, 0, 0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; flex: none; }
 .pv5-omm-game-id { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
 .pv5-omm-game-title { font-size: var(--text-caption); color: var(--text-primary); }
-.pv5-omm-game-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-subtle); }
+.pv5-omm-game-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
 .pv5-omm-game-body { margin-top: var(--gutter-xs); padding-top: var(--gutter-xs); border-top: 1px solid var(--border-light); display: flex; flex-direction: column; gap: var(--gutter-xs); }
 .pv5-omm-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter-sm); }
 .pv5-omm-row-fps { align-items: flex-start; }
@@ -286,7 +286,7 @@
 .pv5-omm-supported { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--gutter-xs); }
 .pv5-omm-sup { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter-xs); background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 10px; }
 .pv5-omm-sup-title { font-size: var(--text-caption); color: var(--text-primary); }
-.pv5-omm-sup-badge { font-family: var(--font-mono); font-size: 10px; color: var(--text-subtle); }
+.pv5-omm-sup-badge { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
 .pv5-omm-sup-cta { font-family: var(--font-mono); font-size: 10px; color: var(--accent-color); text-decoration: none; }
 
 
@@ -300,10 +300,10 @@
 /* (2) bigger Power Mode tiles */
 /* Mode tiles = the card's PRIMARY control: thicker two-row tiles with a
    per-mode icon (icon top-left · watts top-right · label below). The icon
-   carries the state colour — same hues as the sub-area spine. The old
+   carries the state color — same hues as the sub-area spine. The old
    selection dot is gone; the sub-control list stays deliberately lighter. */
 .pv5-anchor .pv5-mode-tile { display: grid; grid-template-columns: auto 1fr; row-gap: 12px; align-items: start; min-height: 78px; padding: 13px 15px 12px; }
-.pv5-mode-ic { grid-row: 1; grid-column: 1; display: flex; color: var(--text-subtle); transition: color 0.15s ease; }
+.pv5-mode-ic { grid-row: 1; grid-column: 1; display: flex; color: var(--text-muted); transition: color 0.15s ease; }
 .pv5-mode-ic svg { width: 20px; height: 20px; }
 .pv5-anchor .pv5-mode-tile .power-mode-watts { grid-row: 1; grid-column: 2; justify-self: end; }
 .pv5-anchor .pv5-mode-tile .power-mode-label { grid-row: 2; grid-column: 1 / -1; font-size: var(--text-body); }
@@ -328,7 +328,7 @@
 .pv5-cleaner-card { cursor: default; }
 /* (cleaner stats + health bar removed — all sub status renders as .pv5-facts) */
 
-/* ── Clean progress Dialogue (the third modal template) ── */
+/* ── Clean progress Dialog (the third modal template) ── */
 .pv5-dialog {
   position: fixed;
   top: 50%;
@@ -375,7 +375,7 @@
 .pv5-sched-day:hover { border-color: var(--border); color: var(--text-dim); }
 .pv5-sched-day.active { border-color: var(--accent-color); background: var(--accent-dimmest); color: var(--text-primary); }
 .pv5-sched-logs { margin-top: var(--gutter-xs); padding-top: var(--gutter-sm); border-top: 1px solid var(--border-light); }
-.pv5-sched-logs-head { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-subtle); margin-bottom: 6px; }
+.pv5-sched-logs-head { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-muted); margin-bottom: 6px; }
 .pv5-sched-log-empty { font-size: var(--text-micro); color: var(--text-muted); }
 .pv5-sched-foot { display: flex; justify-content: flex-end; gap: var(--gutter-sm); margin-top: var(--gutter); padding-top: var(--gutter-sm); border-top: 1px solid var(--border-light); }
 
@@ -423,9 +423,9 @@
 .pv5-top-list { list-style: none; margin: var(--gutter-xs) 0 0; padding: 0; display: flex; flex-direction: column; }
 .pv5-top-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; column-gap: var(--gutter-sm); row-gap: 7px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
 .pv5-top-row:last-child { border-bottom: none; }
-.pv5-top-rank { font-family: 'JetBrains Mono', monospace; font-size: var(--text-micro); color: var(--text-subtle); }
+.pv5-top-rank { font-family: 'JetBrains Mono', monospace; font-size: var(--text-micro); color: var(--text-muted); }
 .pv5-top-app { font-size: var(--text-caption); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.pv5-top-res { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); border: 1px solid var(--border-light); border-radius: 4px; padding: 1px 5px; }
+.pv5-top-res { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border: 1px solid var(--border-light); border-radius: 4px; padding: 1px 5px; }
 .pv5-top-val { font-family: 'JetBrains Mono', monospace; font-size: var(--text-caption); font-weight: 600; color: var(--text-dim); white-space: nowrap; text-align: right; }
 .pv5-top-bar { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .pv5-top-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--orange), var(--red)); border-radius: 2px; }
@@ -448,9 +448,9 @@
 .pv5-svm-head { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--text-caption); color: var(--text-primary); margin-bottom: var(--gutter-sm); }
 .pv5-svm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--gutter-xs); }
 .pv5-svm-stat { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 10px 12px; }
-.pv5-svm-stat-l { display: block; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); }
+.pv5-svm-stat-l { display: block; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
 .pv5-svm-stat-v { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: var(--text-section); color: var(--text-primary); }
-.pv5-svm-graph-head { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle); margin: var(--gutter) 0 var(--gutter-xs); }
+.pv5-svm-graph-head { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: var(--gutter) 0 var(--gutter-xs); }
 .pv5-linegraph { display: block; width: 100%; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-light); border-radius: var(--radius-sm); }
 
 /* System Info modal (single page) */
@@ -460,6 +460,6 @@
 .pv5-si-actions { display: flex; gap: 6px; }
 .pv5-si-specs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); }
 @media (max-width: 640px) { .pv5-si-specs { grid-template-columns: 1fr; } }
-.pv5-si-spec-label { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-subtle); }
+.pv5-si-spec-label { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
 .pv5-si-spec-value { font-size: var(--text-caption); color: var(--text-primary); margin-top: 2px; }
 .pv5-si-spec-row { font-size: var(--text-micro); color: var(--text-muted); margin-top: 2px; }

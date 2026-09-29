@@ -98,7 +98,7 @@
 /* Row label variants */
 .booster-modal .bst-muted {
   font-style: italic;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .booster-modal .bst-warn {
   color: rgba(255, 107, 43, 0.6);

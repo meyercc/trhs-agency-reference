@@ -1,5 +1,5 @@
 /* Shared chrome for feature modals (OMEN AI, Booster, …) — the left-panel
-   benefits/considerations cards and scroll behaviour. Add the `feature-modal`
+   benefits/considerations cards and scroll behavior. Add the `feature-modal`
    class to the ModalShell alongside the modal-specific class.
    Ported from css/prototype.css (.uv-info-*). */
 

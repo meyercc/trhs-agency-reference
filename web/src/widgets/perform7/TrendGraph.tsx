@@ -5,7 +5,7 @@
 //
 // A trend is only readable against something. This one declares:
 //   · a real domain (0..max in the metric's own unit), so height means a value
-//   · the PEAK in the window, marked and labelled — the thing people look for
+//   · the PEAK in the window, marked and labeled — the thing people look for
 //   · optional THRESHOLDS as rules, and the whole trace takes their tone once
 //     the current value crosses one, because a spike matters relative to a limit
 //

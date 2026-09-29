@@ -1,15 +1,35 @@
 /* Multi-display arrangement in the monitor modal hero. Ported from the
    vanilla .dsa-* styles (css/prototype.css); token-only. */
+/* Bottom inset matches the top one (Cindy, 2026-08-06 — "위에 특히 여백이 엄청
+   많은데 왜 거기는 활용을 못하는 거니?"). Measured at a 950px window: of the
+   band's 330px, 94 went to the band's own chrome and the desk got the rest, so
+   the argument about whether to take 42px from the controls below was being had
+   over space the band was already spending on itself. The asymmetric gutter was
+   there to hold the captions that hung under the bottom row; those are on the
+   renders now. */
 .dsa-hero {
   position: relative;
-  padding: var(--gutter-sm) var(--gutter) var(--gutter);
+  padding: var(--gutter-sm) var(--gutter) var(--gutter-sm);
 }
+/* Floating, not a row (Cindy, 2026-08-06 — "위에 여백이 엄청 많은데 왜 거기는
+   활용을 못하는 거니?" + the follow-up: overlay the buttons instead of reserving
+   a line for them). The row used to sit IN FLOW above the stage and cost it a
+   full 28px of height at every window size; lifted out of flow, that height goes
+   back to the desk (see `.mc-arrange .dsa-stage` in monitor-canvas.css, whose
+   subtracted overhead drops with it). `top`/`right` are written out rather than
+   inherited from `.dsa-hero`'s own padding — an absolutely positioned box is
+   NOT inset by its containing block's padding, so without this it would sit
+   flush against the hero's outer edge instead of matching the stage's own
+   16/24px inset. */
 .dsa-hero-head {
+  position: absolute;
+  top: var(--gutter-sm);
+  right: var(--gutter);
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--gutter-sm);
-  margin-bottom: var(--gutter-sm);
 }
 .dsa-hero-title {
   display: flex;
@@ -21,45 +41,141 @@
   text-transform: uppercase;
   color: var(--text-muted);
 }
+/* PROPOSAL 2026-08-04 — the grid is gone. It was the schematic era's floor:
+   when the tiles were drawn boxes it told you this was a coordinate space, and
+   the boxes had hard edges of their own to sit on it. The tiles are photographs
+   now (2026-08-02), and a ruled floor behind a photograph is the one thing that
+   made the map read as a wireframe — it also crossed every silhouette with
+   hairlines at exactly the contrast the dark chassis needed for its own edge.
+   Cindy, 2026-08-04: a lit "desk" surface would read busy — so the answer is
+   not a better floor, it is no floor. What remains is the soft pool of light
+   the group sits in, which is depth without furniture. */
 .dsa-stage {
   position: relative;
+  /* The name pill's drawn height, published so the maths that reserves room for
+     a caption (fitScale's aura, and the second caption line below) reads one
+     number instead of each guessing. Measured off `.ls-rail-btn` on this ramp;
+     it is a fixed size because the pill counter-scales out of the desk zoom. */
+  --dsa-name-h: 29px;
   height: 230px;
   border-radius: var(--radius);
-  background:
-    radial-gradient(90% 70% at 50% 40%, var(--surface-light) 0%, transparent 70%),
-    linear-gradient(var(--border-light) 1px, transparent 1px) 0 0 / 100% 32px,
-    linear-gradient(90deg, var(--border-light) 1px, transparent 1px) 0 0 / 32px 100%;
+  /* ── The lamp: where it is, and how far it goes ─────────────────────────────
+     ⚠️ This used to be a pair of drop-shadows on the render, i.e. light traced
+     around the SILHOUETTE — the whole outline, stand included, glowing evenly
+     front and back. Cindy has now asked twice why (2026-08-11: "라이트 스트립이
+     모니터 중간에 있는데 어떻게 전체가 전부 다 똑같이 글로우가 퍼져?" ·
+     2026-08-19: "모니터 라이트 스트립에 맞춰서 퍼지게 고치고"), and the answer
+     was measured on 2026-08-06: `drop-shadow` reads the PNG's alpha box, so the
+     technique CANNOT know where the LED actually is — front and rear renders
+     spilled within 5–10% of each other. The fix is a positioned light, not a
+     tuned shadow.
+     WHERE: `design-loop/reports/2026-08-10-strip-position-pilot.md` pulled the
+     strip out of the rear render — a rounded-rect loop dead centre of the PANEL,
+     x 24.8→75.3%, y 23.4→78.1% of it, i.e. the middle half. And the front render
+     is 78.1% panel, then neck, then base (measured 2026-08-19 off
+     `treehouse32-front-tight.png`, alpha profile). Composing the two puts the
+     light source at 39.6% of the tile's height — which is why `--dsa-strip-y`
+     is not a taste value and should not be nudged by eye.
+     HOW FAR: `reach` is the outer edge of the wash, `room` is how much of it the
+     desk layout keeps clear (`aura` in fitScale, read off this element). They are
+     deliberately different: past `room` the light is dim enough to lie over the
+     panel it is standing on, and a lamp washing the surface around it is the
+     picture we are after — reserving the full reach as if it were solid made the
+     desk draw SMALLER than its authored size to hold a fade nobody can see
+     (measured 2026-08-18, scale 0.95).
+     ⚠️ Optical, not spacing — do not move these onto the `--gutter` ramp. The
+     ramp governs what the light MEETS (the stage inset, the caption row). */
+  --dsa-glow-reach: 220px;
+  --dsa-glow-room: 28px;
+  /* Share of the tile that is panel — above this is screen, below it is neck and
+     base. Monitor figures; a glowing device with another silhouette (a laptop,
+     if one ever gets a strip) needs its own. */
+  --dsa-panel-h: 78.1%;
+  /* The light source's own centre, in tile space. See the note above. */
+  --dsa-strip-y: 39.6%;
+  /* The pool keeps its shape and loses its middle, 2026-08-06 (Cindy: the
+     under-glow gets hard to read below 20% brightness, so the floor behind it
+     should be darker). It used to peak at dead centre — measured (37,37,37)
+     against a (26,26,26) base — which is exactly the band the displays stand in,
+     so the stage was brightest precisely where the lamp had to be seen. Two soft
+     pools were competing for the same pixels and the decorative one was winning.
+     The first attempt held the outer stop and dipped the inner one, which sounds
+     like "lower the peak" and is not: a gradient that rises before it falls is a
+     ring, and it drew one — a visible bright oval around the group, which is
+     louder than what it replaced and is the "busy lit desk" the decision above
+     rejected. Lowering a peak on a two-stop gradient just means a dimmer stop.
+     The shape and the falloff are untouched; only the maximum comes down. */
+  background: radial-gradient(
+    90% 70% at 50% 45%,
+    color-mix(in srgb, var(--surface-light), transparent 55%) 0%,
+    transparent 70%
+  );
   overflow: hidden;
   touch-action: none;
 }
-/* Free drag here — this lens moves furniture, so no docking and no snap
-   (the Arrange editor is the strict one). On release the whole group glides
-   back to the stage centre; the transition is what makes that read as "the
-   desk settling" rather than a teleport, and it is disabled while dragging so
-   the tile under the pointer never lags. */
+/* The left/top transition outlives the drag it was written for (retired
+   2026-08-20). It still earns its place: the saved layout changes under this
+   lens whenever the Arrange editor commits, and the glide is what makes that
+   read as "the desk settling" rather than a teleport. The `.dragging` variant
+   that switched it off mid-drag is gone with the drag. */
 .dsa-disp {
   position: absolute;
+  /* Vertical placement is `--dsa-t` (the saved fraction, set inline) times
+     `--dsa-vref` (the height that fraction is OF, set on the stage). Doing the
+     multiplication in CSS rather than in the component is not a style choice —
+     it is what keeps the FIRST paint correct. Reading the reference in JS means
+     one render at the fallback and a second at the real value, and the tiles
+     carry a `top` transition, so that pair becomes an animation from a wrong
+     place; measured 2026-08-06, it stalled part-way and simply stayed wrong.
+     The fallback is `100%`, i.e. a fraction of the stage — exactly what this
+     rule did before there was a reference height — so a stage that never sets
+     `--dsa-vref` behaves as it always has. */
+  top: calc(var(--dsa-t, 0) * var(--dsa-vref, 100%));
+  /* Horizontal placement, same construction and same reason (`--dsa-l` inline,
+     `--dsa-href` on the stage). Until 2026-08-18 this was a plain percentage of
+     the stage, which meant the desk SPREAD whenever its box grew — see `hRef`
+     on fitScale for why widening the hero needed that to stop. Fallback `100%`
+     is the old behaviour exactly, so a stage that sets no reference is
+     unchanged. */
+  left: calc(var(--dsa-l, 0) * var(--dsa-href, 100%));
   display: flex;
   flex-direction: column;
   align-items: center;
-  cursor: grab;
+  /* No `cursor: grab` since 2026-08-20 — this desk is read-only and a grab hand
+     is a promise. Tiles that open a display still say so through
+     `.navigable .dsa-bounds { cursor: pointer }`, which is where "this opens"
+     has lived all along. */
   user-select: none;
-  transition:
-    left 0.25s ease,
-    top 0.25s ease;
 }
-.dsa-disp:active {
-  cursor: grabbing;
-  z-index: 4;
-}
-.dsa-stage.dragging .dsa-disp {
-  transition: none;
-}
+/* ── No left/top transition on the tiles (2026-09-01) ────────────────────────
+   This is the same call already made three paragraphs down for the offset
+   wrapper, applied to the thing that kept the bug: "centring is a layout
+   correction, not a motion moment... a stalled transition leaves it wrong
+   indefinitely" (2026-08-03). The tiles had their own stall recorded too, above
+   `top`: 2026-08-06, "it stalled part-way and simply stayed wrong".
+
+   Third measurement, 2026-09-01, reloading straight into the monitor window:
+   inline `--dsa-l` correct at 0.0328, `--dsa-href` correct at 732px — and
+   computed `left` frozen at 217.35px, the PREVIOUS layout's pixel, for 6.8s and
+   counting, with both displays parked against the right edge. Any resize
+   repaired it instantly, which is why Cindy saw it as "가끔씩 모니터 이미지가
+   오른쪽에 붕 떠 있다": only a cold mount reaches it and almost anything hides
+   it again.
+
+   Gating the transition on a measured stage was tried first and did NOT work —
+   it simply armed the glide at the exact moment the value changed, which is the
+   stall. The references arrive in two steps by construction (the component
+   reads them off the stage into state), so any transition here is an animation
+   from a place the tile was never meant to be.
+
+   What is lost: the desk no longer glides when the Arrange editor commits a new
+   layout. That was the transition's one real job, and it is worth less than the
+   desk being in the right place — which is the same trade the wrapper made. */
 /* Offset wrapper — the always-centred group.
    NOT transitioned, deliberately: centring is a layout correction, not a motion
    moment. With a transition the desk is only in the right place once the
    animation finishes, so anything that samples earlier — a screenshot, a
-   throttled tab, a slow first paint — catches it off-centre, and a stalled
+   throttled tab, a slow first paint — catches it off-center, and a stalled
    transition leaves it wrong indefinitely (observed 2026-08-03: currentTime
    stuck at 0, group painted at identity while the inline transform was right).
    The tiles keep their own left/top transition, which is what makes a released
@@ -67,14 +183,17 @@
 .dsa-group {
   position: absolute;
   inset: 0;
-}
-.dsa-stage.mirror .dsa-disp {
-  cursor: default;
+  /* The transform is `translate(...) scale(...)` and every caller's maths (the
+     drag clamp, deskOffset, fitScale) treats the group's origin as the stage's
+     top-left. With the default 50% 50% origin a zoom would ALSO shift the desk by
+     half the size difference, so the centring and the clamp walls would both be
+     wrong by that amount. Irrelevant at zoom 1, load-bearing below it. */
+  transform-origin: 0 0;
 }
 /* `.dsa-screen` / `.dsa-base` (the drawn box + stand) removed 2026-08-02 — the
    tile is a render now, so the box and the little trapezoid stand under it have
-   no element to style. The Perform map still draws schematic tiles and keeps
-   its own `.dov-screen` / `.dov-base`, which were always separate. */
+   no element to style. (The Perform map that kept its own `.dov-*` schematic
+   tiles was retired 2026-08-18 with the Device Overview section.) */
 /* ── Photoreal tile (2026-08-02, Cindy) ──────────────────────────────────────
    The desk map draws the actual product renders instead of numbered boxes.
    Two things follow from that and both are the point, not decoration:
@@ -86,12 +205,21 @@
 .dsa-bounds {
   position: relative;
   border-radius: var(--radius-sm);
-  /* Crops each render to its measured hardware box (renderBox in
-     arrangement.ts) so the bounds are the display, not the PNG's padding. */
-  overflow: hidden;
+  /* PROPOSAL 2026-08-04 — was `overflow: hidden`. The renders are tight-cropped
+     (render-framing.py) and every face is drawn at 100%/100%, so nothing is
+     actually being clipped; what the crop DID do was cut off the drop-shadow
+     that now carries edge separation and selection. */
+  overflow: visible;
+  /* The desk surface. Hover grows the tile from here (see the hover block
+     below), so a display leans toward you off its own stand instead of
+     inflating around its middle — and its caption, which hangs under the
+     bounds box, does not move with it. */
+  transform-origin: bottom center;
   transition:
     box-shadow var(--dur-fast) ease,
-    background var(--dur-fast) ease;
+    background var(--dur-fast) ease,
+    filter var(--dur-fast) ease,
+    transform var(--dur-fast) ease;
 }
 /* `.dsa-bounds img` and not `.dsa-render`: the rule being undone is
    `.dc-hero img` (class + type), which outranks a bare class and kept winning. */
@@ -109,14 +237,154 @@
      The tile sizes its own render, so all three are undone here. */
   max-width: none;
   max-height: none;
-  filter: none;
+  /* Edge separation, drawn on the SILHOUETTE. A black bezel on a black stage
+     has no edge, and on a dark stage a dark shadow adds nothing: the only thing
+     that separates a dark object from a dark ground is a LIGHT edge.
+     `drop-shadow` follows the PNG's alpha, so the hairline traces the neck and
+     stand instead of boxing them — which is also why the stage needs no lit
+     "desk" surface underneath (Cindy, 2026-08-04: a surface reads busy).
+
+     ⚠️ TURNED DOWN 2026-08-05 (Cindy: "지금 모니터 세 개 다 glow가 있어서 조금
+     이상해"). Was 0.55 / 0.14 — enough to read as a LIT object rather than a
+     lit edge, so all three displays looked switched on at once and hover had
+     nothing left to add. A resting map should carry no light of its own; the
+     glow channel belongs to hover and to the hardware's own under-glow.
+     0.28 is the point where the silhouette still separates from the stage
+     (measured against the darkest chassis, the MacBook lid) without reading as
+     a glow. The soft second shadow is gone entirely — it was doing the
+     "switched on" half of the effect. */
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.28));
+}
+/* ── Front↔rear turn (PROTOTYPE 2026-08-04) ─────────────────────────────────
+   The Connectivity tab asks the selected display's tile to show its back
+   (`rearSku` → `.is-rear`); this makes that change a rotation of one object
+   instead of a swap of two pictures. Standard two-face card turn: the inner
+   plane rotates, each face hides its reverse side.
+   · Motion values are DS tokens only. No flip primitive exists to reuse —
+     shared/components.css + shared/tokens*.css grep for
+     perspective|transform-style|backface = 0 hits (2026-08-04).
+   · The rear render is NOT tight-cropped (2112×1738 canvas, hardware box at
+     x 256–1856, chassis y 256–1213 — measured 2026-08-04; kept as-is because
+     PORTMAP-ASSETS.md pins this file as a hash-tracked derived of the port-map
+     PRIMARY). The percentages below map its hardware box onto the same box
+     fractions the tight front render occupies (chassis x 14–965 of 979,
+     y 0–569 of 727), so the monitor body lands on itself mid-turn and the
+     stand base meets the tile bottom on both faces. Derivation:
+     w = 97.14% × 2112/1600 · left = 1.43% − (256/2112)w · h = 78.40% × 1738/958
+     · top = −(256/1738)h. */
+.dsa-flip {
+  position: absolute;
+  inset: 0;
+  perspective: 1200px;
+  /* The rear face is registered to the render's own box, which is larger than
+     the tile (measured 169×139 against a 132×98 tile), and the bounds no longer
+     clip it — so as a hit-testable div it would reach over a neighbouring
+     display and answer for clicks that were meant for it. Inert, like the plain
+     `.dsa-render` it replaces: the bounds box owns hit testing and the drag. */
+  pointer-events: none;
+}
+.dsa-flip-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  /* 500ms read as a snap, not an object turning (Cindy, 2026-08-04). The DS
+     duration ramp tops out at --dur-xslow 500ms, so this scales the token
+     rather than inventing a raw number. */
+  transition: transform calc(var(--dur-xslow) * 1.8) var(--ease-default);
+}
+.dsa-flip.is-rear .dsa-flip-inner {
+  transform: rotateY(180deg);
+}
+.dsa-face {
+  backface-visibility: hidden;
+}
+/* The front face's screen content (ScreenContent), filling the same box as the
+   render so its measured percentages land on the lit area. */
+.dsa-screen-face {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.dsa-bounds img.dsa-face-front {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+.dsa-face-rear {
+  position: absolute;
+  transform: rotateY(180deg);
+  left: -14.11%;
+  top: -20.95%;
+  width: 128.22%;
+  height: 142.23%;
+}
+.dsa-bounds img.dsa-rear-img {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+/* Where the panel's port map is looking. The four numbers are the ones
+   `.port-hl` already uses in monitor-xray.css — same rect, so the marker and
+   the zoom that lands in the panel cannot drift apart.
+   Hidden at rest: at 60×8px a permanent hairline reads as a smudge on the
+   render rather than an annotation, so it appears only while the plate is
+   hovered — the answer to "where is this?" arrives when the question does.
+   Form follows the approved annotation vocabulary rather than inventing a
+   second one: white dashed, no text label, plus the white hover glow
+   (component-specs.md SPEC: xray, card rules 9 and 10). The accent channel
+   stays reserved for state, so no blue here. */
+.dsa-port-mark {
+  position: absolute;
+  left: 50%;
+  top: 60.5%;
+  width: 35.5%;
+  height: 6%;
+  transform: translateX(-50%);
+  border: 1px dashed rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  transition: opacity var(--dur-normal) var(--ease-default);
+  pointer-events: none;
+}
+/* The tile and the plate sit in different subtrees (hero vs panel), so the link
+   is scoped to their nearest shared ancestor, the monitor canvas. Hovering the
+   plate asks "where is this on the monitor?" and the marker answers. */
+.mc-canvas:has(.pm-crop:hover) .dsa-flip.is-rear .dsa-port-mark {
+  opacity: 1;
+}
+/* The bounds crop exists to trim renders to the hardware box; the flip's faces
+   are already registered to that box, and a hidden overflow would flat-cut the
+   plane's near edge while it swings. Scoped to flip tiles only. */
+.dsa-bounds:has(.dsa-flip) {
+  overflow: visible;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dsa-flip-inner {
+    transition: none;
+  }
 }
 .dsa-num {
   position: absolute;
+  /* Above the flip plane — a 3D-transformed sibling otherwise paints over the
+     corner chip while the tile is showing its back. */
+  z-index: 1;
   font-family: var(--font-mono);
-  font-size: var(--text-sm-title);
   color: var(--text-primary);
-  opacity: 0.8;
+  /* PROPOSAL 2026-08-04 (Cindy) — hidden at rest, shown by Identify.
+     The number answers ONE question — "which physical screen is tile 3?" — and
+     that question is only ever asked by pressing Identify, which is also the
+     only moment the real displays put the same number on themselves. Meanwhile
+     every tile already carries its NAME underneath, so a permanent number is a
+     second identifier for a job that is already done, sitting on top of the
+     panel art. Same policy the port marker on this tile already follows: the
+     answer arrives when the question does. */
+  opacity: 0;
+  transition:
+    opacity var(--dur-normal) ease,
+    font-size var(--dur-normal) ease;
   /* On a box the number could sit dead centre; on a render that is where the
      panel art is, so it moves to a corner and gets a scrim to stay legible on
      both a lit screen and a dark bezel. One step down in size too — at tile
@@ -124,6 +392,12 @@
   font-size: var(--text-body);
   left: var(--gutter-xxs, 2px);
   top: var(--gutter-xxs, 2px);
+  /* Out of the desk's zoom, same as the name — Identify's whole job is to make
+     "which physical screen is this?" answerable at a glance, and a 1 that has
+     been shrunk with the furniture is the one moment that fails. Pinned by its
+     own top-left, which is the corner the offsets above set. */
+  scale: calc(1 / var(--dsa-fit, 1));
+  transform-origin: 0 0;
   padding: 0 var(--gutter-xxs, 2px);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -139,14 +413,92 @@
    the scrim and must keep applying. */
 .dsa-stage .dsa-disp .dsa-name {
   position: absolute;
+  /* ⚠️ UNDER the hardware again (Cindy, 2026-08-18: "디바이스 이름도 그 디바이스
+     이미지랑 겹치는 것도 좀 이상하고"). This reverses the 2026-08-06 move that put
+     it ON the render, so both sides are kept here — the reasons that move was
+     made are still true, they were just outweighed once the desk got bigger:
+     · WHY IT WENT ON THE ART: every tile reserved a caption row under it, and
+       that reserve is what `fitScale` had to shrink the whole desk for.
+       ⇒ answered. The under-glow now reserves a deeper band on the same side
+       (`aura` in fitScale), so the caption costs the desk nothing extra — it
+       sits inside the light's own room.
+     · WHY IT CAME BACK: on the art it lands on the stand or the keyboard deck,
+       and at the sizes the desk is drawn at now, a label printed across the
+       hardware reads as a sticker on the product rather than a name for it.
+     · WHAT IS STILL TRUE: two displays on an arm sit ~2cm apart, and a caption
+       hanging below the upper one is drawn INTO that gap. `namesClear` is what
+       keeps a drop from burying it (see DisplayArrange); a stacked desk is the
+       case to look at first if this is ever revisited.
+     `.ds-tag.overlay` stays — the chip still sits over the stage's own art and
+     needs its scrim; it is the library's "label on an image" variant either
+     way. */
   top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  /* --gutter-xs, one step out from the xxs it launched with (Cindy, 2026-08-19:
+     "텍스트가 모니터 디바이스 그 이미지 에셋에서 너무 가까운 거 아니야?") — same
+     ramp step, same day, same reason as the marker above the tile. */
   margin-top: var(--gutter-xs);
-  font-size: var(--text-micro);
-  color: var(--text-dim);
+  left: 50%;
+  translate: -50% 0;
+  /* Text does NOT shrink with the desk (Cindy, 2026-08-06: "accessibility fail
+     아니야?" — it was). The group's zoom is one factor on the whole desk, and it
+     used to take the names down with the hardware: 12px became 10.2px on a
+     stacked desk and 6.9px at a 800px window (measured). A display's name is the
+     only thing telling two dark monitors apart, so it is the last thing that may
+     become unreadable. The group publishes its zoom as `--dsa-fit` and the chip
+     divides itself back out of it, so the art scales and the writing does not.
+     Origin is the chip's own TOP-centre now — the point the positioning above
+     pins, since the chip hangs from the tile's bottom edge rather than sitting
+     on it (2026-08-18). Undoing the zoom must not move the label off its tile,
+     so this has to name the same point `top`/`left` do. */
+  scale: calc(1 / var(--dsa-fit, 1));
+  transform-origin: 50% 0;
+  /* Everything else — face, size, padding, corner, border, colours, states — is
+     `.ls-rail-btn`, Chris's device-picker pill (see the note in DisplayArrange for
+     why this chip wears it now). NOTHING of its look is restated here; that is the
+     point of wearing the class rather than copying it.
+     ⚠️ The overrides that used to live in this block are GONE with the tag they
+     were written against — sentence case, letter-spacing, hand-dealt leading,
+     side padding, the on-image colour. Do not reintroduce them one at a time when
+     his pill looks different from what the tag did: it is SUPPOSED to.
+     What still has to be local, and only this:
+     · it hangs under a tile instead of sitting in a rail (the four lines above);
+     · it must not shrink with the desk (the counter-scale above);
+     · it must not WRAP. His pill lives in a flex rail that gives it room; this one
+       hangs free under a tile, and the tag it replaced carried `white-space` while
+       his does not — so "OMEN OLED 27" broke into three lines and the chip came
+       out 63px tall (measured 2026-08-19, first render after the swap).
+     ⚠️ Chris is being asked to graduate this pill into the library — a device
+     picker is house vocabulary, not a Light Studio detail, and the desk map is
+     now the second place that needs it (`design-assets/chris-next-outbound.md`). */
   white-space: nowrap;
 }
+/* Stacked desk: the caption changes sides (decision 2026-08-19). Two displays
+   on an arm sit ~2cm apart — smaller than the caption — so the upper one's
+   name hung INTO that gap, printed across the lower display's top edge. The
+   alternative (widening the rows by a caption's height) draws hardware spacing
+   the real desk does not have, which is the one thing this map must not do.
+   `.label-up` is set by DisplayArrange from the same geometry the stack magnet
+   uses, only on a display with hardware directly below it. Everything about
+   the chip's look still comes from `.ls-rail-btn`; this flips WHERE it hangs.
+   The counter-scale origin moves with it — the chip now hangs from the tile's
+   TOP edge, so the fixed point is its own bottom-centre. */
+.dsa-stage .dsa-disp.label-up .dsa-name {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: var(--gutter-xs);
+  transform-origin: 50% 100%;
+}
+/* Second caption line (2026-08-24). The pills are wider than some of the tiles
+   they name, so two displays standing flush have captions that must overlap —
+   and when there is hardware above BOTH of them, `label-up` has nowhere to go.
+   One of the pair steps down a line instead. `--dsa-name-h` is the pill's own
+   height on this ramp; the step is that plus the same gutter the first line
+   uses, so the two lines read as a list rather than as a mistake. */
+.dsa-stage .dsa-disp.label-down2 .dsa-name {
+  margin-top: calc(var(--dsa-name-h, 29px) + var(--gutter-xs));
+}
+
 /* Navigable = another display whose settings this map can open. It has to look
    reachable without competing with the accent ring that marks "this display",
    so the hint is neutral and hover-only: a soft white edge plus a hairline lift.
@@ -155,43 +507,319 @@
 .dsa-disp.navigable .dsa-bounds {
   cursor: pointer;
 }
-.dsa-disp.navigable:hover .dsa-bounds,
-.dsa-disp.navigable:focus-visible .dsa-bounds {
-  box-shadow:
-    0 0 0 2px var(--border-med),
-    0 6px 18px var(--ksg-b55, rgba(0, 0, 0, 0.45));
+/* PROPOSAL 2026-08-04 (Cindy) — glow belongs to HOVER, not to resting state.
+   Was a 2px rectangle + drop shadow on the bounds, which had the same
+   wireframe problem the selection ring did. Now the light traces the
+   silhouette, and it exists only while the pointer is on the tile — so a
+   resting map carries no light at all, leaving that channel free for the
+   hardware's own under-glow.
+   White, not accent: the accent channel is reserved for state (the rule
+   `.dsa-port-mark` already follows), and this is an affordance — "this opens".
+   Keyboard focus is NOT redefined here. The old rule killed the global ring
+   (`outline: none`) and drew its own; the library ships one at
+   `html:root :focus-visible` (components.css:6455) and that is what a keyboard
+   user should meet on this tile as on every other control. */
+/* Two layers, because a tile can answer two different questions (Cindy,
+   2026-08-04: only one of the three displays lit up on hover).
+   EVERY tile is draggable, so every tile has to acknowledge the pointer — the
+   quiet layer is "you can pick this up". Only some tiles open a settings page,
+   and that louder glow stays what it was. Before this, the two were collapsed
+   into one rule on `.navigable`, so the current display and the built-in panel
+   — both perfectly draggable — looked inert while the third lit up, which read
+   as a bug rather than as a distinction.
+   Mirror mode is excluded: nothing is draggable there (`cursor: default`), so
+   a hover response would promise a move that cannot happen. */
+/* ONE hover glow for all three (Cindy, 2026-08-05: "hover state glow도 세 개가
+   다 달라. 수정해줘").
+   The two-tier version (a soft 6px for every tile, a bright 12px for the ones
+   that open a settings page) was answering a real distinction with the wrong
+   channel. Brightness is a scalar: side by side it does not read as "this one
+   opens and that one doesn't", it reads as three displays lighting up by
+   different amounts for no stated reason — and the tile that happened to be
+   brightest was not the selected one, so the loudest thing on the map was also
+   the least important. "This opens" is already carried by the pointer cursor
+   (`.navigable .dsa-bounds { cursor: pointer }`), which is the affordance
+   channel and costs no light. */
+/* ── Hover leaves the light channel (Cindy, 2026-08-06) ─────────────────────
+   ⚠️ What used to be here was a white glow ON THE RENDER — the same element and
+   the same property the under-glow lamp uses. `filter` is ONE property, so the
+   rule did not compete with the lamp, it REPLACED it: hovering an under-glow
+   display switched the lamp off and swapped in a white halo, and letting go
+   switched it back on. (Specificity 0,6,1 against the lamp's 0,3,0; watched on
+   screen — the orange pool turns white.) Cindy: "언더글로우 있을 때는 이게
+   구분이 잘 안 되거든."
+
+   So hover moves off light entirely, onto two channels nothing else here uses:
+   the panel WAKES and the display LEANS IN.
+     · brightness multiplies, so the near-black chassis barely moves while the
+       lit panel art lifts — it reads as a screen waking rather than a lamp
+       turning on, and it needs no screen mask (that comes with the wallpaper
+       work);
+     · it grows from `transform-origin: bottom center` = the desk surface, so
+       the tile leans toward you instead of popping, and the caption line under
+       the desk holds still. That line is what 2026-08-06 spent the morning
+       aligning (see defaultsFor in arrangement.ts); a hover that jogged it
+       would undo the fix.
+   Both live on `.dsa-bounds`, never the render, so the render's `filter` stays
+   the lamp's alone and the two can never collide again.
+
+   The keyboard half is unchanged from what it replaces: the same treatment on
+   `:focus-visible`, so a tile reached by Tab says the same thing a hovered one
+   does. The focus RING itself is not redefined here — it is the library's
+   global `html:root :focus-visible`, as it was before.
+
+   Rejected on the way: a hard 1px edge + lift (Cindy: "네모 박스 너무 이상해,
+   와이어프레임 같아"); greying the screens at rest (they read as switched OFF,
+   which is a fault, not a state — Cindy talked herself out of it); and a real
+   3-D tilt (`rotateY`), which was built, compared side by side, and looks fake
+   on a photograph taken head-on. */
+.dsa-stage:not(.mirror) .dsa-disp:hover .dsa-bounds,
+.dsa-stage:not(.mirror) .dsa-disp:focus-visible .dsa-bounds {
+  filter: brightness(1.18) saturate(1.15);
+  transform: translateY(-3px) scale(1.035);
 }
-.dsa-disp.navigable:focus-visible {
-  outline: none;
+/* The motion is the half that can be dropped; the panel still wakes. */
+@media (prefers-reduced-motion: reduce) {
+  .dsa-stage:not(.mirror) .dsa-disp:hover .dsa-bounds,
+  .dsa-stage:not(.mirror) .dsa-disp:focus-visible .dsa-bounds {
+    transform: none;
+  }
 }
-.dsa-disp.navigable:hover .dsa-name {
+.dsa-stage:not(.mirror) .dsa-disp:hover .dsa-name {
   color: var(--text-primary);
 }
-.dsa-disp.current .dsa-bounds {
-  box-shadow:
-    0 0 0 2px var(--accent-color),
-    0 0 0 6px var(--accent-dim);
+/* ── Stacking: a display is ONE object (Cindy, 2026-08-04) ──────────────────
+   The name used to be lifted above every tile on its own, so a buried display's
+   label floated over the screen of the display in front of it — text in front,
+   hardware behind, which is not something a desk can do. Worse, the label sat
+   above even the tile being dragged. Now the whole tile stacks as a unit and the
+   one under the pointer comes forward, label included. Legibility of a partly
+   covered name is handled where it should be: overlap is capped (limitOverlap in
+   DisplayArrange) and the label keeps its scrim. */
+.dsa-disp {
+  z-index: 1;
 }
-.dsa-disp.current .dsa-name {
-  color: var(--accent-color);
+.dsa-disp.current {
+  z-index: 2;
 }
+.dsa-disp:hover,
+/* Keyboard gets the same move as the pointer (Cindy, 2026-08-04). Bringing a
+   buried tile forward is how its name is recovered, and hover is a mouse-only
+   verb — without this, a keyboard user could reach a covered display (every
+   tile is a tab stop now) and still not see which one it is. The RING is the
+   library's global `html:root :focus-visible`; only the stacking is set here. */
+.dsa-disp:focus-visible {
+  z-index: 3;
+}
+/* ── Selection, PROPOSAL 2026-08-04 ─────────────────────────────────────────
+   Was a 2px accent ring + 6px halo on the bounds RECTANGLE. Cindy, 2026-08-04:
+   the rectangle reads as a wireframe next to a photographed monitor that has a
+   neck and a stand. The earlier defence of the box ("a glow traced around a
+   stand reads as a lamp behind the desk") assumed the glow had to be wide and
+   soft; a tight one does not — and this product HAS an under-glow, so light at
+   its base is the object's own vocabulary rather than an annotation.
+   Selection is now said twice, in two channels, so it never rests on hue alone:
+   an accent glow on the silhouette, and everything else stepping back.
+   ⚠️ WITHDRAWN 2026-08-04, same day, by Cindy: selection must not be light.
+   Light behind a monitor render is ALREADY SPOKEN FOR in this app — it is the
+   under-glow, the hardware's own lamp. `.ds-devcard.rich .devw-photo`
+   (device-card.css:294) draws exactly that, with a comment that spells out the
+   rule this proposal broke: "a FAINT warm pool …, NOT a cyan halo washing the
+   whole product". An accent pool under the selected tile would therefore be the
+   card's under-glow vocabulary saying something else — and on the one SKU that
+   has real under-glow hardware (features.underGlow → Utilities tab,
+   MonitorTabs.tsx:774) the two would sit in the same pixels.
+   Selection moved OFF the glow channel, and the glow goes back to the hardware.
+   It first moved to shape — a pointer above the tile — and since 2026-08-24 it
+   is the name pill's own tint (Chris's device picker, `.ls-rail-btn.active`).
+   Either way the rule this paragraph exists for holds: the accent pool under a
+   tile means under-glow hardware, never "this one is selected". */
+/* ── Under-glow, 2026-08-05 ─────────────────────────────────────────────────
+   The channel the selection proposal above gave back to the hardware, now
+   actually carrying it. Same technique as the Perform card's pool
+   (device-card.css `.ds-devcard.rich .devw-photo`) rather than a second
+   invention: `drop-shadow` traces the render's own alpha, so the light follows
+   the chassis and stand instead of boxing them — which is what separates "a
+   lamp behind the desk" from "a rectangle around a thing".
+   Colour + alpha come from `--ug-color` / `--ug-fade`, published on :root by
+   SettingsProvider, so this stage and the Perform card cannot drift; the
+   fallbacks keep the tuned warm pool if the vars are ever absent. `--ug-fade`
+   reaches 100% when the strip is off, which is what hides it — no `.is-off`
+   rule to keep in sync.
+
+   ⚠️ The edge hairline is REDECLARED here, not just appended: `filter` is one
+   property, so a second rule replaces the whole chain. Measured 2026-08-05 —
+   the first version of this rule dropped the 0.28 rim light from the one tile
+   that gained a pool, and Treehouse 32 lost the edge that separates a black
+   chassis from a black stage while the other two kept theirs. Any future edit to
+   the hairline above has to be mirrored here. */
+/* ── Strength, 2026-08-06 ───────────────────────────────────────────────────
+   The rule above put the right colour in the right place and still could not be
+   seen. Measured by forcing `--ug-color` to pure magenta and sampling the floor
+   headless: bare stage (31,31,31), under the Treehouse (32,31,32) — one step out
+   of 255. Two things caused that:
+     · the published alpha tops out at 16% (Settings.tsx: fade = 100 − 16·b), and
+     · 16% spread over a 30px blur leaves no peak anywhere.
+
+   The alpha is deliberately NOT raised at the source. `--ug-fade` is also what
+   the Perform card's pool reads, and that card was tuned faint on purpose
+   (device-card.css, 2026-07-23: "a FAINT warm pool … not a halo washing the
+   whole product") — lifting it there would silently reopen a closed decision in
+   a file that isn't even the subject of this one. So the stage scales the same
+   lamp rather than publishing a second one.
+
+   `--ug-pool` multiplies the OPAQUE share, which is what keeps both ends honest:
+   at fade 100% (strip off) it stays 100%, so "off" still needs no `.is-off`
+   rule, and it tracks the brightness slider linearly the whole way up
+   (b=70 → 11.2% becomes 33.6%; b=100 → 16% becomes 48%).
+
+   Geometry follows the hardware instead of the card's value: a near layer that
+   sits under the chassis plus the softer far layer, not one wide wash — the wide
+   wash is the shape that measured as nothing.
+
+   The near layer's OFFSET took three passes, and the third one was measured
+   rather than eyeballed. The first pass set `0 7px 10px`. The second replaced it
+   with `0 15px 13px` on the argument that the smaller offset "wrapped the whole
+   silhouette evenly — top edge as bright as the bottom", judged side by side at
+   2.4x on 2026-08-06. That argument was wrong about the amount: a 144-point
+   sample taken the same day (design-loop/reports/2026-08-06-underglow-spill-map)
+   put bottom/top at 27.8/4.3 ≈ 6.5x for `0 15px 13px` and 20.3/5.8 ≈ 3.5x for
+   `0 7px 10px`. The smaller offset is still clearly bottom-heavy; it was never
+   the even wrap the comment claimed, so "it becomes an outline" was not a
+   choice between a lamp and a neon rim.
+
+   Cindy chose 3.5x on 2026-08-09, and `0 7px 10px` is back for that reason. The
+   strip spills onto the wall AND the desk, and 6.5x reads as a light that points
+   down only. Both numbers are legitimate lamps; this one matches the hardware.
+
+   What neither number can do: show WHERE on the back panel the light comes from.
+   The strip is a rectangular loop around the middle of the rear chassis, and a
+   drop-shadow on the tile's outline cannot express that — it can only push light
+   off an edge. Reading the loop's real pixel position out of the rear render and
+   splitting the spill accordingly is a different technique and a separate open
+   item; do not try to reach it by tuning this offset.
+
+   ⚠️ The hairline is still redeclared here for the reason given above: `filter`
+   is one property, so this chain replaces the whole chain. */
+/* What is left on the silhouette: the white hairline that separates a dark
+   chassis from a dark stage, and a TIGHT coloured rim — the light escaping
+   around the bezel's own edge, which does follow the outline because that is
+   where it leaves the chassis. No offset and a small blur, so it reads as an
+   edge and not as a lamp; the lamp is the wash below. */
+.dsa-disp.glowing .dsa-render {
+  --ug-pool: calc(100% - 3 * (100% - var(--ug-fade, 84%)));
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.28))
+    drop-shadow(
+      0 0 5px color-mix(in srgb, var(--ug-color, var(--orange)), transparent var(--ug-pool))
+    );
+  transition: filter var(--dur-mid, 240ms) ease;
+}
+
+/* ── The lamp itself ────────────────────────────────────────────────────────
+   A light PLACED where the strip is, rather than a shadow traced around the
+   product. Centred on `--dsa-strip-y` (the loop's measured middle, see the
+   stage) and as tall as the panel plus its reach on each side, so the wash is
+   brightest across the back of the screen and falls away outward — the stand
+   and the neck are simply objects standing in it, not things that glow.
+   Behind the render (`z-index: -1`), inside the tile's own stacking context
+   (`.dsa-disp` sets one), so the hardware always covers the source and what you
+   see is only what escapes past it. `closest-side` makes the ellipse exactly
+   this box, and the stop is where the panel's edge falls — full strength up to
+   the chassis, fading over the reach beyond it.
+   `pointer-events: none`: the light is not a drag target; `.dsa-bounds` is. */
+.dsa-disp.glowing .dsa-bounds::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: var(--dsa-strip-y);
+  width: calc(100% + 2 * var(--dsa-glow-reach));
+  height: calc(var(--dsa-panel-h) + 2 * var(--dsa-glow-reach));
+  translate: -50% -50%;
+  z-index: -1;
+  pointer-events: none;
+  /* Peak alpha, as a number the stops below can take fractions of. `--ug-fade` is
+     stored the other way round (it is the TRANSPARENT share, 84% at full
+     brightness), so this is what is left: 16% of the chosen colour. */
+  --ug-t: calc(100% - var(--ug-fade, 84%));
+  /* Seven stops, not two, and the curve is the point (Cindy, 2026-08-19: "실제
+     빛이 이렇게 퍼진다는걸 표현하는정도로"). Two stops draw a disc with a linear
+     edge, which the eye reads as a shape; light falls off fast near the source and
+     then trails for a long way, so the fractions below drop steeply at first
+     (1 → 0.62 → 0.36) and then crawl (0.18 → 0.07 → 0.02). That long thin tail is
+     what makes it read as a room being lit rather than a coloured oval sitting on
+     the screen — and it is why the reach can be this wide without looking painted.
+     The first two stops hold at full: the strip is a LOOP half the panel wide, not
+     a point, so its own footprint is evenly lit before anything starts to fall off.
+     ⚠️ Written for a dark ground on purpose. Over near-black, painting a colour at
+     low alpha IS addition — `result = alpha × colour` — so the wash behaves like
+     light without needing a blend mode (which would not work here anyway: the
+     tile and the zoom group both open stacking contexts, and blending isolates at
+     those). Measured ground: rgb(10,10,10) — see monitor-canvas.css. */
+  background: radial-gradient(
+    ellipse closest-side at 50% 50%,
+    color-mix(in srgb, var(--ug-color, var(--orange)), transparent calc(100% - var(--ug-t))) 0%,
+    color-mix(in srgb, var(--ug-color, var(--orange)), transparent calc(100% - var(--ug-t))) 16%,
+    color-mix(in srgb, var(--ug-color, var(--orange)), transparent calc(100% - 0.62 * var(--ug-t))) 30%,
+    color-mix(in srgb, var(--ug-color, var(--orange)), transparent calc(100% - 0.36 * var(--ug-t))) 44%,
+    color-mix(in srgb, var(--ug-color, var(--orange)), transparent calc(100% - 0.18 * var(--ug-t))) 58%,
+    color-mix(in srgb, var(--ug-color, var(--orange)), transparent calc(100% - 0.07 * var(--ug-t))) 74%,
+    color-mix(in srgb, var(--ug-color, var(--orange)), transparent calc(100% - 0.02 * var(--ug-t))) 88%,
+    transparent 100%
+  );
+  transition: background var(--dur-mid, 240ms) ease;
+}
+
+/* The unselected displays step back rather than the selected one shouting —
+   but only just. At 0.55 the dimming ate the rim light that separates a black
+   chassis from a black stage, so the two fixes were cancelling each other out
+   (observed 2026-08-04). 0.8 keeps the hierarchy and leaves the edge intact.
+   Scoped to a stage that HAS a selection, so a map with none stays even. */
+.dsa-stage:has(.dsa-disp.current) .dsa-disp:not(.current) .dsa-bounds {
+  opacity: 0.8;
+  transition: opacity var(--dur-fast) ease;
+}
+/* Measured 2026-08-04 on the live tile: --accent-color on the caption scrim
+   (--bg-elevated) came to 2.73:1 — below the 4.5:1 AA floor and below even the
+   3:1 UI floor, while the UNSELECTED captions passed at 8.49:1. The most
+   important label on the map was the least legible one. The glow above now
+   carries the state, so the name goes back to the colour that passes. */
+/* The caption already has a scrim on every tile, so the selected one INVERTS
+   the chip it already has rather than gaining a second one — the two-chip
+   caption Cindy flagged (name + "THIS DISPLAY") had added a component; this
+   adds none. With the pointer above, selection is carried on two channels
+   neither of which is light: shape and fill.
+   Contrast: --text-on-fill (white) on --accent-color measures 4.50:1, clearing
+   AA — against 2.73:1 for the accent-on-scrim text this replaces. */
+/* ⚠️ The solid accent fill is GONE (2026-08-19). It was here because the DS tag's
+   own accent variant is a DIM accent that whispered on a photographed desk, and
+   its accent-on-dim text measured 2.73:1 — so the chip flooded instead.
+   Chris's pill answers that properly: its `.active` is accent text on
+   `--accent-dimmer` WITH an `--accent-dim` border, and the border is what the tag
+   variant lacked — an edge does the work the flood was doing. The class carries
+   it (`.dsa-disp.current .dsa-name` gets `active` in DisplayArrange), so there is
+   no rule here at all. Contrast measured on the live chip in the worst case: see
+   the `--surface` note above, which the active state sits on too. */
 /* In the name row now (see DisplayArrange). A tile is ~130px at its widest, so
    nothing this long fits inside it beside the number without covering the
    stand — and the ring already marks the tile. */
-.dsa-here {
-  margin-left: var(--gutter-xxs, 2px);
-  font-size: var(--text-nano);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--accent-color);
-  opacity: 0.85;
-}
+/* `.dsa-here` (the "this display" ▼) removed 2026-08-24 (Cindy) — the pill's
+   blue tint took over that job when the name row became Chris's device-picker
+   pill (2026-08-19), and the triangle scaled with the desk zoom while the text
+   beside it did not. History of the slot: accent text (2.33:1, worst contrast
+   on the map) → accent tag → triangle (2026-08-04) → gone. */
+/* `.dsa-guide` (the accent snap line) removed 2026-08-20 with the hero drag —
+   it only ever appeared mid-drag. */
 .dsa-stage.identify .dsa-num {
   opacity: 1;
   font-size: var(--text-title);
   transition: all var(--dur-normal) ease;
 }
-.dsa-mirror-badge {
+/* One pill, two announcements — they can never be on screen at the same moment
+   (Identify replaces the mirror line for its 1.1s), so they share the style
+   instead of a second one being invented. `.dsa-stage-note` = the Identify
+   line; see DisplayArrange for why it says what it says. */
+.dsa-mirror-badge,
+.dsa-stage-note {
   position: absolute;
   inset: auto auto var(--gutter-sm) 50%;
   transform: translateX(-50%);
@@ -213,14 +841,120 @@
   flex-direction: column;
   gap: var(--gutter-xxxs);
 }
+/* ── The how-to, on hover (Cindy, 2026-08-05) ───────────────────────────────
+   Was a permanent second line in the header. It is read once and then it is
+   furniture, and the header is the one place where a permanent line is charged
+   to the desk: at 240px of band those two text lines were the difference
+   between a usable map and a 32px strip.
+   ⚠️ First attempt put it ON the stage, bottom-centre, wearing the caption chip.
+   It failed on sight and the failure is worth keeping: at ~700px of copy the
+   chip spanned the whole band and laid a dark bar across all three displays and
+   their names. The map is the thing being explained — the explanation cannot
+   cover it. So it stays in the header row, where the button already sets the
+   28px height and the line costs nothing.
+   Layout-present, paint-absent: `opacity` rather than `display`, so revealing
+   it moves nothing. */
+/* ── What the copy lost, and why (Cindy, 2026-08-05: "텍스트가 왜 이렇게 길어?
+   Shared across every display settings. 이게 정말 필요한 거야?") ──────────────
+   Was: "Drag a display to match where it sits on your desk · shared across
+   every display's settings" — 91 characters, two different kinds of statement
+   welded together.
+   · "Drag a display to match where it sits on your desk" → the instruction.
+     Half of it is the sentence explaining itself: a desk drawn with the user's
+     own monitors on it already says "this is where they sit". "Drag to match
+     your desk" keeps the verb and the goal and drops the narration.
+   · "shared across every display's settings" → cut. It answers a question
+     nobody asked. There is ONE arrangement, the way there is one desk; a user
+     who opens another monitor and finds the same layout is not surprised, they
+     are reassured. Saying it out loud implies the opposite — that settings
+     might have come in several copies — and invents the worry it was meant to
+     prevent. If sharing ever needs saying, the honest place is the moment it
+     would surprise someone (an edit landing somewhere they are looking), not a
+     standing caption on the map. */
+/* Bottom-centre of the desk, on hover (Cindy, 2026-08-06: "center align에
+   밑부분에 놔달라고 내가 저번에 말하지 않았어?").
+   This is the FOURTH placement and it is not a return to the first two — those
+   failed for reasons that no longer apply:
+   · the original bottom-centre carried a 91-character sentence, which laid a
+     bar across all three displays. The line is 23 characters now.
+   · the second sat on the desk with no surface of its own, so it read as one
+     more unaligned caption among the display names. It now wears the same pill
+     `.dsa-stage-note` uses, which is what separates an announcement from a
+     label — that pill did not exist when this was tried.
+   ⚠️ NOT the pill the mirror and Identify lines wear — that was tried for a few
+   hours on 2026-08-06 and Cindy read it immediately as a tooltip ("텍스트가 너무
+   툴팁 같은데"). She was right and the reason is a category error on my part: a
+   filled rounded box with small text IS the tooltip convention, and those two
+   siblings use it to report STATE ("this is mirrored", "the screens are showing
+   numbers") while this line teaches an ACTION. Recolouring it neutral did not
+   change the shape, and shape is what the eye classifies first.
+   The library already has the right vocabulary and I had not looked:
+   `.ds-input-hint` (shared/components.css:1188) = helper text under a field —
+   no fill, --text-micro, display font. That is what a hint looks like in this
+   system, so this borrows it rather than dressing an announcement down.
+   One departure: DS sets --text-subtle (white 25%), which is aimed at helper
+   text under a form control on a flat panel. This sits over product renders, so
+   the colour is one step up — measured, see below. */
 .dsa-hint {
+  position: absolute;
+  inset: auto auto var(--gutter-sm) 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  font-family: var(--font-display);
   font-size: var(--text-micro);
+  line-height: 1.3;
   color: var(--text-muted);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-default);
+  pointer-events: none;
 }
+/* One pill, one message: Identify's line takes the spot while it is up. */
+.dsa-stage.identify .dsa-hint {
+  opacity: 0 !important;
+}
+/* Keyed off the STAGE, not this row: the question ("what do I do here?") is
+   asked by arriving at the desk, and this row also holds buttons that have
+   nothing to do with dragging — hovering Identify should not answer it.
+   `:has()` is already this file's pattern for a cross-element condition. */
+.dsa-hero:has(.dsa-stage:hover) .dsa-hint,
+.dsa-hero:has(.dsa-stage:focus-within) .dsa-hint {
+  opacity: 1;
+}
+/* A push on a tile answers itself, hover or not (`dragTried` in the TSX). Same
+   element and same sentence as the resting hint — this only forces it visible,
+   so there is one message and one place it can come from. */
+.dsa-hint.shown {
+  opacity: 1;
+}
+/* ⚠️ The dark box behind these two buttons is GONE (Cindy, 2026-08-18: "버튼
+   뒤에 까만색 배경 박스 있는데, 이건 왜 이러는 거야?"). It was here for a real
+   reason — floating over a render, a 10%-white button all but disappears on a
+   bright patch of wallpaper (measured 2026-08-06) — but the fix was a scrim
+   drawn by hand around the cluster, and the library already ships the answer
+   per button: `.ds-btn.on-image`, "for buttons over artwork (carousel CTAs,
+   hero overlays)". The buttons carry their own surface now, so the wrapper has
+   nothing left to do but draw a box nobody asked for. Layout only. */
 .dsa-actions {
   display: flex;
   gap: var(--gutter-xs);
+}
+
+/* `.dsa-layout*` (split line / PIP window drawn on the render) retired
+   2026-09-22 — the Viewing Mode tiles are the layout's one drawing. */
+
+/* The `Arrange` slot on a one-display desk. Same row and same type ramp as the
+   links beside it, but a step down the colour ramp and inert — it names the
+   condition that brings the control back rather than refusing a press
+   (2026-08-21 grammar: no padlock where the person can change the situation
+   themselves).
+
+   `--text-subtle`, not `--text-muted`: muted is exactly what `.w-link` uses, so
+   at that value the sentence and the live `Identify` beside it were the same
+   colour and a reader had only the cursor to tell a control from a caption
+   (measured 2026-08-24 — both came back rgba(255,255,255,.5)). */
+.dsa-actions .dsa-action-when {
+  color: var(--text-subtle);
+  cursor: default;
+  user-select: none;
 }

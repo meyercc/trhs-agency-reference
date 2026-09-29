@@ -151,7 +151,7 @@
   transform: translateX(-50%);
   z-index: 60;
   padding: var(--gutter-xs) var(--gutter-sm);
-  background: var(--ksg-n900);
+  background: var(--bg-mid);
   border: 1px solid var(--border-med);
   border-radius: var(--radius);
   color: var(--text-primary);

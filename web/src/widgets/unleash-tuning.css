@@ -53,7 +53,7 @@
 .ut-row-meta {
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .ut-row-control {
   display: flex;
@@ -117,13 +117,13 @@
   justify-content: space-between;
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .ut-srow-note {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   line-height: 1.55;
 }
 
@@ -168,7 +168,7 @@
   flex: 1;
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -176,7 +176,7 @@
 }
 .ut-collapse-chevron {
   margin-left: auto;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   font-size: var(--text-micro);
   transition: transform 0.2s ease;
 }
@@ -254,7 +254,7 @@
   font-family: var(--font-display);
   font-size: var(--text-micro);
   font-weight: 400;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* ── Fan curve editor (PowerThermal fan-curve visual language) ── */
@@ -313,7 +313,7 @@
 .ut-fc-tick {
   font-family: var(--font-mono);
   font-size: 9px;
-  fill: var(--text-subtle);
+  fill: var(--text-muted);
 }
 .ut-fc-axis {
   font-family: var(--font-mono);

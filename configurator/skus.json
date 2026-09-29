@@ -1263,6 +1263,7 @@
       }
     ],
     "features": {
+      "firmware": "2.3.1",
       "power": {
         "batteryLevel": 28,
         "charging": true
@@ -1326,9 +1327,9 @@
       }
     ],
     "features": {
+      "firmware": "1.9.7",
       "connectivity": "wired",
-      "power": false,
-      "spatial": false
+      "power": false
     },
     "codenames": [
       "C3"
@@ -1853,7 +1854,17 @@
         "resolution": "4K UHD",
         "refreshRate": 240,
         "responseTime": "0.03ms",
-        "panel": "OLED"
+        "panel": "OLED",
+        "viewingModes": [
+          "Full Screen",
+          "PBP",
+          "PBP 2:1",
+          "PBP 1:2",
+          "PIP TopL",
+          "PIP TopR",
+          "PIP BottomL",
+          "PIP BottomR"
+        ]
       },
       "color": {
         "hdr": true,
@@ -1871,6 +1882,10 @@
           "DCI-P3"
         ]
       },
+      "comfort": {
+        "blueLightFilter": true,
+        "flickerFree": true
+      },
       "connectivity": {
         "inputs": [
           "Thunderbolt 4 ×2 (90W)",
@@ -1883,13 +1898,7 @@
       "gearSwitch": {
         "hosts": [
           "MacBook",
-          "Gaming Laptop"
-        ],
-        "hotkey": "Ctrl ×2",
-        "viewingModes": [
-          "Full Screen",
-          "PBP",
-          "PIP"
+          "OMEN 35L"
         ]
       },
       "xray": true,
@@ -1916,6 +1925,10 @@
         ]
       },
       "underGlow": true,
+      "osd": {
+        "joystick": true,
+        "lockable": true
+      },
       "modes": [
         "Game",
         "Work",
@@ -1929,9 +1942,17 @@
   {
     "$schema": 1,
     "id": "forge-45l",
-    "name": "OMEN Forge 45L",
+    "name": "HyperX OMEN MAX 45L",
     "type": "desktop",
     "status": "shipping",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "omen-max-45l.webp",
+        "default": true
+      }
+    ],
     "links": {
       "figma": [
         {
@@ -1959,7 +1980,7 @@
   {
     "$schema": 1,
     "id": "forge-45l-gpu",
-    "name": "OMEN Forge 45L — GPU",
+    "name": "HyperX OMEN MAX 45L — GPU",
     "codenames": [
       "FRG45-GPU"
     ],
@@ -1985,7 +2006,7 @@
   {
     "$schema": 1,
     "id": "forge-45l-cpu-cooling",
-    "name": "OMEN Forge 45L — Cryo Chamber",
+    "name": "HyperX OMEN MAX 45L — Cryo Chamber",
     "codenames": [
       "FRG45-COOL"
     ],
@@ -2007,7 +2028,7 @@
   {
     "$schema": 1,
     "id": "forge-45l-ram",
-    "name": "OMEN Forge 45L — Memory",
+    "name": "HyperX OMEN MAX 45L — Memory",
     "codenames": [
       "FRG45-RAM"
     ],
@@ -2030,7 +2051,7 @@
   {
     "$schema": 1,
     "id": "forge-45l-psu",
-    "name": "OMEN Forge 45L — PSU",
+    "name": "HyperX OMEN MAX 45L — PSU",
     "codenames": [
       "FRG45-PSU"
     ],
@@ -2048,7 +2069,7 @@
   {
     "$schema": 1,
     "id": "forge-45l-lighting",
-    "name": "OMEN Forge 45L — Hub Pro",
+    "name": "HyperX OMEN MAX 45L — Hub Pro",
     "codenames": [
       "FRG45-HUB"
     ],
@@ -2126,14 +2147,50 @@
       ],
       "swpd": "PERIPH-622"
     },
-    "notes": "Compact cardioid-only USB-C mic for streamers. Tap-to-mute, plug-and-play, no RGB.",
+    "notes": "Compact cardioid-only USB-C mic for streamers. Tap-to-mute, plug-and-play, headphone out with monitoring mix, input EQ and effects on the PC, a nine-light RGB ring.",
+    "colorways": [
+      {
+        "id": "black",
+        "label": "Black",
+        "image": "solocast-2-pro-rgb-filled.webp",
+        "default": true
+      }
+    ],
     "features": {
       "audio": {
         "pickupPatterns": [
           "cardioid"
-        ]
+        ],
+        "gain": true,
+        "headphoneOut": true,
+        "monitorMix": true,
+        "inputEq": [
+          "bass-boost",
+          "voice-clarity",
+          "broadcast",
+          "flat"
+        ],
+        "effects": [
+          "noise-reduction",
+          "compressor",
+          "limiter"
+        ],
+        "monitoring": false,
+        "tapToMute": false,
+        "audioCredit": "HEAR360°"
       },
-      "lighting": false
+      "effects": false,
+      "lighting": {
+        "lights": 9,
+        "effects": [
+          "solid",
+          "wave",
+          "rainbow",
+          "breathing"
+        ],
+        "unlitImage": "solocast-2-pro.webp"
+      },
+      "mount": false
     },
     "codenames": [
       "SC2P"

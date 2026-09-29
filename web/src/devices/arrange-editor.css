@@ -3,19 +3,31 @@
    Deliberately plain: this is the screen where a few pixels matter, so nothing
    competes with the edges. The photoreal desk is the other lens. */
 
+/* Above the scrim, which sits at 60 — see the Backdrop note in ArrangeEditor.tsx
+   for why this pair is numbered above the library default (this editor opens
+   from inside the device window, and that window is also 51). */
+.arrange-modal {
+  z-index: 61;
+  /* The `narrow` variant is worn for its height rule (see ArrangeEditor); this
+     puts the width back, because the stage is a place to drag rectangles
+     around and 760px is not enough desk. Still short of the full-bleed shell,
+     so the dialog reads as one subject the way the variant intends. */
+  max-width: 1100px;
+  inset: 108px 24px;
+}
 .arrange-modal .modal-right {
   display: flex;
   flex-direction: column;
-  gap: var(--gutter-sm);
+  gap:var(--gutter-sm);
 }
 .ae-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--gutter);
+  gap:var(--gutter);
 }
 .ae-hint {
-  margin: 0;
+  margin:0;
   max-width: 52ch;
   font-size: var(--text-micro);
   color: var(--text-muted);
@@ -23,16 +35,27 @@
 .ae-actions {
   display: flex;
   align-items: center;
-  gap: var(--gutter-xs);
+  gap:var(--gutter-xs);
   flex: 0 0 auto;
 }
 
 /* Same grid stage as the hero map, so the two lenses read as one desk seen
    twice rather than two unrelated screens. */
+/* Height comes from the desk, not from the window (2026-08-24, Cindy: "위아래
+   로 사이즈가 너무 크고, 여백이 위아래로 너무 많이 남아 있어서"). `flex: 1`
+   made the stage eat every spare pixel of a tall modal while the tiles stayed
+   the size the roster's resolutions dictate — measured at 1512×950: a 518px
+   stage holding a 168px desk, i.e. 175px of empty grid above AND below it.
+   The grid is a backdrop for the rectangles, so it stops growing: a fixed band
+   instead of a greedy one. It is NOT measured from the tiles, deliberately —
+   packLayout lays them out against this stage, so a height derived from them
+   would feed back into the layout that produced it. `--ae-desk-h` is the
+   override hook if a surface ever needs a taller band. */
 .ae-stage {
   position: relative;
-  flex: 1;
-  min-height: 320px;
+  flex: 0 0 auto;
+  height: var(--ae-desk-h, 320px);
+  min-height: 200px;
   border-radius: var(--radius);
   background:
     radial-gradient(90% 70% at 50% 40%, var(--surface-light) 0%, transparent 70%),
@@ -53,7 +76,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--gutter-xxs, 2px);
+  gap:var(--gutter-xxs, var(--gutter-xxxs));
   border: 1px solid var(--border-med);
   border-radius: var(--radius-sm);
   /* One step up from the stage, not var(--surface): 0.04 white on the dark grid
@@ -99,18 +122,13 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 var(--gutter-xxs, 2px);
+  padding:0 var(--gutter-xxs, var(--gutter-xxxs));
 }
 .ae-tile.current .ae-tile-name {
   color: var(--accent-color);
 }
-.ae-tile-here {
-  font-size: var(--text-nano);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--accent-color);
-  opacity: 0.85;
-}
+/* `.ae-tile-here` (the in-tile "This display") removed 2026-08-24 — the accent
+   ring already carries it, and at tile size the words sat on the name. */
 .ae-stage.identify .ae-num {
   font-size: var(--text-hero, 40px);
   transition: font-size var(--dur-normal) ease;
@@ -120,7 +138,7 @@
   position: absolute;
   inset: auto auto var(--gutter-sm) 50%;
   transform: translateX(-50%);
-  padding: var(--gutter-xxs, 2px) var(--gutter-xs);
+  padding:var(--gutter-xxs, var(--gutter-xxxs)) var(--gutter-xs);
   border-radius: var(--radius-sm);
   background: var(--accent-dim);
   color: var(--accent-color);
@@ -129,8 +147,29 @@
   z-index: 5;
 }
 
-.ae-foot {
-  margin: 0;
-  font-size: var(--text-nano);
-  color: var(--text-muted);
+/* `.ae-foot` (the resolution footnote) removed 2026-08-24 — see ArrangeEditor. */
+
+/* The computer in the editor. It borrows `.ae-tile` so it reads as part of the
+   same diagram, then says it is a different KIND of thing: dashed edge, no fill
+   and no number, because it takes no place in the numbered coordinate space the
+   screens share. Narrow and tall is the tower's real proportion (arrangement.ts
+   towerTile), so the two lenses agree about what it is. */
+.ae-stage .ae-pc {
+  background: transparent;
+  border-style: dashed;
+  cursor: grab;
+  overflow: visible;                 /* the name hangs below, see next rule */
 }
+/* The name goes UNDER this tile, not inside it. A tower is 34px wide here — its
+   own proportion — and every name we ship is wider than that, so inside meant
+   clipped (seen the first time it drew). The screens keep their names inside
+   because they are wide enough; this is the one tile that is not. */
+.ae-stage .ae-pc .ae-tile-name {
+  position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+  white-space: nowrap;
+  /* The base rule clips names to the tile it sits in — right for a screen, and
+     an ellipsis on a 34px tower ("OM…"). Out here there is nothing to clip to. */
+  overflow: visible; max-width: none; text-overflow: clip;
+}
+.ae-stage .ae-pc.dragging { cursor: grabbing; }
+.ae-stage .ae-pc:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }

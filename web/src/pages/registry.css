@@ -51,7 +51,7 @@
   justify-content: center;
   height: 150px;
   background: var(--surface);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .reg-card-art img {
   max-height: 84%;

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useDeviceProfiles } from './DeviceProfiles';
 import { CONNECTED_DEVICE_IDS } from '../devices/connectedDevices';
-import { getResolvedSku } from '../devices/skus';
+import { getResolvedSku, connectionStatus } from '../devices/skus';
 import { onboardSlotCount } from '../devices/onboard';
 
 /**
@@ -31,6 +31,21 @@ export interface DeviceSimState {
   connected: boolean;
   deviceSlot: number;
   slotAtDisconnect: number;
+  /**
+   * A battery level the tester has dialled in, or `null` to use the SKU's own.
+   *
+   * `null` rather than a number by default, on purpose: the SKU registry is
+   * where a device's battery actually comes from, and a simulator that seeds
+   * itself with a copy would quietly become a second source the moment either
+   * changed. Null means "nobody is simulating this one" — which is also what
+   * makes the HUD's `Reset` a real answer rather than another guess.
+   *
+   * Why it exists at all: the card already draws a LOW battery (`.low`, the red
+   * treatment at 20% and under, DeviceCard.tsx), and nothing in the app could
+   * produce one — every level is a literal in the registry and our desk's mouse
+   * ships at 84%. The design existed and could not be looked at.
+   */
+  battery: number | null;
 }
 
 interface SimStore {
@@ -40,7 +55,7 @@ interface SimStore {
 }
 
 const STORAGE_KEY = 'device-sim';
-const DEFAULT_SIM: DeviceSimState = { connected: true, deviceSlot: 0, slotAtDisconnect: 0 };
+const DEFAULT_SIM: DeviceSimState = { connected: true, deviceSlot: 0, slotAtDisconnect: 0, battery: null };
 
 function load(): SimStore {
   try {
@@ -60,11 +75,46 @@ function persist(store: SimStore) {
   }
 }
 
-/** The devices the simulator covers: connected devices with onboard memory. */
-export const SIM_DEVICE_IDS = CONNECTED_DEVICE_IDS.filter((id) => {
+/**
+ * Every connected device (2026-09-01, Cindy). This used to be "connected
+ * devices with onboard memory", which sounds like a detail and was not: a
+ * monitor has no onboard slots (`peripheral-defaults.json`, monitor.onboard
+ * .slots = 0), so BOTH displays — including the one this whole section is
+ * about — were missing from the only screen that can play the hardware's side.
+ * Nobody could see what the app does when a display is unplugged.
+ *
+ * Widening the roster needed no new wiring, because `connected` was already
+ * read in three places: the home board hides a disconnected device's card
+ * (WidgetBoard), the Devices panel greys its tab (DevicePanel), and the profile
+ * bar reports it (ProfileBar).
+ *
+ * What a given device can DO is decided per row in the HUD instead — a display
+ * has no profile button and no battery, so it is not offered either. The roster
+ * says who is on the desk; capability is a separate question.
+ */
+export const SIM_DEVICE_IDS = CONNECTED_DEVICE_IDS.filter((id) => !!getResolvedSku(id));
+
+/**
+ * Devices that HAVE a battery — wireless ones the registry gives a level. A
+ * wired device is not "at 100%", it has no such number, so the HUD offers it
+ * no slider rather than a slider that means nothing.
+ */
+export const hasBattery = (id: string): boolean => {
+  const sku = getResolvedSku(id);
+  return sku ? connectionStatus(sku.features).batteryLevel != null : false;
+};
+
+/** The battery the registry ships for a device, or null when it has none. */
+export const skuBattery = (id: string): number | null => {
+  const sku = getResolvedSku(id);
+  return sku ? connectionStatus(sku.features).batteryLevel : null;
+};
+
+/** Devices with a profile button to press — the onboard-slot half of the HUD. */
+export const hasProfileButton = (id: string): boolean => {
   const sku = getResolvedSku(id);
   return sku ? onboardSlotCount(sku) > 0 : false;
-});
+};
 
 interface Ctx {
   simState: (deviceId: string) => DeviceSimState;
@@ -76,6 +126,10 @@ interface Ctx {
   disconnect: (deviceId: string) => void;
   /** Plug back in — reconcile what it reports against what the profile wants. */
   reconnect: (deviceId: string) => void;
+  /** Dial a battery level in, or `null` to hand the device back to its SKU. */
+  setBattery: (deviceId: string, pct: number | null) => void;
+  /** What a card should draw: the dialled level, else the SKU's own. */
+  batteryOf: (deviceId: string) => number | null;
 }
 
 const DeviceSimContext = createContext<Ctx | null>(null);
@@ -138,6 +192,13 @@ export function DeviceSimProvider({ children }: { children: React.ReactNode }) {
         // button landed on and says the switch came from the device.
         if (sim.connected) profiles.deviceSwitched(id, next, 'device');
       },
+
+      setBattery: (id, pct) =>
+        update((s) => ({ ...s, byDevice: { ...s.byDevice, [id]: { ...simOf(s, id), battery: pct } } })),
+
+      // The card asks this instead of the registry, so one dialled level shows
+      // up wherever that device is drawn rather than only in the HUD.
+      batteryOf: (id) => simOf(store, id).battery ?? skuBattery(id),
 
       disconnect: (id) =>
         update((s) => {

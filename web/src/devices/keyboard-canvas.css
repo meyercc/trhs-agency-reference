@@ -172,8 +172,10 @@
 
 /* Rail — Figma "Keyboard Quick Select" (Lights 32:34339). The panel recipe is
    the system's, not this file's: Kintsugi panel surface + the Hadouken double
-   stroke (an inner border over a 1px dark hairline, as .ds-input) + the
-   Panels/Dark shadow, which is --shadow-lv-1 exactly. */
+   stroke (an inner border over a 1px dark hairline, as .ds-input) + level-1
+   elevation. Figma's Shadow-Blur/Panels/Dark was --shadow-lv-1 exactly when
+   this was built; the scale has since been re-issued from the HP/Avalonia
+   ShadowLevel dictionary, so the rail now follows the token, not the frame. */
 .kbd-quickselect {
   flex-shrink: 0;
   display: flex;
@@ -219,14 +221,14 @@
   outline-offset: 2px;
 }
 /* The marquee tool. Armed reads as a filled chip as well as a brighter glyph,
-   so the mode is never carried by colour alone; aria-pressed says it in words. */
+   so the mode is never carried by color alone; aria-pressed says it in words. */
 .kbd-qs-icon {
   padding: var(--gutter-xxs);
   margin: 0 calc(var(--gutter-xxs) * -1);
   border-radius: var(--radius-sm);
 }
 .kbd-qs-icon.active {
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
 }
 /* 10% ink either way. The alpha-white scale doesn't flip with the theme, and
    this rail's panel does — white 10% would vanish on the light surface. Same
@@ -235,7 +237,7 @@
   flex-shrink: 0;
   width: 1px;
   height: var(--gutter-sm);
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
 }
 html[data-theme='light'] .kbd-qs-divider,
 html.light .kbd-qs-divider {
@@ -346,276 +348,44 @@ html.light .kbd-qs-icon.active {
   z-index: 1;
 }
 
-/* ── Lighting panel shell ── */
-.pdm-lights {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter-tablet);
-  height: 340px;
-}
-.pdm-lights-body {
-  flex: 1;
-  min-height: 0;
-}
-/* ── Brightness rail ── */
-.pdm-bright {
-  flex: 0 0 auto;
-  align-items: center;
-  padding: var(--gutter-tablet);
-}
-.pdm-bright-val {
-  font-family: var(--font-mono);
-  font-size: var(--text-caption);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-}
-.pdm-bright-icon {
-  display: flex;
-  color: var(--text-dim);
-}
-.pdm-bright-slider {
-  flex: 1;
-  min-height: 0;
-  width: 24px;
-  position: relative;
-  container-type: size;
-}
-.pdm-bright-slider .ds-slider {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100cqh;
-  transform: translate(-50%, -50%) rotate(-90deg);
-}
+/* The Lights tab (.pdm-lights / presets / editor) lives in lighting-tab.css,
+   owned by LightingTab.tsx so any canvas can render the standard panel. */
 
-/* ── Presets panel ── */
-.pdm-presets {
-  flex: 1;
-  position: relative;
-}
-.pdm-presets-grid {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  align-content: start;
-  gap: 2px var(--gutter);
-  padding-bottom: calc(var(--gutter) * 2);
-  overflow-y: auto;
-}
-.pdm-preset {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  color: var(--text-dim);
-  transition: background var(--dur-fast) var(--ease-default);
-}
-.pdm-preset:hover,
-.pdm-preset.menu-open {
-  background: var(--surface);
-  color: var(--text-primary);
-}
-.pdm-preset.active {
-  background: var(--surface-active);
-  color: var(--text-primary);
-}
-.pdm-preset-pick {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--gutter-sm);
-  height: 100%;
-  padding: 0 var(--gutter-sm);
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-family: var(--font-display);
-  font-size: var(--text-body);
-  text-align: left;
-  cursor: pointer;
-}
-.pdm-preset-pick > span:last-child {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pdm-preset-swatch {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1px solid var(--border-med);
-  box-shadow: var(--shadow-lv-1);
-}
-.pdm-preset-fx {
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
-.pdm-preset:hover .pdm-preset-fx,
-.pdm-preset.active .pdm-preset-fx {
-  color: inherit;
-}
-.pdm-preset-menu {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  margin-right: var(--gutter-xs);
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease-default);
-}
-.pdm-preset:hover .pdm-preset-menu,
-.pdm-preset.menu-open .pdm-preset-menu {
-  opacity: 1;
-}
-.pdm-preset-menu:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
 
-/* preset ⋮ context menu (per-row) */
-.pdm-preset-cmenu {
-  position: absolute;
-  top: calc(100% - 4px);
-  right: 6px;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  width: 196px;
-  padding: var(--gutter-sm);
-  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lv-3);
-}
-.pdm-cmenu-item {
-  display: flex;
-  align-items: center;
-  gap: var(--gutter-sm);
-  height: 32px;
-  padding: 0 var(--gutter-sm);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-dim);
-  font-family: var(--font-display);
-  font-size: var(--text-body);
-  text-align: left;
-  cursor: pointer;
-}
-.pdm-cmenu-item:hover {
-  background: var(--surface-active);
-  color: var(--text-primary);
-}
-.pdm-cmenu-item.danger:hover {
-  color: var(--red);
-}
+/* ══════════════════════════════════════════════════════════════════════════════
+   KEYS & MACROS TAB  (.pdm-keys) — Phase 3
+   Assignment rail + searchable keycap browser + click-to-bind on the hero.
+   ══════════════════════════════════════════════════════════════════════════ */
 
-/* new-preset FAB */
-.pdm-preset-fab {
+/* Inactive-layer dot — the OTHER layer carries an assignment on this key. */
+.kbd-key::after {
+  content: '';
   position: absolute;
-  right: var(--gutter-tablet);
-  bottom: var(--gutter-tablet);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--accent-color);
+  top: 3px;
+  right: 3px;
+  width: calc(var(--ku) * 0.1);
+  height: calc(var(--ku) * 0.1);
   border-radius: 50%;
   background: var(--accent-color);
-  color: var(--text-on-fill);
-  cursor: pointer;
-  box-shadow: var(--shadow-lv-2);
-  transition: transform var(--dur-fast) var(--ease-default);
+  opacity: 0;
 }
-.pdm-preset-fab:hover {
-  transform: scale(1.08);
+.kbd[data-kb-layer='base'] .kbd-key[data-has-fn]::after,
+.kbd[data-kb-layer='base'] .kbd-key[data-bind-fn]::after,
+.kbd[data-kb-layer='fn'] .kbd-key[data-bind-base]::after {
+  opacity: 0.7;
 }
-.pdm-preset-fab:active {
-  transform: scale(0.96);
-}
-
-/* ── Preset editor overlay ── */
-.pdm-editor {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: flex;
-}
-.pdm-editor-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter-xs);
-  padding: var(--gutter-sm);
-  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lv-3);
-}
-.pdm-editor-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  gap: var(--gutter-sm);
-}
-.pdm-editor-effects,
-.pdm-editor-params {
-  background: var(--surface-light);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: var(--gutter-mobile) var(--gutter);
-}
-.pdm-editor-effects {
-  flex: 0 0 184px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter-sm);
-}
-.pdm-fx-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.pdm-editor-params {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter-sm);
-}
-.pdm-editor-cols {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  gap: var(--gutter);
-}
-.pdm-editor-vrule,
-.pdm-color-vrule {
-  flex-shrink: 0;
-  align-self: stretch;
-  width: 1px;
-  background: var(--border);
+.kbd-stage[data-kb-mode='lights'] .kbd-key::after {
+  display: none;
 }
 
+/* Both halves are real `.ds-ng3-section` cards on a `.ds-ng3-grid` row, so the
+   surface, border, radius, padding and the 8px gutter between them all come
+   from the shared primitives. This tab used to hand-roll that card — and had
+   drifted off it (a heavier border, a wider surface tint, 24px side padding
+   against the system's 16, and a 16px gutter against the system's 8), which is
+   exactly what a fork costs. Only the geometry the tab actually owns lives
+   here now. */
+/* Assignment-type items on the Keys rail. */
 /* assignment / category rows (effects list) */
 .pdm-assign-item {
   display: flex;
@@ -648,323 +418,14 @@ html.light .kbd-qs-icon.active {
   min-width: 0;
 }
 
-/* colour picker */
-.pdm-color {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter);
-}
-.pdm-color-pills {
-  display: flex;
-  align-items: center;
-  gap: var(--gutter);
-}
-.pdm-color-pill {
-  flex: 1;
-  min-width: 0;
-  height: 24px;
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-lv-1);
-  cursor: pointer;
-}
-.pdm-color-pill.active {
-  border-color: var(--white);
-  outline: 1px solid var(--accent-color);
-  outline-offset: 2px;
-}
-.pdm-color-rand {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--gutter-sm);
-  height: 32px;
-  padding: 0 var(--gutter);
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius-card);
-  background: var(--bg-base);
-  color: var(--text-primary);
-  font-family: var(--font-display);
-  font-size: var(--text-body);
-  cursor: pointer;
-}
-.pdm-color-rand:hover {
-  border-color: var(--text-dim);
-}
-.pdm-color-rand svg {
-  width: 16px;
-  height: 16px;
-  color: var(--text-dim);
-}
-.pdm-color-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  gap: var(--gutter);
-}
-.pdm-color-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--gutter);
-}
-.pdm-color-sliders {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter-tablet);
-}
-.pdm-cslider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 12px;
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius-card);
-  background: var(--surface-active);
-  cursor: pointer;
-  outline: none;
-}
-.pdm-cslider::-webkit-slider-runnable-track {
-  height: 12px;
-  background: transparent;
-}
-.pdm-cslider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  margin-top: calc(-1 * var(--gutter-xs) - 1px);
-  border-radius: 50%;
-  background: var(--cslider-thumb, var(--white));
-  border: 4px solid var(--white);
-  box-shadow: var(--shadow-lv-1);
-  cursor: pointer;
-}
-
-/* hex field */
-.pdm-hex {
-  display: flex;
-  align-items: center;
-  gap: var(--gutter-xs);
-  max-width: 168px;
-  height: 32px;
-  padding: 0 var(--gutter-sm);
-  background: var(--bg-base);
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius-sm);
-}
-.pdm-hex:focus-within {
-  border-color: var(--accent-dim);
-}
-.pdm-hex-sign {
-  font-family: var(--font-mono);
-  font-size: var(--text-body);
-  font-weight: var(--font-semibold);
-  color: var(--text-dim);
-}
-.pdm-hex-input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  outline: none;
-  font-family: var(--font-mono);
-  font-size: var(--text-body);
-  color: var(--text-primary);
-  text-transform: uppercase;
-}
-.pdm-hex-copy {
-  display: flex;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-.pdm-hex-copy:hover {
-  color: var(--text-dim);
-}
-
-/* swatch palette */
-.pdm-swatches {
-  flex-shrink: 0;
-  display: grid;
-  grid-template-columns: repeat(5, 24px);
-  gap: var(--gutter-xs);
-  align-content: flex-start;
-}
-.pdm-sw,
-.pdm-sw-add {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 1px solid var(--border-med);
-  border-radius: 50%;
-  cursor: pointer;
-}
-.pdm-sw {
-  box-shadow: var(--shadow-lv-1);
-}
-.pdm-sw:hover,
-.pdm-sw-add:hover {
-  border-color: var(--text-dim);
-}
-.pdm-sw-add {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface);
-  color: var(--text-dim);
-}
-
-/* direction / speed / opacity */
-.pdm-fx-params {
-  flex: 0 0 168px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: var(--gutter-sm);
-}
-.pdm-fx-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter-xs);
-}
-.pdm-fx-slider-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.pdm-fx-val {
-  font-family: var(--font-mono);
-  font-size: var(--text-caption);
-  color: var(--text-muted);
-}
-
-/* angle dial */
-.pdm-angle {
-  display: flex;
-  align-items: center;
-  gap: var(--gutter-sm);
-}
-.pdm-angle-dial {
-  position: relative;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bg-base);
-  border: 1px solid var(--border-med);
-  cursor: grab;
-  touch-action: none;
-}
-.pdm-angle-dial:active {
-  cursor: grabbing;
-}
-.pdm-angle-needle {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 11px;
-  height: 2px;
-  margin-top: -1px;
-  border-radius: 1px;
-  background: var(--text-primary);
-  transform-origin: 0 50%;
-  transform: rotate(var(--angle, 0deg));
-}
-.pdm-angle-input {
-  width: 52px;
-  height: 32px;
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius-sm);
-  background: var(--bg-base);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--text-body);
-  text-align: center;
-  outline: none;
-}
-.pdm-angle-input:focus {
-  border-color: var(--accent-dim);
-}
-.pdm-angle-steppers {
-  display: flex;
-  flex-direction: column;
-}
-.pdm-angle-steppers button {
-  display: flex;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text-dim);
-  cursor: pointer;
-}
-.pdm-angle-steppers button:hover {
-  color: var(--text-primary);
-}
-
-/* CTA */
-.pdm-editor-cta {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--gutter-sm);
-}
-.pdm-editor-cta .ds-btn {
-  padding: 7px 14px;
-}
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   KEYS & MACROS TAB  (.pdm-keys) — Phase 3
-   Assignment rail + searchable keycap browser + click-to-bind on the hero.
-   ══════════════════════════════════════════════════════════════════════════ */
-
-/* Inactive-layer dot — the OTHER layer carries an assignment on this key. */
-.kbd-key::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  width: calc(var(--ku) * 0.1);
-  height: calc(var(--ku) * 0.1);
-  border-radius: 50%;
-  background: var(--accent-color);
-  opacity: 0;
-}
-.kbd[data-kb-layer='base'] .kbd-key[data-has-fn]::after,
-.kbd[data-kb-layer='base'] .kbd-key[data-bind-fn]::after,
-.kbd[data-kb-layer='fn'] .kbd-key[data-bind-base]::after {
-  opacity: 0.7;
-}
-.kbd-stage[data-kb-mode='lights'] .kbd-key::after {
-  display: none;
-}
 
 .pdm-keys {
-  display: flex;
-  gap: var(--gutter-sm);
   height: 340px;
 }
-.pdm-keys-rail,
-.pdm-keys-browse {
-  background: var(--surface-light);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: var(--gutter-tablet) var(--gutter);
-}
 
-/* Left — assignment rail */
+/* Left — assignment rail. Fixed width; the browser takes the rest. */
 .pdm-keys-rail {
   flex: 0 0 200px;
-  display: flex;
-  flex-direction: column;
   gap: var(--gutter-tablet);
 }
 .pdm-keys-rail-head {
@@ -979,7 +440,7 @@ html.light .kbd-qs-icon.active {
 .pdm-assign-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--gutter-xxxs);
 }
 .pdm-keys-rail-foot {
   margin-top: auto;
@@ -1042,9 +503,6 @@ html.light .kbd-qs-icon.active {
 /* Right — key browser */
 .pdm-keys-browse {
   flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
   gap: var(--gutter-tablet);
 }
 .pdm-keys-browse .ds-input-group {
@@ -1071,7 +529,7 @@ html.light .kbd-qs-icon.active {
   justify-content: center;
   width: 46px;
   height: 46px;
-  padding: var(--gutter-xs) 2px;
+  padding: var(--gutter-xs) var(--gutter-xxxs);
   background: var(--surface-active);
   border: 1px solid var(--border-med);
   border-radius: 6px;
@@ -1152,5 +610,5 @@ html.light .kbd-qs-icon.active {
 }
 .pdm-keys-target-clear {
   flex-shrink: 0;
-  padding: 4px 12px;
+  padding: var(--gutter-xxs) var(--gutter-tablet);
 }

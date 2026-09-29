@@ -27,7 +27,7 @@ const MODES: { id: PowerMode; label: string; watts: string; variant: string }[] 
   { id: 'unleashed', label: 'Unleashed', watts: '115W', variant: 'unleash-mode' },
 ];
 
-// Per-mode icons (stroke, currentColor — CSS drives the state colour). The
+// Per-mode icons (stroke, currentColor — CSS drives the state color). The
 // tiles are the card's PRIMARY control; the icon + taller two-row tile give
 // them the weight the sub-control list defers to.
 const MODE_ICONS: Record<PowerMode, ReactNode> = {

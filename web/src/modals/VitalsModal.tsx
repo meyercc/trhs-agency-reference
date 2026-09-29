@@ -7,7 +7,7 @@ import { VitalsChart } from './VitalsChart';
 import { Gauge } from '../widgets/Gauge';
 import './vitals-modal.css';
 
-// Series colours (mirror the vanilla ECharts palette).
+// Series colors (mirror the vanilla ECharts palette).
 const C_CPU = '#00c8d7';
 const C_GPU = '#a855f7';
 const C_RAM = '#22c55e';

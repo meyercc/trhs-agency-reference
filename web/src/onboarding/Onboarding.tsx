@@ -6,7 +6,7 @@ import { useModules } from '../state/Modules';
 import { MODULES, WIDGET_MODULE } from '../modules/registry';
 import { META_BY_ID, DEVICE_WIDGET_SKU } from '../widgets/catalog';
 import { deviceCardModel } from '../widgets/DeviceCard';
-import { CONNECTED_DEVICE_IDS } from '../devices/connectedDevices';
+import { deskDeviceIds } from '../devices/connectedDevices';
 import { HyperXLogo } from '../app/HyperXLogo';
 import './onboarding.css';
 
@@ -74,7 +74,7 @@ function seedBoard(persona: string, mods: Record<string, boolean>, addDevice: Re
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const { setPersona, setOnboarded } = useSettings();
+  const { setPersona, setOnboarded, deskDevices } = useSettings();
   const { install, remove } = useModules();
 
   const [idx, setIdx] = useState(0);
@@ -83,14 +83,16 @@ export function Onboarding() {
   const [eula, setEula] = useState(false);
   const [telemetry, setTelemetry] = useState(true);
   const [addDevice, setAddDevice] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(CONNECTED_DEVICE_IDS.map((id) => [id, true])),
+    Object.fromEntries(deskDeviceIds(deskDevices).map((id) => [id, true])),
   );
   const [modsOverride, setModsOverride] = useState<Record<string, boolean>>({});
 
   const persona = personaOf(motivation, expertise);
   const effectiveMods = useMemo(() => ({ ...presetFor(persona), ...modsOverride }), [persona, modsOverride]);
 
-  const detected = useMemo(() => CONNECTED_DEVICE_IDS.map((id) => deviceCardModel(id)).filter(Boolean) as NonNullable<ReturnType<typeof deviceCardModel>>[], []);
+  // "Detected" = what is on this desk (Admin), the same roster the home board and
+  // My Devices read — onboarding must not find a display the desk does not have.
+  const detected = useMemo(() => deskDeviceIds(deskDevices).map((id) => deviceCardModel(id)).filter(Boolean) as NonNullable<ReturnType<typeof deviceCardModel>>[], [deskDevices]);
   const primary = detected.find((d) => d.skuId === 'cloud-iii') ?? detected[0];
 
   // The step sequence depends on the intent fork.

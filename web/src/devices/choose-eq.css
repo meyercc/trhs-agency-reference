@@ -1,0 +1,93 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   "Add Equalizer Preset" chooser (Figma Audio 7364:454142). Two square cards
+   on ModalShell's narrow width. Every value is a token; the art is the
+   committed Figma export (eqAssets.ts).
+   ══════════════════════════════════════════════════════════════════════════ */
+.ceq .modal-body {
+  grid-template-columns: 1fr;
+}
+.ceq-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gutter-xs);
+}
+
+/* A card is one square button: the still fills it, the title sits at its foot. */
+.ceq-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  aspect-ratio: 1;
+  padding: var(--gutter-tablet) var(--gutter-sm);
+  overflow: hidden;
+  background: var(--surface-lightest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+.ceq-card:hover {
+  border-color: var(--border-med);
+  background: var(--surface);
+}
+.ceq-card:active {
+  background: var(--surface-active);
+}
+.ceq-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* The still: anchored to the card's top-left, faded in from the left so the
+   title's corner stays quiet — the Figma's alpha mask, as a gradient mask. */
+.ceq-card-art {
+  position: absolute;
+  inset: 0;
+  background-size: 200% auto;
+  background-position: left top;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+  mask-image: linear-gradient(to right, transparent, black);
+  -webkit-mask-image: linear-gradient(to right, transparent, black);
+  pointer-events: none;
+}
+.ceq-card-info {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+/* The title is set in the gradient the Figma paints it with: an image as the
+   text fill, so it reads as a headline rather than a label. */
+.ceq-card-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm-title);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  background-size: cover;
+  background-position: center;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.ceq-card-sub {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@media (max-width: 600px) {
+  .ceq-cards {
+    grid-template-columns: 1fr;
+  }
+}

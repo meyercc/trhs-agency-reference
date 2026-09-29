@@ -53,6 +53,8 @@ export interface SpecTabDef {
   icon: IconName;
   title: string;
   sections: SpecSectionDef[];
+  /** Panel measure for this tab — see `DeviceTab.width`. Omitted = `full`. */
+  width?: 'full' | 'narrow';
 }
 
 // ── shared tabs ────────────────────────────────────────────────────────────

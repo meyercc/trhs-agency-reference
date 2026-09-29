@@ -1,0 +1,136 @@
+/* Lighting controls — sections, label/control rows and the preset list.
+   Shared by Light Studio's controls column and the Modes modal, so choosing
+   lighting looks the same everywhere. Token-only. */
+.ls-label {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.ls-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-tablet);
+  min-width: 0;
+  margin: 0;
+  /* Same space above and below each divider (the column gap). */
+  padding: var(--gutter-sm) 0 0;
+  border: none;
+  border-top: 1px solid var(--border-light);
+}
+.ls-section:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+.ls-section:disabled .ls-fields {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.ls-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+}
+.ls-group-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ls-section-note {
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+}
+/* One row rhythm for the whole column: preset rows and fine-tune rows share
+   the same height and sit flush, so both lists read at the same pitch. */
+.ls-fields {
+  display: flex;
+  flex-direction: column;
+}
+/* Label left, control right — one row each, so fine-tuning stays short. */
+.ls-field {
+  display: grid;
+  grid-template-columns: calc(var(--control-height) * 3) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--gutter-sm);
+  height: var(--control-height);
+}
+
+/* Controls fill their row and shrink with it — a dropdown's 160px minimum
+   would otherwise push past a narrow card; toggles sit at the row's end. */
+.ls-field > .ds-dropdown {
+  min-width: 0;
+  width: 100%;
+}
+.ls-field > :last-child:not(.ds-dropdown):not(.ds-slider) {
+  justify-self: end;
+}
+/* Presets — two columns in the controls: swatch, effect glyph, name. */
+.ls-presets-grid {
+  display: grid;
+  /* As many columns as fit without cutting a name ("Captain America"). */
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--control-height) * 5), 1fr));
+  gap: 0 var(--gutter-sm);
+}
+.ls-preset {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  min-width: 0;
+  height: var(--control-height);
+  padding: 0 var(--gutter-xs);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default);
+}
+.ls-preset:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+/* Selected: the chip's selected treatment (accent wash + accent edge), plus a
+   check so the state doesn't rest on color alone. */
+.ls-preset.active {
+  background: var(--accent-dim);
+  box-shadow: inset 0 0 0 1px var(--accent-color);
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+.ls-preset-check {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--accent-color);
+}
+.ls-preset:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+.ls-preset-swatch {
+  flex-shrink: 0;
+  width: var(--gutter-sm);
+  height: var(--gutter-sm);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-med);
+}
+.ls-preset-fx {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.ls-preset:hover .ls-preset-fx,
+.ls-preset.active .ls-preset-fx {
+  color: inherit;
+}
+.ls-preset-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

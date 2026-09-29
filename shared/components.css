@@ -164,7 +164,7 @@
 /* Count — translucent-dark fill + muted label */
 .ds-badge.count,
 .badge.count {
-  background: var(--ksg-b40);
+  background: var(--surface-sunken);
   color: var(--text-dim);
 }
 /* Deal / sale — dark fill + accent label */
@@ -194,7 +194,7 @@
 /* Status — count base + colored tones */
 .ds-badge.status,
 .badge.status {
-  background: var(--ksg-b40);
+  background: var(--surface-sunken);
   color: var(--text-dim);
 }
 .ds-badge.status.positive,
@@ -228,7 +228,7 @@
 
    Content variants:
      (default)   — empty placeholder surface
-     .wallpaper  — solid wallpaper-colour fill
+     .wallpaper  — solid wallpaper-color fill
      .ds-avatar-img  — cover image (custom photo)
      .ds-avatar-icon — inset app glyph
 
@@ -429,7 +429,7 @@ html.light .ds-backdrop.plain {
   font-size: var(--text-nano);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* ─────────────────────────────────────────
@@ -469,7 +469,7 @@ html.light .ds-backdrop.plain {
   font-size: var(--text-nano);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .ds-spark-val,
 .spark-val {
@@ -553,6 +553,13 @@ html.light .ds-stat-cell {
 .btn.sm {
   padding: 3px ;
 }
+/* Block: fills its container. For a stacked action group (a rail foot, a
+   form's commit row) where the buttons are the column's full width. */
+.ds-btn.block,
+.btn.block {
+  width: 100%;
+  justify-content: center;
+}
 .ds-btn.accent,
 .btn.accent {
   height: 32px;
@@ -614,7 +621,7 @@ html.light .ds-stat-cell {
 .ds-btn-icon svg {
   /* 16 icon in a 32 button (Figma Button/Secondary icon-only). Asymmetric
      glyphs that need an optical nudge carry it on their own class
-     (.ds-tile-play, .wg-lp-play) — not here, where it would off-centre
+     (.ds-tile-play, .wg-lp-play) — not here, where it would off-center
      every symmetric icon. */
   width: 16px;
   height: 16px;
@@ -760,7 +767,7 @@ html.light .ds-select option {
 /* ── Dropdown (.ds-dropdown) ─────────────────────────
    Custom select: a styled trigger plus a popup menu of
    items — replaces the native <select> so the open menu
-   can be themed. Behaviour: js/ds-behaviors.js
+   can be themed. Behavior: js/ds-behaviors.js
    (dsDropdownToggle / dsDropdownPick).
 
    Usage:
@@ -778,10 +785,15 @@ html.light .ds-select option {
        </div>
      </div>                                            */
 .ds-dropdown {
+  /* Menu cap before it scrolls — component geometry, like .ds-ng3-panel's
+     --ng3-tab-h. The React popover reads it; .ds-dropdown-menu below states
+     the same value for the vanilla markup. */
+  --ds-dropdown-max-h: 240px;
   position: relative;
   display: inline-flex;
   flex-direction: column;
   min-width: 160px;
+  width: 100%;
 }
 
 /* Trigger (Hadouken: surface + inner border, chevron button on the right) */
@@ -793,7 +805,7 @@ html.light .ds-select option {
   padding: 0;
   overflow: hidden;
   background: var(--ksg-b20);
-  border: 1px solid var(--ksg-w10);
+  border: 1px solid var(--border-light-m);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-family: var(--font-display);
@@ -804,14 +816,14 @@ html.light .ds-select option {
     background var(--dur-fast) var(--ease-default);
 }
 .ds-dropdown-trigger:hover {
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
 }
 .ds-dropdown-trigger:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--accent-color);
 }
 .ds-dropdown.open .ds-dropdown-trigger {
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
 }
 .ds-dropdown.disabled .ds-dropdown-trigger,
 .ds-dropdown-trigger:disabled {
@@ -827,6 +839,19 @@ html.light .ds-select option {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Leading slot (Hadouken "Dropdown Slot"): an icon before the label that says
+   what kind of thing is being chosen. It takes the label's left inset, so the
+   label closes up to it with the row gap instead of a second inset. */
+.ds-dropdown-leading {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-left: calc(var(--gutter-xs) + var(--gutter-xxs));
+  color: var(--text-dim);
+}
+.ds-dropdown-leading + .ds-dropdown-label {
+  padding-left: var(--gutter-xs);
+}
 
 /* Chevron box — a secondary-surface button area on the trailing edge */
 .ds-dropdown-chevron {
@@ -836,18 +861,21 @@ html.light .ds-select option {
   width: 30px;
   height: 100%;
   flex-shrink: 0;
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
   color: var(--text-dim);
   transition: background var(--dur-fast) var(--ease-default);
 }
 .ds-dropdown-chevron svg {
   display: block;
-  width: 10px;
-  height: 6px;
   transition: transform var(--dur-fast) var(--ease-default);
 }
+/* The vanilla markup's inline chevron path is 10×6; a sprite <Icon> sizes itself. */
+.ds-dropdown-chevron svg:not(.ds-icon) {
+  width: 10px;
+  height: 6px;
+}
 .ds-dropdown.open .ds-dropdown-chevron {
-  background: var(--ksg-w5);
+  background: var(--surface);
 }
 .ds-dropdown.open .ds-dropdown-chevron svg {
   transform: rotate(180deg);
@@ -864,13 +892,13 @@ html.light .ds-select option {
   flex-direction: column;
   gap: 1px;
   min-width: 100%;
-  max-height: 240px;
+  max-height: var(--ds-dropdown-max-h);
   overflow-y: auto;
   padding: var(--gutter-xs);
   background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lv-3);
   scrollbar-width: thin;
@@ -879,7 +907,7 @@ html.light .ds-select option {
   visibility: hidden;
   transition:
     opacity var(--dur-fast) var(--ease-default),
-    visibility var(--dur-fast) var(--ease-default);
+    visibility 0s var(--dur-fast);
 }
 .ds-dropdown-menu::-webkit-scrollbar {
   width: 8px;
@@ -890,9 +918,15 @@ html.light .ds-select option {
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+/* Visibility flips at once on open (so focus can land inside immediately —
+   a transitioning `visibility` still computes `hidden` at the first frame,
+   which makes `.focus()` a no-op) and waits for the fade on close. */
 .ds-dropdown.open .ds-dropdown-menu {
   opacity: 1;
   visibility: visible;
+  transition:
+    opacity var(--dur-fast) var(--ease-default),
+    visibility 0s;
 }
 /* Flip above the trigger when there is no room below */
 .ds-dropdown.open-up .ds-dropdown-menu {
@@ -914,11 +948,21 @@ html.light .ds-select option {
   visibility: hidden;
   transition:
     opacity var(--dur-fast) var(--ease-default),
-    visibility var(--dur-fast) var(--ease-default);
+    visibility 0s var(--dur-fast);
 }
 .ds-dropdown.open .ds-dropdown-pop {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity var(--dur-fast) var(--ease-default),
+    visibility 0s;
+}
+/* A closing menu is still visible for its fade, but it is no longer a target:
+   nothing under it should be shadowed by a menu the user just dismissed. */
+.ds-dropdown:not(.open) .ds-dropdown-pop,
+.ds-dropdown:not(.open) .ds-dropdown-menu {
+  pointer-events: none;
 }
 .ds-dropdown.open-up .ds-dropdown-pop {
   top: auto;
@@ -1059,6 +1103,54 @@ html.light .ds-select option {
 }
 
 /* ── Input wrapper (for icons and loader) ── */
+/* ── Stepper (.ds-stepper) ───────────────────────
+   A numeric field with stacked step buttons (Figma
+   "Input Fields" + Add/Subtract). The field is a
+   .ds-input; the buttons are 16px chevrons out of
+   the tab order — arrow keys step in the field. */
+.ds-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+}
+/* Component geometry: the width of the widest value
+   it holds ("20.00 kHz"), set by type metrics. */
+.ds-stepper-field {
+  width: 90px;
+  text-align: center;
+}
+.ds-stepper-btns {
+  display: flex;
+  flex-direction: column;
+}
+.ds-stepper-btns button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+.ds-stepper-btns button:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.ds-stepper-btns button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.ds-stepper.disabled {
+  opacity: 0.5;
+}
+
 .ds-input-wrap {
   position: relative;
   display: flex;
@@ -1188,7 +1280,7 @@ button.ds-input-icon:focus-visible {
 .ds-input-hint {
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   line-height: 1.3;
 }
 
@@ -1453,7 +1545,7 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
 
 /* ── Carousel aura glow ──
    A blurred, scaled-up, saturated duplicate of the active slide's art behind the
-   carousel. The carousel box is opaque, so the glow reads as an ambient colour
+   carousel. The carousel box is opaque, so the glow reads as an ambient color
    wash bleeding out to the sides + below it. Two layers crossfade on slide change.
    Full-bleed: spans the whole app window width (not just the content grid) via
    the centred-container trick — needs a centred wrapper + `overflow-x: clip` on a
@@ -1469,22 +1561,45 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
   height: 640px;
   pointer-events: none;
   overflow: hidden;
-  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+  /* Fade the sides as well as the bottom. The box is 100vw x 640px with
+     `overflow: hidden`, so masking only the bottom leaves the left and right
+     edges ending in a straight line. On a dark ground the glow is dim enough
+     there that the seam never shows; on a light one the same layer reads as a
+     pale wash and the cut is plainly visible. */
+  mask-image:
+    linear-gradient(180deg, #000 0%, #000 55%, transparent 100%),
+    linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-image:
+    linear-gradient(180deg, #000 0%, #000 55%, transparent 100%),
+    linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  /* The blend sits on the container, not on the layers: the mask already makes
+     this element a stacking context, so a blend applied inside it would compose
+     against that context rather than against the page behind. */
+  mix-blend-mode: var(--carousel-aura-blend);
 }
 .ds-carousel-aura-layer {
   position: absolute;
   inset: -10%;
   background-size: cover;
   background-position: center center;
-  filter: blur(80px) saturate(1.55) brightness(1.05);
+  filter: var(--carousel-aura-filter);
   transform: scale(1.15);
   opacity: 0;
   transition: opacity 0.9s ease;
   will-change: opacity;
 }
+/* Themed, because the effect is not symmetric. Over a dark ground, painting the
+   blurred art normally ADDS light, which is what makes it glow. Over a light
+   ground the same layer still adds light — but there is little headroom left,
+   so it washes toward white and reads as milky haze pulsing on every 0.9s
+   crossfade. Light therefore multiplies instead: the art can only ever subtract
+   light, so it tints the page with the slide's hue and can carry a healthy
+   opacity without ever going white. Merely dimming it was the wrong fix — it
+   removed the wash by removing the effect. */
 .ds-carousel-aura-layer.active {
-  opacity: 0.4;
+  opacity: var(--carousel-aura-opacity);
 }
 /* Dots may be <button>s (the React port) — strip button chrome so the bar shows. */
 .ds-carousel-dot {
@@ -1509,7 +1624,7 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
   position: relative;
   flex-shrink: 0;
   padding: 0;
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   background:
     linear-gradient(103deg, var(--ksg-b30) 0%, transparent 100%),
     var(--accent-color);
@@ -1625,6 +1740,19 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(16px);
 }
+/* Full-width: the pill spans its container and the options share the width
+   evenly. The default is content-width on purpose (see above), so this opts
+   out of BOTH stretch defeats rather than fighting them — for a group that is
+   the whole control in its own row, not a chip sitting beside other content. */
+.ds-toggle-group.full {
+  display: flex;
+  justify-self: stretch;
+  align-self: stretch;
+}
+.ds-toggle-group.full .ds-toggle-group-btn {
+  flex: 1;
+  min-width: 0;
+}
 .ds-toggle-group-btn {
   position: relative;
   display: inline-flex;
@@ -1664,6 +1792,10 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
   opacity: 0.35;
   cursor: not-allowed;
   pointer-events: none;
+}
+/* Icon-only options sit tighter: the icon is the label. */
+.ds-toggle-group-btn.icon-only {
+  padding: 0 var(--gutter-xs);
 }
 /* Icon slot for the icon variant */
 .ds-toggle-group-btn .ds-toggle-group-icon {
@@ -1840,7 +1972,7 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
   height: 20px;
   flex-shrink: 0;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   background:
     linear-gradient(96.6deg, var(--ksg-b30) 0%, transparent 100%),
     var(--ksg-w10);
@@ -1871,7 +2003,7 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
 /* On + Indeterminate → accent fill (Surface - Selected) */
 .ds-checkbox input:checked + .ds-checkbox-mark,
 .ds-checkbox input:indeterminate + .ds-checkbox-mark {
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
   background:
     linear-gradient(96.6deg, var(--ksg-b30) 0%, transparent 100%),
     var(--accent-color);
@@ -1940,7 +2072,7 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
   height: 20px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   background:
     linear-gradient(96.6deg, var(--ksg-b30) 0%, transparent 100%),
     var(--ksg-w10);
@@ -1968,7 +2100,7 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
 
 /* Selected → accent fill (Color / Accent / Solid) + dot */
 .ds-radio input:checked + .ds-radio-mark {
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
   background:
     linear-gradient(96.6deg, var(--ksg-b30) 0%, transparent 100%),
     var(--accent-color);
@@ -2244,7 +2376,7 @@ html.light .ds-chip-check {
 .ds-device-status {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   letter-spacing: 0.04em;
   margin-top: 1px;
 }
@@ -2275,7 +2407,7 @@ html.light .ds-chip-check {
 .ds-filter-list-label {
   font-size: 9px;
   font-weight: 700;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   padding: 0 ;
@@ -2318,7 +2450,7 @@ html.light .ds-chip-check {
 
 /* ── Color Swatch (.ds-swatch) ─────────────────────
    Circular color-picker dot for accent palettes,
-   theme pickers, or any colour-selection grid.
+   theme pickers, or any color-selection grid.
    Default size 20px; add .lg for 30px (modals).
    Wrap in .ds-swatch-row for consistent gap. ────── */
 .ds-swatch-row {
@@ -2346,7 +2478,7 @@ html.light .ds-chip-check {
     transform var(--dur-fast) ease,
     box-shadow var(--dur-fast) ease;
 }
-/* Soft-light sheen — subtle top-down depth over the colour */
+/* Soft-light sheen — subtle top-down depth over the color */
 .ds-swatch::before {
   content: '';
   position: absolute;
@@ -2374,6 +2506,23 @@ html.light .ds-chip-check {
 }
 .ds-swatch.lg:hover {
   transform: scale(1.12);
+}
+/* Wide — a pill that fills its row rather than sitting at a fixed measure.
+   The `width` prop already makes a fixed-width pill; this is the case where the
+   chip is one of a few colors sharing a row and has to breathe with the panel
+   (which changes width between the `full` and `narrow` tab steps), so the size
+   comes from flex rather than from a px value. Hover lifts instead of scaling:
+   a full-width chip scaling would jump its neighbours. */
+.ds-swatch.wide {
+  flex: 1;
+  min-width: 0;
+}
+.ds-swatch.wide:hover {
+  transform: none;
+  box-shadow:
+    inset 0 0 0 1.5px var(--ksg-w30),
+    0 0 0 1px var(--ksg-b20),
+    var(--shadow-lv-1);
 }
 
 /* Custom rainbow swatch with + icon */
@@ -2598,13 +2747,13 @@ html.light .btn:hover {
    .ds-tag.overlay above. Listed after the plain light override so it wins. */
 html[data-theme='light'] .ds-btn.on-image,
 html.light .ds-btn.on-image {
-  background: var(--ksg-w10);
-  border-color: var(--ksg-w20);
+  background: var(--surface-hover);
+  border-color: var(--border);
   color: var(--text-on-image);
 }
 html[data-theme='light'] .ds-btn.on-image:hover,
 html.light .ds-btn.on-image:hover {
-  background: var(--ksg-w20);
+  background: var(--surface-active);
   color: var(--text-on-image);
 }
 
@@ -2914,7 +3063,7 @@ html.light .ds-thumb-meta {
   justify-content: space-between;
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   padding-top: 1px;
   letter-spacing: 0.02em;
 }
@@ -3047,7 +3196,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
 
 /* ── Slider rail (.ds-rail) ─────────────────────────
    Shared chrome for the custom sliders — balance, VU,
-   and colour. Provides the track, fill, handle, value
+   and color. Provides the track, fill, handle, value
    popup, and the transparent <input type=range> that
    drives interaction + a11y. Visual layers track --pct
    (0–100). No single variant owns this base; each adds
@@ -3067,7 +3216,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
   right: 0;
   height: 8px;
   transform: translateY(-50%);
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
@@ -3082,7 +3231,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
   mix-blend-mode: soft-light;
   pointer-events: none;
 }
-/* Centre-origin fill — spans between 50% and the handle */
+/* Center-origin fill — spans between 50% and the handle */
 .ds-rail-fill {
   position: absolute;
   top: 50%;
@@ -3095,7 +3244,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
 }
 /* ── Balance Slider (.ds-balance) ───────────────────
    Audio L/R balance on the .ds-rail base: the fill is
-   centre-origin (set inline) and L/centre/R notches mark
+   center-origin (set inline) and L/center/R notches mark
    the reference points. */
 .ds-balance-notch {
   position: absolute;
@@ -3111,7 +3260,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
   left: 0;
   width: 1px;
   height: 4px;
-  background: var(--ksg-w20);
+  background: var(--surface-active);
 }
 .ds-balance-notch::before {
   top: 0;
@@ -3203,7 +3352,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
   justify-content: center;
   min-width: 24px;
   padding: 2px 4px;
-  background: var(--ksg-n900);
+  background: var(--bg-mid);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lv-2);
@@ -3230,7 +3379,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
   width: 8px;
   height: 8px;
   transform: translateX(-50%) rotate(45deg);
-  background: var(--ksg-n900);
+  background: var(--bg-mid);
   border: 1px solid var(--border);
   border-top: 0;
   border-left: 0;
@@ -3274,6 +3423,20 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
   width: 8px;
   transform: translateX(-50%);
 }
+/* Bipolar rail (VerticalSlider `center`): zero is the middle, so the midpoint
+   gets a notch and the fill grows out from it toward the handle — the vertical
+   twin of `.ds-balance`. Fill geometry is set inline, like BalanceSlider's. */
+.ds-rail.vertical.centered::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--gutter-sm);
+  height: 1px;
+  transform: translate(-50%, -50%);
+  background: var(--border-med);
+  pointer-events: none;
+}
 .ds-rail.vertical .ds-rail-handle {
   top: auto;
   left: 50%;
@@ -3305,7 +3468,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
    A standard left-origin slider that reuses the shared
    .ds-rail chrome (track / fill / handle / popup /
    input) and adds a VU meter: two rows of level marks
-   above and below the track. The React variant colours
+   above and below the track. The React variant colors
    the marks — neutral, green (reference), green→amber
    (peak), or green→amber→red (clipping). */
 .ds-vu-meter {
@@ -3348,7 +3511,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
    Hue / lightness / opacity pickers. Reuses the shared
    .ds-rail chrome (handle / popup / input) but the
    whole 12px pill track IS the gradient (no fill), and
-   the handle's inner dot shows the current colour via
+   the handle's inner dot shows the current color via
    --handle-color. Gradients are driven by --color. */
 .ds-color-slider {
   height: 20px;
@@ -3388,11 +3551,11 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
     #e61a1a 100%
   );
 }
-/* Lightness — black → colour → white */
+/* Lightness — black → color → white */
 .ds-color-track.lightness {
   background: linear-gradient(90deg, #000 0%, var(--color, var(--accent-color)) 50%, #fff 100%);
 }
-/* Opacity — checkerboard base + transparent → colour */
+/* Opacity — checkerboard base + transparent → color */
 .ds-color-track.opacity {
   background-color: #fff;
   background-image:
@@ -3440,7 +3603,7 @@ html.light .ds-slider input[type='range']::-moz-range-thumb {
   justify-content: space-between;
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   padding-top: 1px;
 }
 
@@ -3547,7 +3710,7 @@ html.light .ds-settings-row {
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   cursor: pointer;
   border-radius: 3px;
   padding: 0;
@@ -3676,7 +3839,7 @@ html.light .ds-toast-msg {
 .ds-ctx-trail {
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -3718,7 +3881,7 @@ html.light .ds-toast-msg {
   font-size: 8.5px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* ── Divider ── */
@@ -4002,7 +4165,7 @@ html.light .ds-ctx-divider {
 .ds-feature-card-meta {
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   letter-spacing: 0.02em;
 }
 
@@ -4030,7 +4193,7 @@ html.light .ds-ctx-divider {
   font-size: var(--text-micro);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
@@ -4083,7 +4246,7 @@ html.light .ds-ctx-divider {
 }
 
 /* ── Device card: battery status (top-left of the image) ──
-   Uses the nGenuity battery icons (icon-battery-NN), which colour themselves.
+   Uses the nGenuity battery icons (icon-battery-NN), which color themselves.
    Each symbol bakes in .s-ok / .s-warn / .s-danger, and the set escalates in
    two steps:
 
@@ -4095,7 +4258,7 @@ html.light .ds-ctx-divider {
                don't "fix" the inconsistency with the levels above it)
 
    Only the casing is currentColor, so currentColor must stay NEUTRAL here.
-   Setting it to a status colour floods the casing and collapses the icon into
+   Setting it to a status color floods the casing and collapses the icon into
    one solid block — which also destroys the 0–10% step, since a fully red icon
    only reads as urgent when the levels above it are not. */
 .ds-feature-card-img .dev-battery {
@@ -4119,12 +4282,12 @@ html.light .ds-ctx-divider {
   letter-spacing: 0.02em;
   color: var(--text-primary);
 }
-/* No `.low` colour rule on purpose. Low charge is already carried by the icon
-   itself — a SHORT, red bar (length as well as colour) — and recolouring the
+/* No `.low` color rule on purpose. Low charge is already carried by the icon
+   itself — a SHORT, red bar (length as well as color) — and recoloring the
    casing was what flooded the icon in the first place. Tinting the percentage
    instead is not an option either: red is 3.42:1 and orange 2.58:1 on the
    light-theme card, both under AA for text this size. Any extra emphasis has
-   to be non-colour. */
+   to be non-color. */
 
 /* ── Device card: per-tab shortcut buttons (under the subhead) ──
    One button per device-modal tab; each opens the modal to that tab. */
@@ -4363,7 +4526,7 @@ html.light .pcard-img {
 }
 .ds-card-price.orig {
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   text-decoration: line-through;
   font-weight: 400;
 }
@@ -4404,6 +4567,7 @@ html.light .ds-card.overlay:hover {
        .modal-body         ← 2-column grid
          .modal-left       ← hero/sidebar (300px)
          .modal-right      ← scrollable content area
+       .modal-footer       ← optional pinned action band (sibling of the body)
 
    .modal-shell is the canonical class. A .ds-modal
    alias will be added in a future pass.
@@ -4571,7 +4735,7 @@ html.light .breadcrumb-back:hover {
 .breadcrumb-sep {
   font-family: var(--font-mono);
   font-size: var(--text-caption);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   line-height: 1;
   user-select: none;
 }
@@ -4616,6 +4780,23 @@ html.light .breadcrumb-back:hover {
 .modal-right::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 2px;
+}
+
+/* Footer band (ModalShell `footer`). A modal's last row is furniture — commit
+   actions, a status strip — so it is a sibling of the body, pinned like the
+   header, not something that drifts inside the scroll area. It spans the full
+   width, under a left rail included, because it belongs to the frame and not to
+   either column. The band owns the separator and the spacing; whatever is
+   placed inside carries none. */
+.modal-footer {
+  flex: none;
+  padding: var(--gutter-sm) var(--gutter);
+  border-top: 1px solid var(--border-light);
+}
+.modal-footer > * {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 /* ── Modal side navigation (.ds-modal-nav) ─────────────────────
@@ -4696,6 +4877,14 @@ html.light .modal-right {
 /* ── Thumbnail Tile (.ds-tile) ──────────────
    Image card for games, apps, and media. Supports
    cover art (default) and icon-only fallback variants.
+
+   NOT the Quick Control tile — that one is `.ds-quick-tile`,
+   at the foot of this file. The two are different components
+   and must never share a class. They did for one release
+   (v0.2.27): the Quick Control block declared a bare
+   `.ds-tile` and, sitting later in the file, put its widget
+   padding, surface and border on every game tile in the
+   library. Keep this namespace for the picture card.
 
    Structure:
      .ds-tile(.glow)             ← container, opt-in glow
@@ -5280,7 +5469,7 @@ html.light .ds-panel-close:hover {
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   transition:
     background var(--dur-fast) var(--ease-default),
     border-color var(--dur-fast) var(--ease-default),
@@ -5470,7 +5659,7 @@ html.light .ds-card-select-tag {
   font-size: var(--text-nano);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   margin-bottom: 1px;
 }
 
@@ -5493,7 +5682,7 @@ html.light .ds-card-select-tag {
   font-family: var(--font-cond);
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-on-image);
   line-height: 1.1;
 }
 
@@ -5605,7 +5794,7 @@ html.light .ds-card-select-tag {
   height: 15px;
   border: none;
   background: none;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   cursor: help;
   padding: 0;
   margin: 0 0 0 ;
@@ -5889,13 +6078,13 @@ html:root .btn.accent:active::before {
    does not change with the theme. */
 html:root .ds-btn.on-image,
 html:root .btn.on-image {
-  background: var(--ksg-w10);
-  border-color: var(--ksg-w20);
+  background: var(--surface-hover);
+  border-color: var(--border);
   color: var(--text-on-image);
 }
 html:root .ds-btn.on-image:hover,
 html:root .btn.on-image:hover {
-  background: var(--ksg-w20);
+  background: var(--surface-active);
   border-color: var(--ksg-w25);
   color: var(--text-on-image);
 }
@@ -6138,7 +6327,7 @@ html:root .ds-panel.open {
 ══════════════════════════════════════════ */
 /*html:root .nav-bar {
   background: var(--nav-bg);
-  border-bottom: 1px solid var(--ksg-w10);
+  border-bottom: 1px solid var(--border-light-m);
   backdrop-filter: blur(24px) saturate(1.4);
 }*/
 
@@ -6194,10 +6383,14 @@ html:root .w-devcard .devw-title {
   font-family: var(--font-mono);
 }
 
+/* The carousel sits on a full-bleed hero image that is dark in both themes, so
+   its copy is on-image ink, not page ink. This override had re-pointed it at
+   --text-dim, which follows the theme and so turned near-black on the artwork
+   in light — the one place the ground does not flip with the theme. */
 html:root .ds-carousel-desc {
   font-size: var(--text-body);
   font-weight: 500;
-  color: var(--text-dim);
+  color: var(--text-on-image-dim);
 }
 
 /* ══════════════════════════════════════════
@@ -6232,15 +6425,15 @@ html:root .search-modal {
     var(--shadow-lv-4);
 }
 html:root .search-header {
-  border-bottom-color: var(--ksg-w10);
+  border-bottom-color: var(--border-light-m);
 }
 html:root .search-footer {
   background: var(--ksg-b20);
-  border-top-color: var(--ksg-w10);
+  border-top-color: var(--border-light-m);
 }
 html:root .search-footer-key {
   background: var(--ksg-btn-secondary-surface);
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
   box-shadow: 0 0 0 1px var(--ksg-b80);
 }
 html:root .search-close-btn:hover {
@@ -6278,7 +6471,7 @@ html:root .search-prompt-chip:hover {
 
 /* Recently-played thumbnails */
 html:root .srg-tile-art {
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
   box-shadow: 0 0 0 1px var(--ksg-b60);
 }
 html:root .srg-tile:hover .srg-tile-art {
@@ -6288,10 +6481,10 @@ html:root .srg-tile:hover .srg-tile-art {
 /* Result rows */
 html:root .sr-item:hover,
 html:root .sr-item.sr-focused {
-  background: var(--ksg-w5);
+  background: var(--surface);
 }
 html:root .sr-group + .sr-group {
-  border-top-color: var(--ksg-w10);
+  border-top-color: var(--border-light-m);
 }
 html:root .sr-action {
   background: var(--ksg-btn-secondary-surface);
@@ -6313,11 +6506,11 @@ html:root .search-results::-webkit-scrollbar-thumb {
 /* AI answer surfaces */
 html:root .search-ai-stat {
   background: var(--ksg-field-surface);
-  border-color: var(--ksg-w10);
+  border-color: var(--border-light-m);
   box-shadow: inset 0 1px 0 var(--ksg-w5);
 }
 html:root .search-ai-disclaimer {
-  border-top-color: var(--ksg-w10);
+  border-top-color: var(--border-light-m);
 }
 
 /* ══════════════════════════════════════════
@@ -6328,17 +6521,17 @@ html:root .spatial-radar-dial {
   background:
     radial-gradient(circle at 50% 40%, var(--ksg-w5), transparent 64%),
     var(--ksg-field-surface);
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
   box-shadow:
     0 0 0 1px var(--ksg-b80),
     inset 0 2px 6px var(--ksg-b40);
 }
 html:root .spatial-radar-dial::before {
-  border-color: var(--ksg-w10);
+  border-color: var(--border-light-m);
 }
 html:root .spatial-center {
   background: var(--ksg-b60);
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
   box-shadow:
     0 0 0 1px var(--ksg-b80),
     inset 0 1px 2px var(--ksg-b40);
@@ -6346,12 +6539,12 @@ html:root .spatial-center {
 html:root .spatial-spk,
 html:root .spatial-sub {
   background: var(--ksg-b40);
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
   box-shadow: 0 0 0 1px var(--ksg-b80);
 }
 html:root .spatial-spk--active {
   background: var(--accent-color);
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
 }
 html:root .spatial-spk.off,
 html:root .spatial-sub.off {
@@ -6359,11 +6552,11 @@ html:root .spatial-sub.off {
 }
 html:root .spatial-io {
   background: var(--ksg-b20);
-  border-color: var(--ksg-w20);
+  border-color: var(--border);
   box-shadow: 0 0 0 1px var(--ksg-b80);
 }
 html:root .spatial-io-div {
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
 }
 
 /* ══════════════════════════════════════════
@@ -6729,7 +6922,7 @@ html:root {
     font-weight: var(--font-medium);
   }
   .uv-info-card.benefits, .uv-info-card.risks {
-    background: var(--ksg-w5);
+    background: var(--surface);
     border: 1px solid var(--border-light);
     .uv-info-card-title {
       color: var(--text-muted);
@@ -6883,11 +7076,11 @@ html:root {
   transition: background var(--dur-fast) var(--ease-default);
 }
 .ds-list-item:hover {
-  background: var(--ksg-w5);
+  background: var(--surface);
 }
 .ds-list-item.selected,
 .ds-list-item[aria-selected='true'] {
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
 }
 .ds-list-item:focus-visible {
   outline: 2px solid var(--accent-color);
@@ -6961,6 +7154,29 @@ html:root {
   border-radius: 0;
 }
 
+/* ── List Heading (.ds-list-heading) ─────────────────
+   A muted label that names a run of rows (Hadouken menu
+   "Software" / "Onboard"). Subheadline type, placeholder
+   color, sitting on the rows' text inset. Wrap the heading
+   and its rows in role="group" aria-labelledby=<heading id>
+   so the grouping reaches assistive tech, not just the eye.
+   Usage: <div role="group" aria-labelledby="g1">
+            <div class="ds-text-subheadline ds-list-heading" id="g1">Onboard</div>
+            <div class="ds-list-item">…</div>
+          </div>                                       */
+.ds-list-heading {
+  padding: var(--gutter-xs) var(--gutter-xs) var(--gutter-xxs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+}
+.ds-list-group {
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── Separator (.ds-separator) ────────────────────────
    A 1px rule, horizontal (default) or vertical. Uses the
    standard --border divider color. Vertical stretches to
@@ -6999,7 +7215,7 @@ html:root {
   background: var(--ksg-panel-surface);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lv-3);
 }
@@ -7034,9 +7250,9 @@ html:root {
   gap: var(--gutter-xs);
   height: 30px;
   padding: 0 calc(var(--gutter-sm) - 4px);
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--ksg-b40);
+  background: var(--surface-sunken);
   color: var(--text-primary);
   font-family: var(--font-display);
   font-size: var(--text-caption);
@@ -7106,8 +7322,8 @@ html:root {
   width: max-content;
   max-width: 220px;
   padding: var(--gutter-xs) var(--gutter-tablet);
-  background: var(--ksg-n900);
-  border: 1px solid var(--ksg-w20);
+  background: var(--bg-mid);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lv-2);
   -webkit-backdrop-filter: blur(16px);
@@ -7139,8 +7355,8 @@ html:root {
   position: absolute;
   width: 8px;
   height: 8px;
-  background: var(--ksg-n900);
-  border: 1px solid var(--ksg-w20);
+  background: var(--bg-mid);
+  border: 1px solid var(--border);
 }
 /* top — tooltip above the trigger, arrow points down */
 .ds-tooltip-popup.top {
@@ -7199,14 +7415,18 @@ html:root {
 
 /* ── NG3 Panel (.ds-ng3-panel) ──────────────────────
    The NGenuity 3 trademark panel: a chamfered tool tab
-   protruding from the top centre, a blurred dark panel
+   protruding from the top center, a blurred dark panel
    body with a header row (RBNo3.1 caps title + action
    icons), and a bordered inner content section.
 
    <div class="ds-ng3-panel">
-     <div class="ds-ng3-tab"><div class="ds-ng3-toolbar">
-       <button class="ds-ng3-tool active">…</button> …
-     </div></div>
+     <div class="ds-ng3-strip">
+       <div class="ds-ng3-aside leading">…</div>
+       <div class="ds-ng3-tab"><div class="ds-ng3-toolbar">
+         <button class="ds-ng3-tool active">…</button> …
+       </div></div>
+       <div class="ds-ng3-aside trailing">…</div>
+     </div>
      <div class="ds-ng3-body">
        <div class="ds-ng3-header">
          <span class="ds-ng3-title ds-text-headline caps">…</span>
@@ -7218,15 +7438,37 @@ html:root {
 .ds-ng3-panel {
   --ng3-tab-h: 40px;
   --ng3-chamfer: 22px;
+  /* The `narrow` step. A panel is as wide as its tab needs: a dense tab earns
+     the full measure, a sparse one reads better held in. Kept here with the
+     panel's other geometry so every canvas gets the same two steps rather than
+     inventing its own percentage. */
+  --ng3-w-narrow: 65%;
   /* Opaque so the tab cleanly covers the body's top border where they meet,
      reading as one continuous outline. */
-  --ng3-surface: color-mix(in srgb, var(--ksg-n900), var(--ksg-n950) 65%);
+  --ng3-surface: color-mix(in srgb, var(--bg-mid), var(--bg-base) 85%);
   position: relative;
   width: 100%;
   padding-top: var(--ng3-tab-h);
 }
 
-/* Panel body — dark card. Its top border is covered by the tab in the centre,
+/* Narrow: held in and centred. The tab strip is centred on the panel, so it
+   travels with it and the chamfer still lands over the body's top edge. */
+.ds-ng3-panel.narrow {
+  width: var(--ng3-w-narrow);
+  margin-inline: auto;
+}
+/* Tabs are a lateral move, so the panel eases between widths instead of
+   snapping — the hero above it holds still either way. */
+.ds-ng3-panel {
+  transition: width var(--dur-normal) var(--ease-default);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-ng3-panel {
+    transition: none;
+  }
+}
+
+/* Panel body — dark card. Its top border is covered by the tab in the center,
    so the tab's chamfer reads as a continuation of the body's top edge. */
 .ds-ng3-body {
   position: relative;
@@ -7240,19 +7482,67 @@ html:root {
   box-shadow: var(--shadow-lv-3);
 }
 
-/* Tool tab — chamfered trapezoid rising from the body's top edge. The element
-   is the 1px border; the inset ::before is the fill, clipped to the same shape.
-   It overlaps the body top by --ng3-overlap so its fill hides the body's top
-   border in the centre. */
-.ds-ng3-tab {
-  --ng3-overlap: 2px;
+/* Tool tab — chamfered trapezoid rising from the body's top edge. It overlaps
+   the body top by --ng3-overlap so its fill hides the body's top border in the
+   center.
+   The trapezoid is drawn by two clipped pseudo-elements rather than by the
+   element itself: ::before is the 1px border, ::after the inset fill. The
+   element must stay UNCLIPPED because clip-path clips descendants, and a tool's
+   tooltip sits above the tab — clipping here erased it entirely. Paint order
+   does the layering for free (::before under ::after), and .ds-ng3-toolbar's
+   own z-index keeps the tools above both. */
+/* The strip the tab lives in: the panel's top --ng3-tab-h, laid out as three
+   columns — a leading aside, the tab, a trailing aside. The asides are equal
+   `minmax(0, 1fr)` tracks, so the tab stays dead-center whatever sits beside
+   it, and aside content that outgrows its track truncates instead of shoving
+   the tab off the body's centerline. A device canvas puts the profile
+   selector in the leading aside and the profile's Save/Undo in the trailing
+   one (Figma Hardware-Mode "Profile Selector"). */
+.ds-ng3-strip {
   position: absolute;
   z-index: 1;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  height: var(--ng3-tab-h);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+}
+.ds-ng3-tab {
+  --ng3-overlap: 2px;
+  position: relative;
+  grid-column: 2;
   height: calc(var(--ng3-tab-h) + var(--ng3-overlap));
-  background: var(--border);
+}
+.ds-ng3-aside {
+  position: relative;
+  /* Over the tab, so a menu opening from the aside clears the tab's tooltips. */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  min-width: 0;
+  height: var(--ng3-tab-h);
+  /* The aside is a track, not a surface: its empty run must never catch a
+     pointer or a hit-test meant for what shows through it (a tooltip rising
+     from the body's top row). Its children take their own events back. */
+  pointer-events: none;
+}
+.ds-ng3-aside > * {
+  pointer-events: auto;
+}
+.ds-ng3-aside.leading {
+  grid-column: 1;
+}
+.ds-ng3-aside.trailing {
+  grid-column: 3;
+  justify-content: flex-end;
+}
+.ds-ng3-tab::before,
+.ds-ng3-tab::after {
+  content: '';
+  position: absolute;
   clip-path: polygon(
     var(--ng3-chamfer) 0,
     calc(100% - var(--ng3-chamfer)) 0,
@@ -7261,16 +7551,12 @@ html:root {
   );
 }
 .ds-ng3-tab::before {
-  content: '';
-  position: absolute;
+  inset: 0;
+  background: var(--border);
+}
+.ds-ng3-tab::after {
   inset: 1px 1px 0 1px;
   background: var(--ng3-surface);
-  clip-path: polygon(
-    var(--ng3-chamfer) 0,
-    calc(100% - var(--ng3-chamfer)) 0,
-    100% 100%,
-    0 100%
-  );
 }
 
 /* Tool row inside the tab */
@@ -7305,8 +7591,23 @@ html:root {
   color: var(--text-primary);
   outline: none;
 }
+/* Selected. Hover and selected used to be the same color, so while you hovered
+   one tab you could not tell which one you were actually on. The Hadouken
+   nav-panel icons answer this with a second layer: the Active state paints the
+   glyph's interior (Icon/Filled, white 20%) as well as brightening the stroke.
+   `--icon-shade` reaches the path through the <use> shadow tree because custom
+   properties inherit into it — the symbol defaults it to transparent, so an
+   icon without the layer is simply unaffected.
+   The shade is FIXED white (Figma's Icon/Filled, #ffffff33 = --ksg-w20), not a
+   theme-flipping surface token: this tab strip stays dark in both themes, so a
+   token that flips to black ink would vanish into it. That is the inverse of
+   the .kbd-qs-divider case, where the panel does flip and fixed white was the
+   bug — the rule is to follow the SURFACE, not the theme.
+   The fill also means selection is carried by shape as well as color, so it
+   does not rely on color alone. */
 .ds-ng3-tool.active {
   color: var(--text-primary);
+  --icon-shade: var(--ksg-w20);
 }
 
 /* Header row — title + actions */
@@ -7354,7 +7655,7 @@ html:root {
   min-height: 0;
   padding: var(--gutter-sm) var(--gutter-sm);
   background: var(--surface);
-  border: 1px solid var(--ksg-w10);
+  border: 1px solid var(--border-light-m);
   border-radius: var(--radius-sm);
 }
 
@@ -7378,14 +7679,26 @@ html:root {
   flex-direction: column;
   gap: var(--gutter-xs);
 }
+/* A panel is a filled frame, not a stack of cards on a floor. Columns already
+   stretch to the panel height (.ds-ng3-grid is align-items: stretch), which
+   left the slack INSIDE a column as dead space under its last card. The last
+   section absorbs it, so every column bottoms out on the same line.
+   `flex-grow` alone, not `flex: 1`: basis stays `auto`, so a section starts at
+   its content height and only ever grows into leftover space — it can never be
+   squashed below its content when the column is tight.
+   To split a column proportionally instead, set `flex` on its sections
+   explicitly (see `.pdm-settings-col` in keyboard-canvas.css). */
+.ds-ng3-col > .ds-ng3-section:last-child {
+  flex-grow: 1;
+}
 /* The bordered sub-card every panel control group sits in. */
 .ds-ng3-section {
   display: flex;
   flex-direction: column;
   gap: var(--gutter-sm);
   padding: var(--gutter-tablet) var(--gutter-sm);
-  background: var(--surface-light);
-  border: 1px solid var(--border);
+  background: var(--surface-lightest);
+  border: 1px solid var(--border-light-m);
   border-radius: var(--radius-sm);
   min-width: 0;
 }
@@ -7395,11 +7708,11 @@ html:root {
   align-items: center;
   gap: var(--gutter-xxs);
   font-family: var(--font-mono);
-  font-size: var(--text-micro);
+  font-size: var(--text-caption);
   font-weight: var(--font-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-primary);
 }
 .ds-ng3-label.strong {
   color: var(--text-primary);
@@ -7416,7 +7729,7 @@ html:root {
   color: var(--text-dim);
 }
 .ds-ng3-label .ds-icon {
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 /* Label ↔ control row (master toggles, inline settings). */
 .ds-ng3-row {
@@ -7492,9 +7805,9 @@ html:root {
   gap: var(--gutter-xs);
   max-width: 100%;
   padding: var(--gutter-xs) var(--gutter-sm);
-  border: 1px solid var(--ksg-w30);
+  border: 1px solid var(--border-med);
   border-radius: var(--radius-xl);
-  background: var(--ksg-b55);
+  background: var(--scrim);
   backdrop-filter: blur(16px);
   box-shadow: var(--shadow-lv-2);
   color: var(--text-primary);
@@ -7562,4 +7875,414 @@ html:root {
   filter: grayscale(0.85);
   pointer-events: none;
   user-select: none;
+}
+
+/* ── Quick Control Tile (.ds-quick-tile) ──────────────────────────────────── */
+/* NOT `.ds-tile` — that name belongs to the thumbnail tile (the game/app
+   picture card, further up this file). This block shipped as `.ds-tile` in
+   v0.2.27 and silently restyled every tile in the game library, because a bare
+   `.ds-tile` here lands on the same element and wins by coming later. The
+   React component is still <Tile>; only the CSS namespace carries the prefix.
+   ─────────────────────────────────────────────────────────────────────────── */
+/* Quick Control tile. One component for every Quick Control surface (the
+   Personalize page today; the in-game overlay and taskbar flyout later): a
+   tile is status + one primary control + a reason line that says why it is
+   here. Placed on .ds-quick-tile-grid, a 4-column grid that reflows to 2 and 1.
+   Shell:  the dashboard widget (.w) — surface, hairline border, gutter padding
+           and gap, overline label — so tiles read as Home and Perform cards.
+   Sizes:  .s (1×1, default) · .m (2×1) · .t (1×2) · .l (2×2) · .full (row)
+   Layout: .row — a compact one-line tile (catalog links)
+   States: .context     — ranked here by a signal; its badge says so
+           .suggested   — a question, not a change (dashed: never color alone)
+           .attention   — something needs you
+           .overridden  — you changed a value a mode owns
+           .unavailable — the device is gone; content drains, overlay-free
+   Parts:  .ds-quick-tile-head (.ds-quick-tile-title + .ds-quick-tile-controls) · .ds-quick-tile-value
+           · .ds-quick-tile-body · .ds-quick-tile-foot (.ds-quick-tile-reason + .ds-quick-tile-actions)
+           · .ds-quick-tile-link
+   ─────────────────────────────────────────────────────────────────────────── */
+.ds-quick-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(calc(var(--control-height) * 4), auto);
+  grid-auto-flow: row dense;
+  gap: var(--gutter);
+}
+@media (max-width: 1024px) {
+  .ds-quick-tile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .ds-quick-tile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ds-quick-tile-grid > .ds-quick-tile.m,
+  .ds-quick-tile-grid > .ds-quick-tile.l {
+    grid-column: span 1;
+  }
+  /* One column is narrow: let the header and footer wrap rather than
+     truncating the title or the reason line. */
+  .ds-quick-tile-head,
+  .ds-quick-tile-foot {
+    flex-wrap: wrap;
+  }
+  .ds-quick-tile-reason {
+    white-space: normal;
+  }
+  /* A row tile's actions drop under its text instead of squeezing it. */
+  .ds-quick-tile.row {
+    flex-wrap: wrap;
+  }
+}
+
+.ds-quick-tile {
+  /* layout */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  min-width: 0;
+  padding: var(--gutter);
+  /* visual — the dashboard widget shell (.w) */
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  /* Not clipped: tooltips and dropdown lists inside a tile must escape it. The
+     wash below carries the corner radius itself instead. */
+  isolation: isolate;
+  /* typography */
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  text-align: left;
+  /* motion */
+  transition:
+    border-color var(--dur-normal) var(--ease-default),
+    background var(--dur-normal) var(--ease-default),
+    box-shadow var(--dur-normal) var(--ease-default);
+}
+/* State wash — a soft corner glow in the state's color, under the content. */
+.ds-quick-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(135deg, var(--ds-quick-tile-wash, transparent) 0%, transparent 60%);
+  transition: opacity var(--dur-normal) var(--ease-default);
+}
+
+/* Sizes */
+.ds-quick-tile.m {
+  grid-column: span 2;
+}
+.ds-quick-tile.t {
+  grid-row: span 2;
+}
+.ds-quick-tile.l {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+.ds-quick-tile.full {
+  grid-column: 1 / -1;
+}
+.ds-quick-tile.row {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-sm) var(--gutter);
+}
+/* Hover lifts the border like a dashboard widget. */
+section.ds-quick-tile:hover {
+  border-color: var(--accent-dim);
+}
+
+/* States */
+.ds-quick-tile.suggested {
+  border-style: dashed;
+  border-color: var(--accent-dim);
+  --ds-quick-tile-wash: var(--accent-dimmest);
+}
+.ds-quick-tile.attention {
+  border-color: color-mix(in srgb, var(--accent-yellow), transparent 45%);
+  --ds-quick-tile-wash: color-mix(in srgb, var(--accent-yellow), transparent 86%);
+}
+.ds-quick-tile.overridden {
+  border-color: var(--border-med);
+}
+.ds-quick-tile.suggested::before,
+.ds-quick-tile.attention::before {
+  opacity: 1;
+}
+.ds-quick-tile.unavailable > * {
+  opacity: 0.45;
+  filter: grayscale(0.85);
+}
+
+/* Interactive (the whole tile is a button — catalog links) */
+button.ds-quick-tile {
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+}
+button.ds-quick-tile:hover {
+  border-color: var(--accent-dim);
+  background: var(--surface-hover);
+}
+button.ds-quick-tile:active {
+  background: var(--surface-active);
+}
+
+/* Selectable — the tile IS the control (profile cards): the same hover a
+   clickable widget gives, on a tile that keeps its head/value/foot. */
+.ds-quick-tile.selectable {
+  cursor: pointer;
+}
+.ds-quick-tile.selectable:hover {
+  background: var(--surface-hover);
+}
+/* Hover lifts the surface, never the selected border: pointing at the one in
+   use must not make it look less chosen. */
+.ds-quick-tile.selectable:hover:not(.selected) {
+  border-color: var(--accent-dim);
+}
+.ds-quick-tile.selectable:active {
+  background: var(--surface-active);
+}
+/* The one in use. The accent border and wash are reinforcement — a selected
+   tile also says so in words (a badge in its header), never colour alone. */
+.ds-quick-tile.selected {
+  border-color: var(--accent-color);
+  --ds-quick-tile-wash: var(--accent-dimmest);
+}
+.ds-quick-tile.selected::before {
+  opacity: 1;
+}
+.ds-quick-tile:focus-visible,
+.ds-quick-tile-link:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Parts */
+.ds-quick-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+  min-height: var(--control-height-sm);
+}
+.ds-quick-tile-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+/* The title text truncates; a reason tooltip beside it must not (it would clip). */
+.ds-quick-tile-title > span:not(.ds-tooltip-wrap) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-quick-tile-title .ds-icon {
+  flex-shrink: 0;
+  color: var(--text-dim);
+}
+.ds-quick-tile-head .ds-quick-tile-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ds-quick-tile-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  flex-shrink: 0;
+}
+.ds-quick-tile-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm-title);
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.ds-quick-tile.l .ds-quick-tile-value,
+.ds-quick-tile.full .ds-quick-tile-value {
+  font-size: var(--text-title);
+}
+.ds-quick-tile.attention .ds-quick-tile-value {
+  color: var(--accent-yellow);
+}
+.ds-quick-tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  font-size: var(--text-micro);
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.ds-quick-tile-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  /* Set off from the tile's content: the footer is a different kind of thing
+     (the way out to the full controls), not the next line of the body. */
+  margin-top: auto;
+  padding-top: var(--gutter-xs);
+  min-height: var(--control-height-sm);
+}
+/* The footer row reserves a link-sized hit target around its text, so a full
+   gutter beneath it would read as a second gap — the row's own height already
+   holds the text off the bottom edge. Tiles that have one keep the smallest pad. */
+.ds-quick-tile:not(.row):has(> .ds-quick-tile-foot) {
+  padding-bottom: var(--gutter-xs);
+}
+.ds-quick-tile-reason {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+}
+/* The reason as an icon: the tooltip holds the words. Hover/focus lifts the
+   tile so its popup paints over neighbouring tiles. */
+.ds-quick-tile:hover,
+.ds-quick-tile:focus-within {
+  z-index: 1;
+}
+.ds-quick-tile-reason-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  margin-left: calc(var(--gutter-xs) * -1);
+  border-radius: var(--radius-full);
+  color: var(--text-dim);
+  cursor: help;
+  transition:
+    color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+/* In a row tile the icon follows the text, so it keeps its own spacing. */
+.ds-quick-tile.row .ds-quick-tile-reason-icon {
+  margin-left: 0;
+}
+.ds-quick-tile-reason-icon:hover,
+.ds-quick-tile-reason-icon:focus-visible {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.ds-quick-tile-reason-icon:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+.ds-quick-tile-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  flex-shrink: 0;
+}
+.ds-quick-tile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  font-weight: var(--font-semibold);
+  color: var(--text-dim);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-default);
+}
+.ds-quick-tile-link:hover {
+  color: var(--text-primary);
+}
+.ds-quick-tile-link:active {
+  color: var(--accent-color);
+}
+.ds-quick-tile-link:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-quick-tile,
+  .ds-quick-tile::before,
+  .ds-quick-tile-link {
+    transition: none;
+  }
+}
+
+/* Light theme */
+html[data-theme='light'] .ds-quick-tile.suggested,
+html.light .ds-quick-tile.suggested {
+  border-color: var(--accent-color);
+}
+.ds-quick-tile.row .ds-quick-tile-actions {
+  margin-left: auto;
+}
+/* Row text: title over a one-line caption, so neither truncates the other. */
+.ds-quick-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+  min-width: 0;
+}
+.ds-quick-tile-row-icon {
+  flex-shrink: 0;
+  color: var(--text-dim);
+}
+/* Row media: a square leading visual (art, device photo) — fills its box. */
+.ds-quick-tile-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: calc(var(--control-height) * 1.5);
+  height: calc(var(--control-height) * 1.5);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+.ds-quick-tile-media > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Row body: extra content between the text and the actions, taking the room. */
+.ds-quick-tile-row-body {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: var(--gutter-sm);
+}
+/* A grid of row tiles sizes to its content instead of the tile row height. */
+.ds-quick-tile-grid.compact {
+  grid-auto-rows: auto;
 }

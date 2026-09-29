@@ -4,9 +4,12 @@
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
 const OUT = process.argv[2] || '/tmp';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
 let msgId = 0;
 function makeSend(ws) {
@@ -35,6 +38,15 @@ async function evalJs(send, expr) {
   return result.value;
 }
 
+// Expression form of waitFor, for state that is not a selector (storage, hash).
+async function waitExpr(send, expr, timeoutMs = 8000) {
+  for (let waited = 0; waited < timeoutMs; waited += 100) {
+    try { if (await evalJs(send, `!!(${expr})`)) return true; } catch {}
+    await sleep(100);
+  }
+  return false;
+}
+
 async function waitFor(send, sel, timeout = 12000) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
@@ -60,9 +72,9 @@ async function main() {
   await send('Runtime.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 2, mobile: false });
 
-  await send('Page.navigate', { url: 'http://localhost:5175/#/?modal=settings' });
-  await sleep(1200);
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/#/?modal=settings` });
   check('settings modal opens', await waitFor(send, '.settings-modal'));
+  await waitFor(send, '.settings-modal .ds-settings-row-label');
 
   // Sectioned modal: left nav (shared .ds-modal-nav) with the three sections,
   // Appearance first — theme/accent/wallpaper migrated from Personalize.
@@ -81,7 +93,7 @@ async function main() {
 
   // Setup section: both rows
   await evalJs(send, `[...document.querySelectorAll('.settings-modal .ds-modal-nav-item')].find(b => b.textContent.trim() === 'Setup').click()`);
-  await sleep(250);
+  await waitFor(send, '.settings-modal .ds-toggle-group-btn');
   const rows = await evalJs(send, `
     [...document.querySelectorAll('.settings-modal .ds-settings-row-label')].map(e => e.textContent.trim())
   `);
@@ -98,7 +110,7 @@ async function main() {
   await evalJs(send, `
     [...document.querySelectorAll('.settings-modal .ds-toggle-group-btn')].find(b => b.textContent.trim() === 'Hands-on').click()
   `);
-  await sleep(300);
+  await waitExpr(send, `/tinkerer/.test(localStorage.getItem('persona') ?? '') && document.querySelector('.settings-modal .ds-toggle-group-btn.active')?.textContent.trim() === 'Hands-on'`);
   const persona = await evalJs(send, `localStorage.getItem('persona')`);
   check('click Hands-on → persona=tinkerer', persona === 'tinkerer' || persona === '"tinkerer"', String(persona));
   const active = await evalJs(send, `
@@ -114,7 +126,7 @@ async function main() {
   await evalJs(send, `
     [...document.querySelectorAll('.settings-modal .ds-toggle-group-btn')].find(b => b.textContent.trim() === 'Guided').click()
   `);
-  await sleep(300);
+  await waitExpr(send, `/learner/.test(localStorage.getItem('persona') ?? '')`);
   const persona2 = await evalJs(send, `localStorage.getItem('persona')`);
   check('click Guided → persona=learner', /learner/.test(String(persona2)), String(persona2));
 
@@ -125,7 +137,7 @@ async function main() {
   await evalJs(send, `
     [...document.querySelectorAll('.settings-modal button')].find(b => b.textContent.trim() === 'Redo setup').click()
   `);
-  await sleep(600);
+  await waitExpr(send, `location.hash.startsWith('#/onboarding')`);
   const hash = await evalJs(send, `location.hash`);
   check('Redo setup → #/onboarding', hash.startsWith('#/onboarding'), hash);
   check('onboarding welcome renders', await waitFor(send, '.onb .onb-h1'));

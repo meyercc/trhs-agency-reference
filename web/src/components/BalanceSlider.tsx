@@ -5,7 +5,7 @@ export interface BalanceSliderProps
   min?: number;
   max?: number;
   step?: number;
-  /** Controlled value (centre = midpoint of min/max). */
+  /** Controlled value (center = midpoint of min/max). */
   value?: number;
   /** Uncontrolled initial value. */
   defaultValue?: number;
@@ -20,12 +20,12 @@ export interface BalanceSliderProps
 /**
  * Audio L/R balance slider over the design system's shared `.ds-rail` chrome
  * plus the `.ds-balance` modifier. Unlike a normal slider, the fill grows from
- * the CENTRE toward the handle — left of centre fills left, right fills right —
- * with L/centre/R notches and a value popup while dragging or focused. A
+ * the CENTER toward the handle — left of center fills left, right fills right —
+ * with L/center/R notches and a value popup while dragging or focused. A
  * transparent native range input drives interaction and accessibility; the
  * visual layers track `--pct`.
  *
- * Avalonia: a Slider ControlTheme with a centre-anchored decorator for the
+ * Avalonia: a Slider ControlTheme with a center-anchored decorator for the
  * fill and a ToolTip-style popup bound to Value.
  */
 export const BalanceSlider = forwardRef<HTMLInputElement, BalanceSliderProps>(function BalanceSlider(

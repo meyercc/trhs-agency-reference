@@ -1,0 +1,57 @@
+/* ── HomeV2 (#/home-v2) — dashboard concept for the partner comparison ──
+   Only .hv2-* selectors; tokens only. The cards are the board's own widgets, so
+   nothing here styles a card — this file places four of them and stops.
+
+   The grid is the home board's grammar on purpose (`.wb-grid`, board.css): six
+   columns and `--widget-row` rows, so 2/3 and 1/3 land on the same column edges
+   the real dashboard uses and the two can be read side by side. */
+
+.hv2-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: var(--widget-row);
+  gap: var(--gutter);
+}
+
+/* Every card is two rows tall — the decided height for all four, so the page
+   reads as two bands rather than four unrelated cards. */
+.hv2-cell {
+  grid-row: span 2;
+  min-width: 0;
+  display: flex;
+}
+/* The widget shell is a flex column with no height of its own, so it fills the
+   cell the grid gave it. */
+.hv2-cell > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Row one: the headset at two thirds, the monitor beside it in the last third.
+   Row two: the mirror — system vitals at one third, last played at two thirds. */
+.hv2-cell[data-card='headset'] { grid-column: span 4; }
+.hv2-cell[data-card='monitor'] { grid-column: span 2; }
+.hv2-cell[data-card='vitals'] { grid-column: span 2; }
+.hv2-cell[data-card='lastplayed'] { grid-column: span 4; }
+
+/* Tablet: the asymmetry is the concept, but it cannot survive a 130px column —
+   the pairing stays (headset beside monitor, vitals beside last played) and the
+   two thirds become one half. */
+@media (max-width: 900px) {
+  .hv2-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .hv2-cell[data-card='headset'],
+  .hv2-cell[data-card='monitor'],
+  .hv2-cell[data-card='vitals'],
+  .hv2-cell[data-card='lastplayed'] {
+    grid-column: span 1;
+  }
+}
+
+/* Mobile: one column, in reading order. */
+@media (max-width: 600px) {
+  .hv2-grid {
+    grid-template-columns: 1fr;
+  }
+}

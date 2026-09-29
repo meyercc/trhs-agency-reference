@@ -43,7 +43,7 @@ function ShadowCard({ token, name, use }: (typeof LEVELS)[number]) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-primary)' }}>{token}</code>
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, color: 'var(--text-muted)' }}>{use}</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, lineHeight: 1.4, color: 'var(--text-subtle)', wordBreak: 'break-word' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, lineHeight: 1.4, color: 'var(--text-muted)', wordBreak: 'break-word' }}>
           {resolved}
         </span>
       </div>

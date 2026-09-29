@@ -13,12 +13,12 @@ import { useEffect, useId, useRef, useState } from 'react';
 // failure. This is click-activated, so it has a visible affordance, and it is
 // panel-sized, so it can hold real content.
 //
-// Behaviour, fixed here because this is the first one in the codebase:
+// Behavior, fixed here because this is the first one in the codebase:
 //   · click the trigger to open, click anywhere outside to dismiss
 //   · Escape closes and returns focus to the trigger
-//   · NO scrim — a scrim would make it read as a Dialogue and imply a commit
+//   · NO scrim — a scrim would make it read as a Dialog and imply a commit
 //   · the trigger carries aria-expanded and aria-controls
-//   · the panel is labelled by the trigger and takes focus on open
+//   · the panel is labeled by the trigger and takes focus on open
 
 export interface InfoDisclosureProps {
   /** Trigger text. Short — it sits next to a title. */

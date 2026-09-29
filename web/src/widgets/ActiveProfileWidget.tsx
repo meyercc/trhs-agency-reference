@@ -1,17 +1,24 @@
+import { useSearchParams } from 'react-router-dom';
 import { WidgetShell, ToggleButtonGroup } from '../components';
-import { useSettings } from '../state/Settings';
-import { SOFTWARE_PROFILES } from '../state/profiles';
+import { useProfiles } from '../state/Profiles';
 
 export function ActiveProfileWidget() {
-  const { activeProfileId, setActiveProfileId } = useSettings();
+  const { profiles, activeId, selectProfile } = useProfiles();
+  const [, setParams] = useSearchParams();
+  const openManage = () =>
+    setParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set('modal', 'profiles');
+      return p;
+    });
   return (
-    <WidgetShell title="Active Profile" action={{ label: 'Manage →' }}>
+    <WidgetShell title="Active Profile" action={{ label: 'Manage →', onClick: openManage }}>
       <div style={{ marginTop: 'var(--gutter-sm)' }}>
         <ToggleButtonGroup
           aria-label="Profile"
-          value={activeProfileId}
-          onChange={setActiveProfileId}
-          options={SOFTWARE_PROFILES.map((p) => ({ label: p.name, value: p.id }))}
+          value={activeId}
+          onChange={selectProfile}
+          options={profiles.map((p) => ({ label: p.name, value: p.id }))}
         />
       </div>
     </WidgetShell>

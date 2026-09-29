@@ -35,7 +35,7 @@
 
 .pz2-screen-name { font-size: var(--text-caption); color: var(--text-primary); margin-top: 4px; }
 .pz2-screen--sel .pz2-screen-name { color: var(--accent-color); }
-.pz2-screen-meta { font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.04em; color: var(--text-subtle); }
+.pz2-screen-meta { font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.04em; color: var(--text-muted); }
 
 .pz2-rel-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter); padding: 11px 2px; border-bottom: 1px solid var(--border-light); }
 .pz2-rel-row:last-child { border-bottom: none; padding-bottom: 2px; }
@@ -45,11 +45,11 @@
 .pz2-ctl-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gutter); min-height: 34px; }
 .pz2-ctl-row--slider { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: var(--gutter-sm); }
 .pz2-ctl-slider { min-width: 0; }
-.pz2-ctl-auto { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-subtle); }
+.pz2-ctl-auto { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 
 /* the selected screen's sub area (rides pv5-pm-sub: indent + accent spine) */
 .pz2-sub { margin-top: var(--gutter-sm); margin-bottom: 6px; }
-.pz2-sub-head { font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-subtle); }
+.pz2-sub-head { font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
 
 /* ── Lighting main element: the desk scene — real product shots in rough
    spatial position, each device lit by its own light. The bloom is a
@@ -84,7 +84,7 @@
 .pz2-lighting--sync .pz2-dev-fig { border-color: color-mix(in srgb, var(--accent-color), transparent 55%); background: rgba(255, 255, 255, 0.02); }
 .pz2-dev--sel .pz2-dev-name { color: var(--accent-color); }
 .pz2-dev:focus-visible .pz2-dev-fig { outline: 2px solid var(--accent-color); outline-offset: 2px; }
-.pz2-dev-name { font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.04em; color: var(--text-subtle); margin-top: 5px; }
+.pz2-dev-name { font-family: var(--font-mono); font-size: var(--text-nano); letter-spacing: 0.04em; color: var(--text-muted); margin-top: 5px; }
 
 @keyframes pz2-breathe { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.14; } }
 @keyframes pz2-wave { 0%, 100% { transform: translateX(-72%); } 50% { transform: translateX(-28%); } }

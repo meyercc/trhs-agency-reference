@@ -4,7 +4,9 @@
 // Register decision B (2026-07-22, consultant review with Cindy): the app shows
 // "the display set" in two deliberate registers —
 //   • photoreal (HERE)  = IDENTIFICATION / desirability, scoped to THIS device
-//   • schematic (Perform DeviceOverview / Personalize) = arrangement + routing + KVM
+//   • schematic (Personalize Display section, redesign in progress 2026-08-18;
+//     the Perform DeviceOverview that carried this register is retired) =
+//     arrangement + routing + KVM
 // So this HERO is READ-ONLY and deliberately DROPS the routing / topology /
 // desktop-level actions it used to carry (KVM routing tag, EXTEND/MIRROR toggle,
 // Save-as-profile). Those live on the schematic surfaces, which stay the single
@@ -12,7 +14,7 @@
 // can-disagree AI-zone risk.
 //
 // Roster = the display set (v3): Treehouse 32 (this display) · Built-in (MacBook)
-// · OMEN OLED 27. The Gaming Laptop is a KVM host (a non-display) → NOT shown
+// · OMEN OLED 27. The second computer is a KVM host (a non-display) → NOT shown
 // here; it lives on the schematic Device Overview where routing belongs.
 //
 // Composition matches the Canvas "Home" original (borderless photoreal row, names
@@ -24,6 +26,7 @@
 // ══════════════════════════════════════════════════════════════════════════
 import { useNavigate } from 'react-router-dom';
 import { Button, Icon } from '../../components';
+import { deskDisplayCount } from '../arrangement';
 import './monitor-arrangement.css';
 import treehouseUrl from './assets/treehouse32-front-tight.png';
 import macbookUrl from './assets/macbook-front-generic.png';
@@ -62,10 +65,15 @@ const DISPLAYS: ArDisplay[] = [
 
 export function RichArrangement() {
   const navigate = useNavigate();
+  // Only the screens the desk actually has. This list is already written in
+  // keep-priority order (Treehouse 32 first, then the lid, then the OMEN), the
+  // same order `arrangement.ts` drops from, so a slice is the whole filter —
+  // and the two surfaces can never disagree about which screen went away.
+  const shown = DISPLAYS.slice(0, deskDisplayCount());
   return (
     <section className="mar" aria-label="Displays">
       <div className="ar-stage">
-        {DISPLAYS.map((d) => (
+        {shown.map((d) => (
           <div key={d.name} className={'ar-dev' + (d.thisDisplay ? ' this' : '')}>
             <div className={'ar-render ar-' + d.kind}>
               {d.thisDisplay && <span className="ar-thisdisplay">◇ THIS DISPLAY</span>}

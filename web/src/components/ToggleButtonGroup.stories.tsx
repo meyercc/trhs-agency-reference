@@ -44,3 +44,53 @@ export const TwoUp: Story = {
     );
   },
 };
+
+/**
+ * `fullWidth` — the pill spans its container and the options share the width
+ * evenly. Use it where the group IS the control for its row (the headset's
+ * notification mode, say); the default content width is right where the group
+ * sits beside other content and should read as a chip.
+ */
+export const FullWidth: Story = {
+  render: () => {
+    const [v, setV] = useState('voice');
+    return (
+      <div style={{ width: 360 }}>
+        <ToggleButtonGroup
+          fullWidth
+          aria-label="Notifications"
+          value={v}
+          onChange={setV}
+          options={[
+            { label: 'Voice', value: 'voice' },
+            { label: 'Tone', value: 'tone' },
+            { label: 'None', value: 'none' },
+          ]}
+        />
+      </div>
+    );
+  },
+};
+
+/** Icon options, with or without their labels. Icon-only options carry the label as their accessible name. */
+export const WithIcons: Story = {
+  args: {
+    value: 'grid',
+    options: [
+      { label: 'Grid', value: 'grid', icon: 'grid' },
+      { label: 'List', value: 'list', icon: 'details' },
+    ],
+    'aria-label': 'Layout',
+  },
+};
+export const IconOnly: Story = {
+  args: {
+    value: 'grid',
+    iconOnly: true,
+    options: [
+      { label: 'Grid', value: 'grid', icon: 'grid' },
+      { label: 'List', value: 'list', icon: 'details' },
+    ],
+    'aria-label': 'Layout',
+  },
+};

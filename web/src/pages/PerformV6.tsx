@@ -32,7 +32,7 @@ import './perform-v6.css';
 //   · each card declares one HERO READING form fit to its data
 //     (NB → Metric pair · Fan Cleaner → Level bar · System Cleaner → Metric ·
 //      OMEN AI → Facts receipts) — Facts stays the baseline everywhere
-//   · identity icon tiles return to feature-card headers (the colour anchors)
+//   · identity icon tiles return to feature-card headers (the color anchors)
 // Only three cards + the kit are forked into widgets/perform6; everything else
 // is reused from perform5 untouched.
 

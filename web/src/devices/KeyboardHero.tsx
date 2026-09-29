@@ -23,7 +23,7 @@ import {
  * so the Lighting and Keys panels can drive and read it.
  *   • Keys mode  → Base/FN toggle; clicking a key selects it (assignment target).
  *   • Lights mode → quick-select rail + click-to-toggle a key's lighting select;
- *                  applied preset/editor colours paint keys via `--key-rgb`.
+ *                  applied preset/editor colors paint keys via `--key-rgb`.
  */
 
 /** Movement (px, Manhattan) that turns a press into a drag rather than a click. */
@@ -44,7 +44,7 @@ export interface KeyboardHeroProps {
   onLayer: (layer: KbLayer) => void;
   selected: string | null;
   litSel: Set<string>;
-  /** code → applied backlight colour (CSS colour string). */
+  /** code → applied backlight color (CSS color string). */
   keyColors: Map<string, string>;
   /** code → custom per-layer remaps. */
   binds: Map<string, KeyBinds>;
@@ -239,7 +239,7 @@ export function KeyboardHero({
           {/* The marquee tool leads the rail, ahead of Reset and the presets:
               it is how you build a selection the presets don't cover. Armed
               state is a filled chip as well as a brighter glyph — pressed is
-              never carried by colour alone. */}
+              never carried by color alone. */}
           <button
             type="button"
             className={'kbd-qs-btn kbd-qs-icon' + (marquee ? ' active' : '')}

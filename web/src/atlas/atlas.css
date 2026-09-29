@@ -43,19 +43,19 @@
     box-shadow 0.15s ease;
 }
 .atlas-node.kind-page {
-  --_accent: #00c8d7;
+  --_accent: var(--cyan);
 }
 .atlas-node.kind-feature-modal {
-  --_accent: #7cc5ff;
+  --_accent: var(--blue);
 }
 .atlas-node.kind-device-modal {
-  --_accent: #f6a13c;
+  --_accent: var(--orange);
 }
 .atlas-node.kind-panel {
-  --_accent: #56d364;
+  --_accent: var(--green);
 }
 .atlas-node.kind-alt {
-  --_accent: #b38cf0;
+  --_accent: var(--purple);
 }
 .atlas-node[data-interacting] {
   box-shadow:

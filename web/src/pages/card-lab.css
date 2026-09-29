@@ -92,7 +92,7 @@ button.clab-mini { cursor: pointer; }
   color: var(--text-muted);
   text-transform: uppercase;
 }
-.clab-mini-glyph { margin-left: auto; color: var(--text-subtle); }
+.clab-mini-glyph { margin-left: auto; color: var(--text-muted); }
 .clab-seam {
   border-top: 1px solid var(--border-light);
   margin: var(--gutter-xxs) calc(-1 * var(--gutter-sm));

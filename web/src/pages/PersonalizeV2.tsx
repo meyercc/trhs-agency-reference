@@ -130,14 +130,14 @@ export function PersonalizeV2() {
               <div className="ds-feature-card-title">Input</div>
               <CardDoor verb="manage" />
             </div>
-            <Hero>QuadCast 2 S</Hero>
+            <Hero>SoloCast 2 Pro</Hero>
             <div className="pz2-ctl-row">
               <span className="pz2-rel-label">Noise reduction</span>
               <Toggle checked={noiseReduction} onChange={setNoiseReduction} aria-label="Noise reduction" />
             </div>
             <Facts
               items={[
-                { label: 'Device', value: 'HyperX QuadCast 2 S · USB' },
+                { label: 'Device', value: 'HyperX SoloCast 2 Pro · USB' },
                 { label: 'Gain', value: '72%' },
               ]}
             />

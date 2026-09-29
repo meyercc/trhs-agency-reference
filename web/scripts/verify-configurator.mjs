@@ -1,11 +1,14 @@
 // CDP walkthrough for the React SKU Registry (/registry) + Configurator
-// (/configurator). Dev server :5175, headless Chrome :9222, run from web/.
+// (/configurator). Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
 const OUT = process.argv[2] || '/tmp';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
 let msgId = 0;
 function makeSend(ws) {
@@ -34,6 +37,17 @@ async function evalJs(send, expr) {
   return result.value;
 }
 
+// Poll until `expr` is truthy. Replaces fixed sleeps: under CPU contention (the
+// parallel verify lane) a sleep that was "long enough" reads mid-render. An eval
+// that throws (execution context torn down by a navigation) counts as not-yet.
+async function waitFor(send, expr, timeoutMs = 8000) {
+  for (let waited = 0; waited < timeoutMs; waited += 100) {
+    try { if (await evalJs(send, `!!(${expr})`)) return true; } catch {}
+    await sleep(100);
+  }
+  return false;
+}
+
 const results = [];
 const check = (name, ok, detail = '') => {
   results.push({ name, ok });
@@ -41,9 +55,11 @@ const check = (name, ok, detail = '') => {
 };
 
 let loadN = 0;
-async function nav(send, hash) {
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#${hash}` });
-  await sleep(1100);
+// `ready` is the expression that proves the route rendered. The unique ?r= is
+// what proves the NEW document committed — the old one has the same selectors.
+async function nav(send, hash, ready) {
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#${hash}` });
+  await waitFor(send, `location.search.includes('r=${loadN}') && document.readyState === 'complete' && (${ready})`);
 }
 
 async function main() {
@@ -57,11 +73,11 @@ async function main() {
   await send('Emulation.setDeviceMetricsOverride', { width: 1600, height: 1000, deviceScaleFactor: 2, mobile: false });
 
   // ── Registry ──
-  await nav(send, '/registry');
+  await nav(send, '/registry', `document.querySelector('.reg-card')`);
   let n = await evalJs(send, `document.querySelectorAll('.reg-card').length`);
   check('registry: cards render', n > 20, `${n} cards`);
   await evalJs(send, `[...document.querySelectorAll('.reg-chips .ds-chip')].find(c => c.textContent.trim() === 'microphone').click()`);
-  await sleep(300);
+  await waitFor(send, `document.querySelectorAll('.reg-card').length !== ${n}`);
   n = await evalJs(send, `document.querySelectorAll('.reg-card').length`);
   check('registry: type filter → 9 mics', n === 9, String(n));
   await evalJs(send, `[...document.querySelectorAll('.reg-chips .ds-chip')].find(c => c.textContent.trim() === 'all').click()`);
@@ -70,7 +86,8 @@ async function main() {
     const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
     set.call(inp, 'cloud iii s'); inp.dispatchEvent(new Event('input', { bubbles: true }));
   `);
-  await sleep(300);
+  // 'all' briefly restores the full list before the search narrows it again.
+  await waitFor(send, `(c => c > 0 && c < 9)(document.querySelectorAll('.reg-card').length)`);
   n = await evalJs(send, `document.querySelectorAll('.reg-card').length`);
   check('registry: search narrows', n >= 1 && n <= 3, String(n));
   let shot = await send('Page.captureScreenshot', { format: 'png' });
@@ -78,18 +95,20 @@ async function main() {
 
   // Preview opens the real canvas over the page
   await evalJs(send, `[...document.querySelectorAll('.reg-card')][0].querySelector('.reg-card-btns .ds-btn')?.click() ?? [...document.querySelectorAll('.reg-card button')].find(b => b.textContent.trim() === 'Preview').click()`);
-  await sleep(900);
+  await waitFor(send, `document.querySelector('.dc-canvas')`);
   check('registry: Preview opens device canvas', await evalJs(send, `!!document.querySelector('.dc-canvas')`));
   await evalJs(send, `document.querySelector('.dc-close').click()`);
-  await sleep(400);
+  await waitFor(send, `!document.querySelector('.dc-canvas')`);
 
   // Edit navigates to the configurator
   await evalJs(send, `[...document.querySelectorAll('.reg-card button')].find(b => b.textContent.trim() === 'Edit').click()`);
-  await sleep(900);
+  await waitFor(send, `location.hash.includes('/configurator?edit=')`);
   check('registry: Edit → configurator', await evalJs(send, `location.hash.includes('/configurator?edit=')`), await evalJs(send, `location.hash`));
 
   // ── Configurator: edit cloud-iii-s ──
-  await nav(send, '/configurator?edit=cloud-iii-s');
+  await nav(send, '/configurator?edit=cloud-iii-s', `document.querySelector('.cfg-editing')
+    && document.querySelector('.cfg-stage .dc-canvas .ds-ng3-panel')
+    && /cloud-iii-s/.test(document.querySelector('.cfg-json pre')?.textContent ?? '')`);
   check('cfg: editing badge', await evalJs(send, `!!document.querySelector('.cfg-editing')`));
   check('cfg: live canvas preview in stage', await evalJs(send, `!!document.querySelector('.cfg-stage .dc-canvas .ds-ng3-panel')`));
   let spec = await evalJs(send, `document.querySelector('.cfg-json pre').textContent`);
@@ -98,7 +117,7 @@ async function main() {
   // EQ section visible in the preview before, gone after toggling Equalizer off
   const eqBefore = await evalJs(send, `[...document.querySelectorAll('.cfg-stage .ds-ng3-label')].some(l => l.textContent.includes('Audio Equalizer'))`);
   await evalJs(send, `[...document.querySelectorAll('.cfg-form .ds-ng3-row')].find(r => r.textContent.trim().startsWith('Equalizer')).querySelector('.ds-toggle').click()`);
-  await sleep(400);
+  await waitFor(send, `![...document.querySelectorAll('.cfg-stage .ds-ng3-label')].some(l => l.textContent.includes('Audio Equalizer'))`);
   const eqAfter = await evalJs(send, `[...document.querySelectorAll('.cfg-stage .ds-ng3-label')].some(l => l.textContent.includes('Audio Equalizer'))`);
   spec = await evalJs(send, `document.querySelector('.cfg-json pre').textContent`);
   check('cfg: Equalizer off → preview updates live', eqBefore === true && eqAfter === false, `before=${eqBefore} after=${eqAfter}`);
@@ -113,30 +132,30 @@ async function main() {
     const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
     set.call(s, '10'); s.dispatchEvent(new Event('input', { bubbles: true })); s.dispatchEvent(new Event('change', { bubbles: true }));
   `);
-  await sleep(400);
+  await waitFor(send, `/10%/.test([...document.querySelectorAll('.cfg-stage .dc-chip-val')].map(e => e.textContent).join('/'))`);
   const chip = await evalJs(send, `[...document.querySelectorAll('.cfg-stage .dc-chip-val')].map(e => e.textContent.trim()).join('/')`);
   check('cfg: battery slider → preview chip', /10%/.test(chip), chip);
 
   // Type switch swaps the form + canvas
   await evalJs(send, `[...document.querySelectorAll('.cfg-form .ds-dropdown-trigger')].find(t => t.textContent.trim() === 'headset').click()`);
-  await sleep(200);
+  await waitFor(send, `document.querySelector('.ds-dropdown-pop')`);
   await evalJs(send, `[...document.querySelectorAll('.ds-dropdown-pop .ds-list-item, .ds-dropdown-pop [role=option], .ds-dropdown-pop li')].find(o => o.textContent.trim() === 'mouse').click()`);
-  await sleep(500);
+  await waitFor(send, `document.querySelector('.cfg-stage .dc-sensor, .cfg-stage .dc-buttons')`);
   const mouseForm = await evalJs(send, `[...document.querySelectorAll('.cfg-feature-name')].map(e => e.textContent.trim()).join('/')`);
   check('cfg: type switch → mouse form', /Sensor/.test(mouseForm), mouseForm);
   check('cfg: type switch → mouse canvas', await evalJs(send, `!!document.querySelector('.cfg-stage .dc-sensor, .cfg-stage .dc-buttons')`));
 
   // Save guard without id/name (Start fresh clears identity first)
   await evalJs(send, `[...document.querySelectorAll('.cfg-editing .ds-btn, .cfg-editing button')].find(b => b.textContent.includes('Start fresh'))?.click()`);
-  await sleep(300);
+  await waitFor(send, `!document.querySelector('.cfg-editing')`);
   await evalJs(send, `[...document.querySelectorAll('.cfg-actions .ds-btn')].find(b => b.textContent.includes('Save')).click()`);
-  await sleep(300);
+  await waitFor(send, `document.querySelector('.cfg-toast')?.textContent`);
   const toast = await evalJs(send, `document.querySelector('.cfg-toast')?.textContent ?? ''`);
   check('cfg: save guard (no id/name)', /Need id, name/.test(toast), toast);
 
   // ── Colorway label field (was dropped in the React port) ──
   // `haste` is the fixture: saga-pro ships no colorways, so it renders no rows.
-  await nav(send, '/configurator?edit=haste');
+  await nav(send, '/configurator?edit=haste', `document.querySelector('.cfg-cw-row input[aria-label="Colorway 1 label"]')`);
   const cwFields = await evalJs(send, `[...document.querySelectorAll('.cfg-cw-row')][0]
     ? [...document.querySelectorAll('.cfg-cw-row')[0].querySelectorAll('input[aria-label]')].map(i => i.getAttribute('aria-label'))
     : null`);
@@ -153,14 +172,14 @@ async function main() {
     setter.call(i, 'Midnight');
     i.dispatchEvent(new Event('input', { bubbles: true }));
   })()`);
-  await sleep(400);
+  await waitFor(send, `/Midnight/.test(document.querySelector('.cfg-json pre')?.textContent ?? '')`);
   const cwSpec = await evalJs(send, `(() => {
     try { return JSON.parse(document.querySelector('.cfg-json pre').textContent).colorways[0].label; } catch (e) { return null; }
   })()`);
   check('cfg: edited colorway label lands in the spec', cwSpec === 'Midnight', JSON.stringify(cwSpec));
 
   // ── Mouse callouts editor (ported from the vanilla 6 chip-slot rows) ──
-  await nav(send, '/configurator?edit=saga-pro');
+  await nav(send, '/configurator?edit=saga-pro', `document.querySelectorAll('.cfg-callout-row').length === 6`);
   const callouts = await evalJs(send, `(() => {
     const rows = [...document.querySelectorAll('.cfg-callout-row')];
     return {
@@ -174,7 +193,7 @@ async function main() {
 
   // Unclaiming a slot drops it from the spec and disables its inputs.
   await evalJs(send, `document.querySelectorAll('.cfg-callout-row')[5].querySelector('input[type=checkbox]').click()`);
-  await sleep(350);
+  await waitFor(send, `document.querySelectorAll('.cfg-callout-row')[5]?.classList.contains('cfg-off')`);
   const afterUnclaim = await evalJs(send, `(() => {
     const row = document.querySelectorAll('.cfg-callout-row')[5];
     return { off: row.classList.contains('cfg-off'), disabled: row.querySelector('input[aria-label$="callout id"]').disabled };
@@ -183,7 +202,7 @@ async function main() {
 
   // Re-claiming restores the slot in canonical order, not at the end.
   await evalJs(send, `document.querySelectorAll('.cfg-callout-row')[5].querySelector('input[type=checkbox]').click()`);
-  await sleep(350);
+  await waitFor(send, `!document.querySelectorAll('.cfg-callout-row')[5]?.classList.contains('cfg-off')`);
   const json = await evalJs(send, `(() => {
     try { return JSON.parse(document.querySelector('.cfg-json pre').textContent).features.buttons.callouts.map(c => c.slot); }
     catch (e) { return null; }
@@ -194,7 +213,7 @@ async function main() {
 
   // ── Share link (?spec=) renders a draft with no commit ──
   const b64 = Buffer.from(JSON.stringify({ $schema: 1, id: '', name: 'Draft Headset', type: 'headset', features: { audio: { equalizer: false }, spatial: false } })).toString('base64');
-  await nav(send, `/?spec=${encodeURIComponent(b64)}`);
+  await nav(send, `/?spec=${encodeURIComponent(b64)}`, `document.querySelector('.dc-canvas .ds-ng3-tool')`);
   const specTabs = await evalJs(send, `[...document.querySelectorAll('.dc-canvas .ds-ng3-tool')].map(b => b.getAttribute('aria-label'))`);
   check('share link: ?spec= renders draft canvas', JSON.stringify(specTabs) === JSON.stringify(['Audio', 'Settings']), specTabs?.join('/'));
   check('share link: draft name on dialog', await evalJs(send, `document.querySelector('.dc-canvas')?.getAttribute('aria-label')`) === 'Draft Headset');

@@ -19,8 +19,8 @@
 //     the System Vitals gauge value). One word per card, from this table only:
 //       optimizing  automation is triggered and doing its job NOW (green)
 //       idle        armed — waiting for its trigger; the card must
-//                   say WHEN it starts (a `Starts` fact)          (grey)
-//       inactive    automation is off — user's choice, not an error (grey)
+//                   say WHEN it starts (a `Starts` fact)          (gray)
+//       inactive    automation is off — user's choice, not an error (gray)
 //       ready       a manual action is available and safe to run (green)
 //       good        health reading is fine                       (green)
 //       quiet       monitoring: nothing needs attention          (green)

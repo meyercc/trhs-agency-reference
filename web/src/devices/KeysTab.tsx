@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Icon, Input, Ng3Label } from '../components';
+import { Icon, Input, Ng3Grid, Ng3Label, Ng3Section } from '../components';
 import { KEYCAP_SETS, KEY_CATEGORIES, ASSIGN_TYPES } from './keysData';
 import { KEY_BY_CODE, type KbLayer, type KeyBinds } from './keyboardLayout';
 
@@ -53,9 +53,9 @@ export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, 
   const target = buildTarget(selected, armed, layer, binds);
 
   return (
-    <div className="pdm-keys">
+    <Ng3Grid className="pdm-keys">
       {/* Left — assignment rail */}
-      <aside className="pdm-keys-rail">
+      <Ng3Section as="aside" className="pdm-keys-rail">
         <div className="pdm-keys-rail-head">
           <Ng3Label strong>Assignments</Ng3Label>
           <Icon name="info" size={16} />
@@ -89,10 +89,10 @@ export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, 
             Reset Layer
           </button>
         </div>
-      </aside>
+      </Ng3Section>
 
       {/* Right — key browser */}
-      <section className="pdm-keys-browse">
+      <Ng3Section as="section" className="pdm-keys-browse">
         <div className={'pdm-keys-target'} data-state={target.state}>
           <span className="pdm-keys-target-key" aria-hidden={target.state === 'empty'}>
             {target.key ?? '—'}
@@ -143,8 +143,8 @@ export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, 
           })}
           {q && totalHits === 0 && <div className="pdm-keys-empty">No keys match your search.</div>}
         </div>
-      </section>
-    </div>
+      </Ng3Section>
+    </Ng3Grid>
   );
 }
 

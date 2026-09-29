@@ -25,7 +25,7 @@
   font-size: var(--text-nano);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* temp / status badge */
@@ -243,12 +243,26 @@
 .wp-thumb.is-active {
   border-color: var(--accent-color);
 }
+/* The label is white over a user-chosen wallpaper, and some of them are
+   near-white — "Abstract" left it at 1.4:1. A text-shadow only thickens the
+   glyph edge; it cannot darken the ground behind a bright thumbnail. This is
+   the same bottom scrim .wg-lp-scrim gives the Last Played caption, so the
+   label has a dark ground whatever art sits under it. As a `::before` it
+   paints above the thumbnail but below the label. */
+.wp-thumb::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 55%;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.72) 100%);
+  pointer-events: none;
+}
 .wp-thumb-name {
   position: absolute;
   left: 8px;
   bottom: 6px;
   font-size: var(--text-caption);
-  color: #fff;
+  color: var(--text-on-image);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
   pointer-events: none;
 }
@@ -325,7 +339,7 @@
 }
 .wbst-stat-lbl {
   font-size: 8px;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   margin-top: 3px;
@@ -338,7 +352,7 @@
   justify-content: space-between;
   align-items: baseline;
   font-size: 8.5px;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   margin-bottom: 5px;
 }
 .wbst-ram-hdr-label {
@@ -456,4 +470,50 @@
   width: 14px;
   height: 14px;
   margin-left: 2px;
+}
+
+/* ── Smart actions: the standing explanation ──────────────────────────────────
+   The card's job is to be readable BEFORE its switch is flipped (2026-07-16
+   usability review: "어떤 AI가 뭘 가져가는지 설명 없이는 못 켜겠다"), so this text
+   is not folded away. But it is standing text, and at the size and shade of the
+   rows around it, it was what the eye landed on first — ahead of the one line
+   asking for an answer (looked at 2026-08-21). One size down the ramp and one
+   shade back is enough to reverse that without hiding anything.
+   ⚠️ The shade is `--text-dim`, NOT `--text-subtle`. Subtle was tried first and
+   measured at 25% white (`--ksg-w25`) — on this card that is a paragraph the
+   person is REQUIRED to read before granting permission, printed at a contrast
+   nobody can read. The size step alone carries the hierarchy; the colour only
+   has to stay a rung below the line asking for an answer. Both tokens are the
+   library's — no numbers here. */
+/* The line the switch governs — see SmartActionsWidget.tsx. `.wg-foot` sets the
+   row's layout and its muted label colour; this is the one row on that class
+   whose text is the card's subject rather than a field name, so it takes the
+   primary colour and the note below it stays a rung down. */
+.sa-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  color: var(--text-primary);
+}
+
+/* Type comes from the library's `.ds-settings-group-desc` on the same element
+   (2026-09-13). That class also truncates to one line with an ellipsis — right
+   for its home (a group header's one-liner), wrong here: this is a standing
+   sentence and Cindy saw it cut mid-word with nothing on hover. So it wraps. */
+.sa-note {
+  max-width: 78ch;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+/* The unmet condition standing where the switch would be (2026-09-01). Same
+   tone as the app's other "your desk does not have this yet" lines — Viewing
+   Mode's `With a second input`, Gear Switch's `With a second PC` — which are
+   `--text-dim` sentences, not disabled controls: a condition the user can fill
+   is not a lock (copy-rules.md, 기기 가변성 ②). Right-aligned by its `.wg-foot`
+   row, so it lands exactly where the switch it replaces did. */
+.sa-needs {
+  font-size: var(--text-nano);
+  color: var(--text-dim);
+  white-space: nowrap;
 }

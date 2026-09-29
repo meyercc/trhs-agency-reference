@@ -1,33 +1,59 @@
-/* Light Studio — 3D device desk + inline RGB controls (Personalize section,
-   gated by the `lightstudio` module). Token-only, scoped `.ls`. */
+/* Light Studio — 3D device desk + inline RGB controls (Personalize Lighting
+   modal and tile, gated by the `lightstudio` module). Token-only, scoped `.ls`.
+
+   Layout: the desk is always full width and takes whatever height the host
+   gives it; the controls sit in a row underneath (presets | fine-tune). */
 .ls {
-  display: grid;
-  grid-template-columns: 1fr 300px;
+  display: flex;
+  flex-direction: column;
   gap: var(--gutter);
-  align-items: start;
+  height: 100%;
+  min-height: 0;
 }
-@media (max-width: 900px) {
-  .ls {
-    grid-template-columns: 1fr;
-  }
+.ls-stage {
+  flex: 1;
 }
 
-/* ── Stage (viewport + device rail) ── */
+/* ── Stage (camera views, viewport, device rail) ── */
+/* The stage never shrinks below its bar, a usable desk and its rail — so it
+   can't slide under the controls; a short host scrolls instead. */
 .ls-stage {
   display: flex;
   flex-direction: column;
   gap: var(--gutter-sm);
   min-width: 0;
 }
+.ls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+}
+/* Views alone (the tile) still sit on the right. */
+.ls-bar > :only-child {
+  margin-left: auto;
+}
 .ls-viewport {
   position: relative;
-  height: 440px;
+  flex: 1;
+  min-height: calc(var(--control-height) * 5);
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--border);
-  background: #06070c;
+  background: var(--bg-base);
 }
+@media (max-width: 900px) {
+  .ls-viewport {
+    flex: none;
+    height: calc(var(--control-height) * 10);
+  }
+}
+/* The canvas is out of flow: the renderer writes pixel sizes onto it, which
+   would otherwise grow a flexible viewport on every resize. */
 .ls-canvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -50,8 +76,9 @@
   font-size: var(--text-caption);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-on-image-dim);
   transition: opacity 0.4s ease;
+  pointer-events: none;
 }
 .ls-loaded .ls-loading {
   opacity: 0;
@@ -76,7 +103,7 @@
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--text-dim);
+  color: var(--text-on-image-dim);
   font-family: var(--font-display);
   font-size: var(--text-caption);
   cursor: pointer;
@@ -85,7 +112,7 @@
     background 0.15s ease;
 }
 .ls-hud-btn:hover {
-  color: var(--text-primary);
+  color: var(--text-on-image);
 }
 .ls-hud-btn.active {
   color: var(--accent-color);
@@ -99,10 +126,10 @@
   gap: var(--gutter-xs);
 }
 .ls-rail-btn {
-  padding: 5px 12px;
+  padding: var(--gutter-xxs) var(--gutter-tablet);
   border: 1px solid var(--border-light);
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-full);
+  background: var(--surface);
   color: var(--text-dim);
   font-family: var(--font-display);
   font-size: var(--text-caption);
@@ -111,6 +138,16 @@
     color 0.15s ease,
     background 0.15s ease,
     border-color 0.15s ease;
+}
+/* Synced: the picking is off, and it looks off — but the buttons stay lit,
+   because under Sync every device really is a target. */
+.ls-rail-btn:disabled,
+.ls-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.ls-rail-btn:disabled:hover {
+  border-color: var(--border);
 }
 .ls-rail-btn:hover {
   color: var(--text-primary);
@@ -121,140 +158,13 @@
   background: var(--accent-dimmer);
   border-color: var(--accent-dim);
 }
-
-/* ── Controls ── */
-.ls-controls {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter-sm);
-  padding: var(--gutter);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-.ls-target-title {
-  font-family: var(--font-display);
-  font-size: var(--text-body-lg, 1.05rem);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.ls-target-desc {
-  margin-top: 2px;
-  font-size: var(--text-caption);
-  font-weight: 300;
-  line-height: 1.4;
-  color: var(--text-muted);
-}
-.ls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--gutter-sm);
-}
-.ls-label {
-  font-size: var(--text-body);
-  color: var(--text-dim);
-}
-.ls-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter-xs);
-  border: none;
-  padding: 0;
-  margin: 0;
-  min-width: 0;
-}
-.ls-group:disabled {
-  opacity: 0.45;
-  pointer-events: none;
-}
-.ls-group-label {
-  font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-top: var(--gutter-xxs);
-}
-.ls-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.ls-swatch {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  box-shadow: 0 0 0 1px var(--border);
-  cursor: pointer;
-  padding: 0;
-  transition: transform 0.12s ease;
-}
-.ls-swatch:hover {
-  transform: scale(1.12);
-}
-.ls-swatch.active {
-  border-color: var(--text-primary);
-}
-.ls-swatch-custom {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-dim);
-  box-shadow: 0 0 0 1px var(--border);
-  overflow: hidden;
-}
-.ls-swatch-custom input[type='color'] {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-.ls-effects {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.ls-effect {
-  padding: 5px 10px;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-dim);
-  font-family: var(--font-display);
-  font-size: var(--text-caption);
-  cursor: pointer;
-  transition:
-    color 0.15s ease,
-    background 0.15s ease,
-    border-color 0.15s ease;
-}
-.ls-effect:hover {
-  color: var(--text-primary);
-}
-.ls-effect.active {
-  color: var(--accent-color);
-  background: var(--accent-dimmer);
-  border-color: var(--accent-dim);
-}
-.ls-slider-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: var(--gutter-xxs);
-}
 .ls-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--gutter-xs);
-  padding-top: var(--gutter-xs);
-  border-top: 1px solid var(--border-light);
 }
 .ls-action {
-  padding: 5px 10px;
+  padding: var(--gutter-xxs) var(--gutter-mobile);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
   background: transparent;
@@ -268,5 +178,91 @@
 }
 .ls-action:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
+}
+.ls-rail-btn:focus-visible,
+.ls-action:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* ── Controls ── */
+.ls-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--gutter);
+  flex-shrink: 0;
+  padding: var(--gutter-sm) var(--gutter);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.ls-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  flex-shrink: 0;
+  margin-left: var(--gutter-xs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+/* Side by side in the controls row: the fine-tune section's divider runs down
+   its left edge instead of across the top. */
+.ls-controls > .ls-section + .ls-section {
+  padding: 0 0 0 var(--gutter);
+  border-top: none;
+  border-left: 1px solid var(--border-light);
+}
+@media (max-width: 900px) {
+  .ls-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ls-controls > .ls-section + .ls-section {
+    padding: var(--gutter-sm) 0 0;
+    border-left: none;
+    border-top: 1px solid var(--border-light);
+  }
+}
+
+/* Side — the desk on the left, the controls as a card on the right with its
+   sections stacked (presets over fine-tune). */
+.ls.side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(var(--control-height) * 14);
+  align-items: stretch;
+}
+.ls.side .ls-controls {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+}
+.ls.side .ls-controls > .ls-section + .ls-section {
+  padding: var(--gutter-sm) 0 0;
+  border-left: none;
+  border-top: 1px solid var(--border-light);
+}
+@media (max-width: 900px) {
+  .ls.side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Compact — view only (the Personalize Lighting tile): camera views above the
+   desk; no rail, no panel, and the canvas ignores the pointer so a click lands
+   on the host tile. */
+.ls.compact {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: auto;
+}
+.ls.compact .ls-stage {
+  flex: 1;
+}
+.ls.compact .ls-viewport {
+  flex: 1;
+  height: auto;
+  min-height: calc(var(--control-height) * 5);
+}
+.ls.compact .ls-canvas {
+  pointer-events: none;
 }

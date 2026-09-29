@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { Decorator } from '@storybook/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SettingsProvider } from '../src/state/Settings';
+import { ProfilesProvider } from '../src/state/Profiles';
 import { ModulesProvider } from '../src/state/Modules';
 import { DeviceProfilesProvider } from '../src/state/DeviceProfiles';
 import { DeviceSimProvider } from '../src/state/DeviceSim';
@@ -18,15 +19,17 @@ import { DeviceSimProvider } from '../src/state/DeviceSim';
  */
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <SettingsProvider>
-      <ModulesProvider>
-        <DeviceProfilesProvider>
-          <DeviceSimProvider>
-            <MemoryRouter>{children}</MemoryRouter>
-          </DeviceSimProvider>
-        </DeviceProfilesProvider>
-      </ModulesProvider>
-    </SettingsProvider>
+    <ProfilesProvider>
+      <SettingsProvider>
+        <ModulesProvider>
+          <DeviceProfilesProvider>
+            <DeviceSimProvider>
+              <MemoryRouter>{children}</MemoryRouter>
+            </DeviceSimProvider>
+          </DeviceProfilesProvider>
+        </ModulesProvider>
+      </SettingsProvider>
+    </ProfilesProvider>
   );
 }
 

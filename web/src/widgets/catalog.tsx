@@ -31,7 +31,7 @@ export const DEVICE_WIDGET_SKU: Record<string, string> = {
   'dev-keyboard': 'origins-65',
   'dev-headset': 'cloud-iii',
   'dev-monitor': 'pulse-27',
-  'dev-mic': 'quadcast-2-s',
+  'dev-mic': 'solocast-2-pro',
   'dev-treehouse': 'treehouse-32',
 };
 
@@ -96,7 +96,7 @@ export const CATALOG: WidgetMeta[] = [
   { id: 'dev-keyboard', name: 'Alloy Origins 65', cat: 'Devices', span: 3, rows: 2 },
   { id: 'dev-headset', name: 'Cloud III', cat: 'Devices', span: 3, rows: 2 },
   { id: 'dev-monitor', name: 'OMEN OLED 27', cat: 'Devices', span: 3, rows: 2 },
-  { id: 'dev-mic', name: 'QuadCast 2 S', cat: 'Devices', span: 3, rows: 2 },
+  { id: 'dev-mic', name: 'SoloCast 2 Pro', cat: 'Devices', span: 3, rows: 2 },
   // Standard (3×2) is the decided default for the rich monitor card
   { id: 'dev-treehouse', name: 'Treehouse 32', cat: 'Devices', span: 3, rows: 2 },
 ];

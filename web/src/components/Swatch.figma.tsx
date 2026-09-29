@@ -6,7 +6,7 @@ import { Swatch } from './Swatch';
  *
  * Selected → selected. The Variant (1/2/3 Swatch-Up · Parent · Gradient) chooses
  * which fill prop you'd use (color / colors / gradient) — shown here as a single
- * colour example; swap to `colors={[…]}` or `gradient={RAINBOW}` as needed.
+ * color example; swap to `colors={[…]}` or `gradient={RAINBOW}` as needed.
  */
 figma.connect(
   Swatch,

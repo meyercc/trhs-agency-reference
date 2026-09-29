@@ -27,7 +27,7 @@ type Story = StoryObj<typeof ColorSlider>;
 /** Drag (or focus + arrows) to see the value popup. */
 export const Default: Story = {};
 
-/** The three dimensions for one base colour. */
+/** The three dimensions for one base color. */
 export const Variants: Story = {
   parameters: { controls: { disable: true } },
   render: () => (

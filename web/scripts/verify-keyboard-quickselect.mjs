@@ -11,13 +11,16 @@
 // The pill itself is system parts, not local ones: the Kintsugi panel surface,
 // the Hadouken double stroke (2px inner border over a 1px dark hairline) and
 // --shadow-lv-1, which IS the Figma Panels/Dark shadow.
-// Dev server :5175, headless Chrome :9222, run from web/.
+// Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
 const OUT = process.argv[2] || '/tmp';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
 let msgId = 0;
 function makeSend(ws) {
@@ -106,7 +109,7 @@ const SNAP = `(() => {
 
 let loadN = 0;
 async function open(send, tab = 'lighting') {
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#/?sku=origins-65&tab=${tab}` });
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#/?sku=origins-65&tab=${tab}` });
   await waitFor(send, `document.readyState === 'complete' && document.querySelector('#root')?.firstElementChild`);
   await waitFor(send, `document.querySelector('.kbd-key')`);
   await sleep(300);
@@ -147,7 +150,14 @@ async function clickKey(send, label) {
 
 const arm = async (send) => {
   await evalJs(send, `document.querySelector('.kbd-qs-icon').click()`);
-  await sleep(250);
+  // The armed chip's background is transitioned, and the checks below compare the
+  // computed color exactly. A fixed sleep reads mid-transition under CPU contention
+  // (seen as alpha 0.086 instead of 0.1 in a parallel lane) — wait for the class to
+  // land and the transition to finish instead.
+  await waitFor(send, `(() => {
+    const el = document.querySelector('.kbd-qs-icon');
+    return el && el.classList.contains('active') && el.getAnimations().length === 0;
+  })()`);
 };
 
 async function main() {
@@ -174,8 +184,11 @@ async function main() {
     s?.borderWidth === '1px' && s?.borderColor === 'rgba(255, 255, 255, 0.2)', `${s?.borderWidth} ${s?.borderColor}`);
   check('…over a 1px dark hairline, so the edge reads on any hero',
     /rgba\(0, 0, 0, 0\.8\) 0px 0px 0px 1px/.test(s?.shadow ?? ''), s?.shadow?.slice(0, 60));
-  check('the Panels/Dark shadow is --shadow-lv-1',
-    /rgba\(0, 0, 0, 0\.3\) 0px 1px 8px/.test(s?.shadow ?? '') && /rgba\(0, 0, 0, 0\.15\) 0px 2px 24px/.test(s?.shadow ?? ''),
+  // The rail takes its elevation from the token, whatever the token says. It was
+  // the two-layer Kintsugi lv-1 when this suite was written; the scale has since
+  // been re-issued from the HP/Avalonia ShadowLevel dictionary as a single drop.
+  check('the panel shadow is --shadow-lv-1, not a hand-rolled value',
+    /rgba\(0, 0, 0, 0\.14\) 0px 2px 4px/.test(s?.shadow ?? ''),
     s?.shadow?.slice(0, 100));
   check('16px rhythm — the control step, not the 24px page gutter',
     s?.gap === '16px' && s?.padding === '16px', `gap=${s?.gap} pad=${s?.padding}`);

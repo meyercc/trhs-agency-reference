@@ -8,6 +8,7 @@
 // selection/state changes flow back through the `onChange` callback.
 // ══════════════════════════════════════════════════════════════════════════
 import * as THREE from 'three';
+import { DEVICE_IDS, type DeviceId, type Effect } from './lighting';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -25,23 +26,43 @@ import headsetUrl from '../../../Assets/3d-devices/koala-velvet.glb?url';
 import mouseUrl from '../../../Assets/3d-devices/generic-mouse.obj?url';
 import monitorUrl from '../../../Assets/3d-devices/monitor.obj?url';
 
-export const DEVICE_IDS = ['tower', 'monitor', 'keyboard', 'mouse', 'headset', 'mic'] as const;
-export type DeviceId = (typeof DEVICE_IDS)[number];
-export const LABELS: Record<DeviceId, string> = {
-  tower: 'OMEN 35L',
-  monitor: 'OMEN Monitor',
-  keyboard: 'Origins 65',
-  mouse: 'Pulsefire',
-  headset: 'Cloud III',
-  mic: 'QuadCast S',
-};
+/** Give the desk up as unloadable after this long and show what did arrive. */
+const LOAD_TIMEOUT_MS = 12000;
 
-export type Effect = 'solid' | 'breathe' | 'wave' | 'rainbow' | 'off';
+/**
+ * One Draco decoder for the whole app. Every DRACOLoader spins up its own wasm
+ * workers, so a page that builds the studio many times (the Mode tile, the
+ * modals, every hot reload) ran the browser out of Wasm memory and the models
+ * stopped arriving at all. Shared, it is never disposed.
+ */
+let draco: DRACOLoader | undefined;
+function sharedDraco(): DRACOLoader {
+  if (!draco) {
+    draco = new DRACOLoader();
+    draco.setDecoderPath(`${import.meta.env.BASE_URL}draco/`);
+  }
+  return draco;
+}
+
+export { DEVICE_IDS, LABELS } from './lighting';
+export type { DeviceId, Effect } from './lighting';
+
+// HyperX brand red, for the HyperX effect.
+const HYPERX_RED = new THREE.Color(224 / 255, 56 / 255, 62 / 255);
+const WHITE = new THREE.Color(1, 1, 1);
+/** Stable 0–1 pseudo-random from a number (per-device sparkle / confetti). */
+const hash01 = (n: number) => {
+  const x = Math.sin(n * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+};
 export interface DeviceState {
   color: string; // "r,g,b"
   effect: Effect;
   brightness: number; // 0–100
   speed: number; // 1–10
+  /** The preset this lighting was picked from — tells apart presets that light
+   *  the same (Blue Skye and Captain America). */
+  preset?: string;
 }
 export type CameraView = 'front' | 'three-quarter' | 'top' | 'side';
 /** View the studio opens on. Exported so the React HUD can't drift from it. */
@@ -53,7 +74,11 @@ export interface UIState {
   /** Effective target state (first selected / any device in sync) or null. */
   target: DeviceState | null;
   cameraView: CameraView;
+  /** Every device's lighting, so a host that owns lighting state can mirror it. */
+  states: DeviceStates;
 }
+
+export type DeviceStates = Record<DeviceId, DeviceState>;
 
 interface DeviceObj {
   group: THREE.Group;
@@ -83,7 +108,11 @@ export class LightStudioScene {
   private deskPlane!: THREE.Mesh;
   private ro?: ResizeObserver;
   private raf = 0;
+  private loadTimer = 0;
+  private loaded = false;
   private disposed = false;
+  /** Distance multiplier the current camera view was framed with (see fitScale). */
+  private framedScale = 1;
 
   private devices: Partial<Record<DeviceId, DeviceObj>> = {};
   private deviceState: Record<DeviceId, DeviceState>;
@@ -92,14 +121,27 @@ export class LightStudioScene {
   private cameraView: CameraView = DEFAULT_CAMERA_VIEW;
   private hovered: DeviceId | null = null;
 
-  constructor(canvas: HTMLCanvasElement, viewport: HTMLElement, onChange: (s: UIState) => void) {
-    this.canvas = canvas;
+  constructor(
+    viewport: HTMLElement,
+    onChange: (s: UIState) => void,
+    /** Starting lighting — passed in by a host that owns lighting state. */
+    initialStates?: Partial<DeviceStates>,
+    /** Told when the browser takes this desk's GL context away, so the host can
+     *  build a new scene (and with it a new canvas) instead of going blank. */
+    private onContextLost?: () => void,
+  ) {
+    // Its own canvas, not one React keeps: a canvas whose context was lost can
+    // never hand out another, so every scene starts on a fresh one.
+    this.canvas = document.createElement('canvas');
+    this.canvas.className = 'ls-canvas';
+    viewport.prepend(this.canvas);
+    viewport.classList.remove('ls-loaded');
+    this.canvas.addEventListener('webglcontextlost', this.contextLost);
     this.viewport = viewport;
     this.onChange = onChange;
-    this.deviceState = Object.fromEntries(DEVICE_IDS.map((id) => [id, DEFAULT_STATE()])) as Record<
-      DeviceId,
-      DeviceState
-    >;
+    this.deviceState = Object.fromEntries(
+      DEVICE_IDS.map((id) => [id, { ...DEFAULT_STATE(), ...initialStates?.[id] }]),
+    ) as DeviceStates;
     this.init();
   }
 
@@ -162,7 +204,8 @@ export class LightStudioScene {
     this.controls.dampingFactor = 0.08;
     this.controls.target.set(0, 0.6, 0);
     this.controls.minDistance = 2.5;
-    this.controls.maxDistance = 14;
+    // Room for fitScale to back narrow viewports away from the desk.
+    this.controls.maxDistance = 24;
     this.controls.maxPolarAngle = Math.PI / 2 - 0.05;
     this.controls.enablePan = true;
     this.controls.screenSpacePanning = false;
@@ -185,33 +228,53 @@ export class LightStudioScene {
     this.animate();
   }
 
+  /** Draw the desk and clear the loading state — once, however the models went. */
+  private finishLoad() {
+    if (this.disposed || this.loaded) return;
+    this.loaded = true;
+    this.placeDevice('keyboard', this.buildKeyboard(), { pos: [0, 0, 0.75] });
+    this.placeDevice('mic', this.buildMic(), { pos: [-3.2, 0, 0.5] });
+    DEVICE_IDS.forEach((id) => this.applyDeviceState(id));
+    this.emit();
+    this.viewport.classList.add('ls-loaded');
+  }
+
   private loadDevices() {
-    Promise.all([
-      this.loadGLB(towerUrl).then((g) => {
-        this.addCaseRGB(g);
-        this.placeDevice('tower', g, { targetWidth: 0.75, pos: [2.7, 0, -0.6], lightPos: [0, 0.7, 0.35] });
-      }),
-      this.loadGLB(headsetUrl).then((g) =>
-        this.placeDevice('headset', g, { targetWidth: 1.0, pos: [-2.3, 0, -0.5] }),
-      ),
-      this.loadOBJDevice(mouseUrl, {
-        targetWidth: 0.3,
-        rotation: [-Math.PI / 2, Math.PI / 2, 0],
-        glowOffsetY: 0.002,
-      }).then((g) => this.placeDevice('mouse', g, { pos: [1.5, 0, 0.85] })),
-      this.loadOBJDevice(monitorUrl, { targetWidth: 2.6, noUnderglow: true, backGlow: true }).then((g) =>
-        this.placeDevice('monitor', g, { pos: [0, 0, -1.05], lightPos: [0, 1.0, -0.5] }),
-      ),
-    ])
-      .catch((e) => console.warn('[lightstudio] model load error', e))
-      .then(() => {
-        if (this.disposed) return;
-        this.placeDevice('keyboard', this.buildKeyboard(), { pos: [0, 0, 0.75] });
-        this.placeDevice('mic', this.buildMic(), { pos: [-3.2, 0, 0.5] });
-        DEVICE_IDS.forEach((id) => this.applyDeviceState(id));
-        this.emit();
-        this.viewport.classList.add('ls-loaded');
+    // Per-model: one model failing must not hold back the others.
+    const settle = <T>(p: Promise<T>, what: string) =>
+      p.catch((e) => {
+        console.warn('[lightstudio] could not load', what, e);
       });
+    // …and a model that neither loads nor errors (a lost context aborts the
+    // Draco decoder mid-flight) must not hold back the desk.
+    this.loadTimer = window.setTimeout(() => this.finishLoad(), LOAD_TIMEOUT_MS);
+    Promise.all([
+      settle(
+        this.loadGLB(towerUrl).then((g) => {
+          this.addCaseRGB(g);
+          this.placeDevice('tower', g, { targetWidth: 0.75, pos: [2.7, 0, -0.6], lightPos: [0, 0.7, 0.35] });
+        }),
+        'tower',
+      ),
+      settle(
+        this.loadGLB(headsetUrl).then((g) => this.placeDevice('headset', g, { targetWidth: 1.0, pos: [-2.3, 0, -0.5] })),
+        'headset',
+      ),
+      settle(
+        this.loadOBJDevice(mouseUrl, {
+          targetWidth: 0.3,
+          rotation: [-Math.PI / 2, Math.PI / 2, 0],
+          glowOffsetY: 0.002,
+        }).then((g) => this.placeDevice('mouse', g, { pos: [1.5, 0, 0.85] })),
+        'mouse',
+      ),
+      settle(
+        this.loadOBJDevice(monitorUrl, { targetWidth: 2.6, noUnderglow: true, backGlow: true }).then((g) =>
+          this.placeDevice('monitor', g, { pos: [0, 0, -1.05], lightPos: [0, 1.0, -0.5] }),
+        ),
+        'monitor',
+      ),
+    ]).then(() => this.finishLoad());
   }
 
   private makeBackdrop(): THREE.CanvasTexture {
@@ -292,14 +355,9 @@ export class LightStudioScene {
    * failure here: the promise is caught, the scene renders, and the device
    * just never appears. Decoder is vendored in public/draco (see its README).
    */
-  private dracoLoader?: DRACOLoader;
   private gltfLoader(): GLTFLoader {
-    if (!this.dracoLoader) {
-      this.dracoLoader = new DRACOLoader();
-      this.dracoLoader.setDecoderPath(`${import.meta.env.BASE_URL}draco/`);
-    }
     const loader = new GLTFLoader();
-    loader.setDRACOLoader(this.dracoLoader);
+    loader.setDRACOLoader(sharedDraco());
     return loader;
   }
 
@@ -406,7 +464,7 @@ export class LightStudioScene {
    * Give a loaded model RGB the controls can actually drive. The GLB chassis
    * have their own baked emissive (the tower's fans), but nothing tagged
    * `userData.rgb`, so without this a device renders fine and then ignores
-   * every colour/effect change — lit, but not controllable.
+   * every color/effect change — lit, but not controllable.
    */
   private addCaseRGB(group: THREE.Group) {
     const bbox = new THREE.Box3().setFromObject(group);
@@ -618,18 +676,87 @@ export class LightStudioScene {
       const baseIntensity = (s.brightness / 100) * (s.effect === 'off' ? 0 : 1);
       const speedFactor = 0.4 + (s.speed / 10) * 1.6;
       let mod = 1;
-      let hueShift = 0;
-      if (s.effect === 'breathe') mod = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * speedFactor * 2));
-      else if (s.effect === 'wave') mod = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * speedFactor * 2 - idx * 0.7));
-      else if (s.effect === 'rainbow') hueShift = (t * speedFactor * 0.15) % 1;
+      // Multicolor effects set an absolute hue (full saturation) and ignore the
+      // picked color; the rest light the picked color and animate brightness.
+      let hue: number | null = null;
+      let override: THREE.Color | null = null;
+      const n = DEVICE_IDS.length;
+      const ts = t * speedFactor;
+      switch (s.effect) {
+        case 'breathe':
+          mod = 0.15 + 0.85 * (0.5 + 0.5 * Math.sin(ts * 2));
+          break;
+        case 'wave':
+          // A rainbow rolling across the desk.
+          hue = ts * 0.15 - idx * 0.12;
+          break;
+        case 'rainbow':
+          // Every device cycles through the colors together.
+          hue = ts * 0.12;
+          break;
+        case 'starlight':
+          // Each device twinkles on its own beat.
+          mod = 0.15 + 0.85 * Math.pow(Math.max(0, Math.sin(ts * (1.5 + hash01(idx)) + idx * 2.4)), 6);
+          break;
+        case 'raindrop': {
+          // A colored drop lands, then fades; each drop picks a new color.
+          const drop = ts * 0.5 + hash01(idx + 7);
+          hue = hash01(Math.floor(drop) + idx * 5.3);
+          mod = 0.15 + 0.85 * Math.exp(-(drop % 1) * 6);
+          break;
+        }
+        case 'audio-eq': {
+          // A level meter: quiet reads green, loud reads red.
+          const level = Math.abs(Math.sin(ts * 3.1 + idx) * Math.sin(ts * 1.7 + idx * 0.5));
+          hue = 0.33 * (1 - level);
+          mod = 0.3 + 0.7 * level;
+          break;
+        }
+        case 'rave':
+          // Hard color jumps and a strobe on the beat.
+          hue = hash01(Math.floor(ts * 2) + idx * 1.7);
+          mod = (Math.floor(ts * 4) + idx) % 2 ? 1 : 0.35;
+          break;
+        case 'ripple': {
+          // Color rings out from the middle of the desk.
+          const dist = Math.abs(idx - (n - 1) / 2);
+          hue = ts * 0.2 - dist * 0.15;
+          mod = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(ts * 3 - dist * 1.4));
+          break;
+        }
+        case 'ghosting': {
+          // One lit device with a fading trail behind it.
+          const d = (((ts * 0.8) % n) - idx + n) % n;
+          mod = 0.1 + 0.9 * Math.exp(-d * 1.3);
+          break;
+        }
+        case 'confetti':
+          hue = hash01(Math.floor(ts * 1.5) + idx * 3.1);
+          break;
+        case 'sun': {
+          // Warm light swelling between amber and gold.
+          const warm = 0.5 + 0.5 * Math.sin(ts * 0.8 + idx * 0.4);
+          hue = 0.06 + 0.07 * warm;
+          mod = 0.55 + 0.45 * warm;
+          break;
+        }
+        case 'hyperx':
+          // Brand red and white chase each other across the desk.
+          override = (Math.floor(ts * 1.2) + idx) % 2 ? WHITE : HYPERX_RED;
+          break;
+        case 'swipe': {
+          // A sweep of a new color across the desk, then dark, on repeat.
+          const pass = (ts * 0.5) / 1.4;
+          const edge = ((ts * 0.5) % 1.4) * n;
+          hue = hash01(Math.floor(pass) + 11);
+          mod = idx < edge ? 1 : 0.1;
+          break;
+        }
+      }
 
       const [r, g, b] = s.color.split(',').map(Number);
-      const col = new THREE.Color(r / 255, g / 255, b / 255);
-      if (hueShift) {
-        const hsl = { h: 0, s: 0, l: 0 };
-        col.getHSL(hsl);
-        col.setHSL((hsl.h + hueShift) % 1, hsl.s, hsl.l);
-      }
+      const col = override ? override.clone() : new THREE.Color(r / 255, g / 255, b / 255);
+      if (hue !== null) col.setHSL(((hue % 1) + 1) % 1, 1, 0.55);
       const finalIntensity = baseIntensity * mod;
       dev.rgbMeshes.forEach((m) => {
         const mat = m.material as THREE.MeshStandardMaterial;
@@ -662,11 +789,23 @@ export class LightStudioScene {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
     this.composer?.setSize(w, h);
+    // A narrower viewport pulls the camera back so the whole desk stays in frame.
+    if (Math.abs(this.fitScale() - this.framedScale) > 0.02) this.setCameraView(this.cameraView, false);
+  }
+
+  /** The camera views are framed for a wide viewport; narrower ones back the
+   *  camera away from the desk by the aspect shortfall so no device is cut off. */
+  private fitScale() {
+    const FRAMED_ASPECT = 1.9;
+    return Math.max(1, FRAMED_ASPECT / (this.camera?.aspect || FRAMED_ASPECT));
   }
 
   // ── Pointer: pick + drag + select ────────────────────────────────────────────
   private bindPointer() {
-    let drag: { id: DeviceId; startX: number; startY: number; offsetXZ: THREE.Vector3; moved: boolean; shift: boolean } | null =
+    // `offsetXZ` is null when the click ray missed the desk plane (the top of
+    // the monitor, the tower): that device can still be picked, it just cannot
+    // be dragged from there — a click up there used to do nothing at all.
+    let drag: { id: DeviceId; startX: number; startY: number; offsetXZ: THREE.Vector3 | null; moved: boolean; shift: boolean } | null =
       null;
 
     const pickDevice = (ev: PointerEvent): DeviceId | null => {
@@ -694,6 +833,7 @@ export class LightStudioScene {
 
     this.canvas.addEventListener('pointermove', (ev) => {
       if (drag) {
+        if (!drag.offsetXZ) return;
         const p = deskHit(ev);
         if (!p) return;
         const dev = this.devices[drag.id]!;
@@ -713,13 +853,12 @@ export class LightStudioScene {
       const id = pickDevice(ev);
       if (!id) return;
       const p = deskHit(ev);
-      if (!p) return;
       const dev = this.devices[id]!;
       drag = {
         id,
         startX: ev.clientX,
         startY: ev.clientY,
-        offsetXZ: new THREE.Vector3(p.x - dev.group.position.x, 0, p.z - dev.group.position.z),
+        offsetXZ: p ? new THREE.Vector3(p.x - dev.group.position.x, 0, p.z - dev.group.position.z) : null,
         moved: false,
         shift: ev.shiftKey,
       };
@@ -759,6 +898,7 @@ export class LightStudioScene {
       sync: this.sync,
       target: this.targetState(),
       cameraView: this.cameraView,
+      states: Object.fromEntries(DEVICE_IDS.map((id) => [id, { ...this.deviceState[id] }])) as DeviceStates,
     });
   }
   private refreshHalos() {
@@ -769,6 +909,8 @@ export class LightStudioScene {
   }
 
   select(id: DeviceId, shift = false) {
+    // Synced: the desk moves as one, so there is nothing to pick.
+    if (this.sync) return;
     if (!shift) this.selected.clear();
     if (this.selected.has(id)) this.selected.delete(id);
     else this.selected.add(id);
@@ -787,13 +929,32 @@ export class LightStudioScene {
   }
   setSync(on: boolean) {
     this.sync = on;
+    // Sync IS "everything selected": show it on the desk rather than leaving a
+    // stale one-device selection that no longer means anything.
+    if (on) this.selected = new Set(DEVICE_IDS);
+    else this.selected.clear();
+    this.refreshHalos();
     this.emit();
   }
   applyToTargets(patch: Partial<DeviceState>) {
-    const targets = this.getTargets();
-    if (!targets.length) return;
-    targets.forEach((id) => {
+    this.applyTo(this.getTargets(), patch);
+  }
+  /** Apply to specific devices, whatever is selected. */
+  applyTo(ids: DeviceId[], patch: Partial<DeviceState>) {
+    if (!ids.length) return;
+    ids.forEach((id) => {
       Object.assign(this.deviceState[id], patch);
+      this.applyDeviceState(id);
+    });
+    this.emit();
+  }
+  /** Replace lighting from outside (a host's shared state). It emits so the
+   *  panel re-reads the target; the host compares before echoing it back. */
+  setStates(states: Partial<DeviceStates>) {
+    DEVICE_IDS.forEach((id) => {
+      const next = states[id];
+      if (!next) return;
+      this.deviceState[id] = { ...next };
       this.applyDeviceState(id);
     });
     this.emit();
@@ -812,7 +973,12 @@ export class LightStudioScene {
       top: [0, 8.5, 0.01],
       side: [7.5, 2.0, 0.01],
     };
-    const tgt = targets[view];
+    const scale = this.fitScale();
+    this.framedScale = scale;
+    // Scale the offset from the look-at point, not the raw position.
+    const LOOK_Y = 0.6;
+    const base = targets[view];
+    const tgt: [number, number, number] = [base[0] * scale, LOOK_Y + (base[1] - LOOK_Y) * scale, base[2] * scale];
     if (!doAnimate || !this.camera) {
       this.camera?.position.set(tgt[0], tgt[1], tgt[2]);
       this.controls?.target.set(0, 0.6, 0);
@@ -835,14 +1001,26 @@ export class LightStudioScene {
     this.emit();
   }
 
+  private contextLost = (e: Event) => {
+    e.preventDefault();
+    if (!this.disposed) this.onContextLost?.();
+  };
+
   dispose() {
     this.disposed = true;
+    this.canvas.removeEventListener('webglcontextlost', this.contextLost);
+    this.canvas.remove();
     cancelAnimationFrame(this.raf);
+    clearTimeout(this.loadTimer);
     this.ro?.disconnect();
     this.controls?.dispose();
-    this.dracoLoader?.dispose();
     this.composer?.dispose?.();
     this.renderer?.dispose();
+    // Hand the GL context back now rather than whenever the canvas is collected:
+    // opening the studio a dozen times otherwise hits the browser's context
+    // limit and it starts killing live ones. Safe because this canvas is the
+    // scene's own and has just been removed — nothing will draw on it again.
+    this.renderer?.forceContextLoss();
     this.scene?.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.geometry) m.geometry.dispose();

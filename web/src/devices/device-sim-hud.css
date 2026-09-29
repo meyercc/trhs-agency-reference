@@ -13,7 +13,7 @@
   gap: var(--gutter-xs);
   width: min(340px, calc(100vw - var(--gutter) * 2));
   padding: var(--gutter-sm);
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   border-radius: var(--radius-card);
   background: var(--ksg-panel-surface);
   backdrop-filter: blur(8px);
@@ -46,7 +46,7 @@
   cursor: pointer;
 }
 .sim-hud-close:hover {
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
   color: var(--text-primary);
 }
 .sim-hud-close:focus-visible {
@@ -59,7 +59,7 @@
   flex-direction: column;
   gap: var(--gutter-xxs);
   padding-top: var(--gutter-xs);
-  border-top: 1px solid var(--ksg-w10);
+  border-top: 1px solid var(--border-light-m);
 }
 /* Name over state — side-by-side the state line squeezes the name into
    ellipsis on every wireless SKU's long name. */
@@ -90,4 +90,59 @@
 .sim-hud-actions {
   display: flex;
   gap: var(--gutter-xxs);
+}
+
+/* Battery row (2026-09-01) — a VALUE, not an act, so it sits on its own line
+   under the buttons rather than beside them. Only drawn for devices the
+   registry gives a level; a wired device has no such number.
+
+   Why the simulator has this at all: the device card draws a low battery in
+   red at 20% and under, and nothing in the app could produce one — every level
+   is a literal in the SKU registry (our desk's mouse ships at 84%). The
+   treatment existed and could not be looked at. */
+.sim-hud-battery {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  padding-top: var(--gutter-xxs);
+}
+.sim-hud-batt-lbl {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+/* Fixed width so the track does not shuffle sideways as the number changes
+   width while it is being dragged (3 chars + the sign). */
+.sim-hud-batt-pct {
+  min-width: 4ch;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  text-align: right;
+  color: var(--text-dim);
+}
+/* No low-battery colour here, deliberately — `shared/components.css` settled
+   this for the card and the reasoning carries: red is 3.42:1 and orange 2.58:1
+   on the light theme, both under AA for text this size, so low is carried by
+   the battery ICON's short red bar and never by tinted text. The HUD has no
+   icon, so it says the number and lets the card do the showing. */
+.sim-hud-batt-reset {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  color: var(--text-dim);
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sim-hud-batt-reset:hover {
+  color: var(--text-primary);
+}
+.sim-hud-batt-reset:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }

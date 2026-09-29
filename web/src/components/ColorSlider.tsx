@@ -4,9 +4,9 @@ export type ColorSliderVariant = 'hue' | 'lightness' | 'opacity';
 
 export interface ColorSliderProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'type' | 'value' | 'defaultValue' | 'color'> {
-  /** Which colour dimension the track represents. */
+  /** Which color dimension the track represents. */
   variant?: ColorSliderVariant;
-  /** Base colour for the lightness/opacity gradients and the handle dot. */
+  /** Base color for the lightness/opacity gradients and the handle dot. */
   color?: string;
   min?: number;
   max?: number;
@@ -24,14 +24,14 @@ export interface ColorSliderProps
 }
 
 /**
- * Colour picker slider over the shared `.ds-rail` chrome plus a `.ds-color`
+ * Color picker slider over the shared `.ds-rail` chrome plus a `.ds-color`
  * gradient track. Three variants: `hue` (rainbow spectrum), `lightness`
- * (black → colour → white), and `opacity` (a CSS checkerboard under a
- * transparent → colour gradient). The whole track is the gradient — no fill —
- * and the handle's inner dot shows the current colour.
+ * (black → color → white), and `opacity` (a CSS checkerboard under a
+ * transparent → color gradient). The whole track is the gradient — no fill —
+ * and the handle's inner dot shows the current color.
  *
  * Avalonia: a Slider ControlTheme whose track Background is a LinearGradientBrush
- * (or a DrawingBrush checkerboard for opacity), thumb fill bound to the colour.
+ * (or a DrawingBrush checkerboard for opacity), thumb fill bound to the color.
  */
 export const ColorSlider = forwardRef<HTMLInputElement, ColorSliderProps>(function ColorSlider(
   {

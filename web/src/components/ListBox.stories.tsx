@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { ListBox } from './ListBox';
+import { ListBox, ListGroup } from './ListBox';
 import { ListItem } from './ListItem';
 import { Separator } from './Separator';
+import { Icon } from './Icon';
 
 const meta: Meta<typeof ListBox> = {
   title: 'Molecules/ListBox',
@@ -66,4 +67,20 @@ export const Selectable: Story = {
       </ListBox>
     );
   },
+};
+
+/** Grouped under headings — each `ListGroup` is a labelled group of rows. */
+export const Grouped: Story = {
+  render: () => (
+    <ListBox aria-label="Profile">
+      <ListGroup label="Software">
+        <ListItem leading={<Icon name="profile" />} label="Focus" />
+      </ListGroup>
+      <ListGroup label="Onboard">
+        <ListItem leading={<Icon name="profile" />} label="Slot 1" selected trailing="Running" />
+        <ListItem leading={<Icon name="profile" />} label="Slot 2" />
+        <ListItem leading={<Icon name="profile" />} label="Slot 3" />
+      </ListGroup>
+    </ListBox>
+  ),
 };

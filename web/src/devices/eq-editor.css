@@ -1,0 +1,72 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Equalizer editor furniture shared by the Simple and Advanced Equalizer
+   modals: the named-range pill, the frequency label, and the dB axis with its
+   ticks. Class names keep the `seq-` prefix they were born with. Every value
+   is a token.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Axis gutter. Component geometry, like .hc-stage's 198px ring — this is the
+   width of the widest tick label ("+12 dB") plus its leader line, set by type
+   metrics rather than by the spacing scale, so it is not a --gutter step. */
+.seq-editor,
+.aeq-editor {
+  --seq-axis-w: 56px;
+}
+
+/* ── Named range pill ── */
+.seq-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter-xxs) var(--gutter-xs);
+  background: var(--surface);
+  border: 1px solid var(--border-light-m);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+
+/* ── Frequency label ── */
+.seq-hz-label {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+
+/* ── dB axis ── */
+/* The axis is exactly as tall as the rails and each tick is placed at the gain
+   it names, centred on that point. Spreading the ticks over the stage box
+   instead would put "0 dB" somewhere other than where a 0 dB handle rests —
+   an axis that does not share the rails' geometry is decoration, not a scale. */
+.seq-axis {
+  position: relative;
+  width: var(--seq-axis-w);
+  height: 100%;
+  flex-shrink: 0;
+  padding-right: var(--gutter-xs);
+}
+.seq-tick {
+  position: absolute;
+  right: var(--gutter-xs);
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+/* A hairline at each tick, carrying the eye across to the rails. */
+.seq-tick::after {
+  content: '';
+  position: absolute;
+  left: calc(100% + var(--gutter-xs));
+  top: 50%;
+  width: var(--gutter-xs);
+  height: 1px;
+  background: var(--border-light);
+}

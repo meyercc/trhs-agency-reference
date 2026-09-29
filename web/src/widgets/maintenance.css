@@ -16,7 +16,7 @@
   font-size: 9px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .cleaner-stat-val {
   font-family: var(--font-cond);
@@ -58,5 +58,5 @@
 .fan-health-label {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }

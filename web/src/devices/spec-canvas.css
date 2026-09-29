@@ -23,8 +23,8 @@
   width: 200px;
   height: 200px;
   border-radius: var(--radius-lg);
-  background: var(--ksg-w5);
-  border: 1px solid var(--ksg-w10);
+  background: var(--surface);
+  border: 1px solid var(--border-light-m);
   color: var(--text-muted);
 }
 

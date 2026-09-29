@@ -4,13 +4,16 @@
 // the Perform page that /perform rendered until V7 was promoted over it. That
 // page is now /perform-v1, so the suite follows it. V7 does not implement
 // persona curation — if it ever does, point this back at /perform.
-// Dev server :5175, headless Chrome :9222, run from web/.
+// Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
 const OUT = process.argv[2] || '/tmp';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
 let msgId = 0;
 function makeSend(ws) {
@@ -87,8 +90,10 @@ async function load(send, { persona, route = '/perform-v1', modal } = {}) {
     localStorage.removeItem('perform-sections');
     ${persona ? `localStorage.setItem('persona', ${JSON.stringify(persona)});` : ''}
   `);
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#${route}${modal ? '?modal=' + modal : ''}` });
-  await waitFor(send, `document.readyState === 'complete' && document.querySelector('#root')?.firstElementChild`);
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#${route}${modal ? '?modal=' + modal : ''}` });
+  // The unique ?r= proves the new document committed — without it the next
+  // selector can match the previous page and the snapshot reads stale state.
+  await waitFor(send, `location.search.includes('r=${loadN}') && document.readyState === 'complete' && document.querySelector('#root')?.firstElementChild`);
   if (modal) await waitFor(send, `document.querySelector('.omenai-modal .ai-games-list > *')`);
   else await waitFor(send, `document.querySelector('.page-sub')`);
 }
@@ -161,13 +166,13 @@ async function main() {
   // Learner can still take over — picking Performance drops the note + Auto.
   await evalJs(send, `document.querySelector('.ai-games-list > .ds-settings-group .ai-mode-group')
     .querySelectorAll('button')[1].click()`);
-  await sleep(350);
+  await waitFor(send, `document.querySelectorAll('.omenai-modal .ai-auto-note').length === 9`);
   s = await evalJs(send, AI_SNAP);
   check('learner: picking Performance takes over (one fewer Auto note)', s?.autoNotes === 9, String(s?.autoNotes));
 
   // Toggling a game off must move the intro stat too — proves it's live.
   await evalJs(send, `document.querySelector('.omenai-modal .ai-games-list > .ds-settings-group .ds-toggle').click()`);
-  await sleep(350);
+  await waitFor(send, `document.querySelector('.omenai-modal .ai-right-stat-val')?.textContent.trim() === '8'`);
   s = await evalJs(send, AI_SNAP);
   check('learner: turning a game off updates the intro stat live',
     s?.optimizing === 8 && s?.statusDetail === '8 of 10 games',

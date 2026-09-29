@@ -4,6 +4,7 @@ import './device-canvas.css';
 import {
   Icon,
   Ng3Panel,
+  Ng3Tool,
   Ng3Grid,
   Ng3Section,
   Ng3Row,
@@ -21,7 +22,7 @@ import {
 } from '../components';
 import { type ResolvedSku, deviceImageUrl, heroImageFile, connectionStatus } from './skus';
 import { deviceTabs } from './deviceTabs';
-import { ProfileBar, ProfileScopeBody, useDeviceProfileBar } from './ProfileBar';
+import { ProfileBar, ProfileActions, ProfileScopeBody, useDeviceProfileBar, useProfileValue, type ProfileBarState } from './ProfileBar';
 
 /**
  * Full-canvas device modal — the Figma "Keys-Buttons" mouse design (node
@@ -66,7 +67,7 @@ const MOUSE_KEYS: KeyChip[] = [
 // at the anchor end either way). Which slots exist comes from the SKU
 // (`features.buttons.callouts`, editable in the configurator).
 // `flip` = left-flank slots whose labels extend leftward-out; `line` stretches
-// the leader so labels from centre anchors (wheel, DPI) clear the mouse body.
+// the leader so labels from center anchors (wheel, DPI) clear the mouse body.
 // Rows are spread so labels stay clear of each other even in the taller
 // assigned state (kicker + value) — overlapping callout buttons steal each
 // other's clicks and drag drops.
@@ -81,6 +82,8 @@ const CALLOUT_POS: Record<string, { x: number; y: number; flip?: boolean; line?:
 
 /** A callout's assignment: a rebind label, or the button switched off. */
 type CalloutBind = { label: string } | 'disabled';
+/** Stable fallback: `useProfileValue` keys its setter on the fallback object. */
+const NO_BINDS: Record<string, CalloutBind> = {};
 
 /** Format a pressed keyboard key into a chip-style assignment label. */
 function keyLabel(key: string): string {
@@ -202,7 +205,7 @@ const DPI_PRESET_COLORS = ['var(--red)', 'var(--blue)', 'var(--yellow)', 'var(--
 // SENSOR tab — Sensitivity (DPI presets + slider) on the left; polling, lift-off,
 // motion sync, angle adjustment + snapping on the right. Data-driven from
 // features.sensor, falling back to the same defaults as the generic modal.
-function SensorTab({ features }: { features: Record<string, any> }) {
+function SensorTab({ features, profile }: { features: Record<string, any>; profile: ProfileBarState }) {
   const sensor = features?.sensor || {};
   const dpiCfg = sensor.dpi || {};
   const min: number = dpiCfg.min ?? 50;
@@ -223,17 +226,25 @@ function SensorTab({ features }: { features: Record<string, any> }) {
   const angMax: number = angle.max ?? 30;
   const defaultPoll = polling.includes(1000) ? 1000 : polling[0];
 
-  const [val, setVal] = useState(presets[0] ?? min);
-  const [presetIdx, setPresetIdx] = useState(0);
-  const [dpiText, setDpiText] = useState(String(presets[0] ?? min));
-  const [motionSync, setMotionSync] = useState(false);
-  const [ang, setAng] = useState(0);
-  const [snap, setSnap] = useState(false);
+  // Every sensor setting is scope-backed — it belongs to the profile or to the
+  // onboard slot the device is running, not to this component's lifetime.
+  // `presetIdx` and `dpiText` stay local: they are view state (which swatch to
+  // tint, what is typed in the field mid-edit), not settings the device runs.
+  const [val, setVal] = useProfileValue(profile, 'sensor.dpi', presets[0] ?? min);
+  const [motionSync, setMotionSync] = useProfileValue(profile, 'sensor.motionSync', false);
+  const [ang, setAng] = useProfileValue(profile, 'sensor.angle', 0);
+  const [snap, setSnap] = useProfileValue(profile, 'sensor.angleSnapping', false);
+  // These two were uncontrolled `defaultValue` dropdowns — they persisted
+  // nothing at all, not even for the session.
+  const [poll, setPoll] = useProfileValue(profile, 'sensor.pollingRate', String(defaultPoll));
+  const [lod, setLod] = useProfileValue(profile, 'sensor.liftOffDistance', liftOff[0]?.value ?? '1mm');
+  const [presetIdx, setPresetIdx] = useState(Math.max(0, presets.indexOf(val)));
+  const [dpiText, setDpiText] = useState(String(val));
   // Keep the editable field in sync when a preset / the slider drives the value.
   useEffect(() => setDpiText(String(val)), [val]);
   const clamp = (n: number) => Math.max(min, Math.min(max, n));
   // Set the DPI; if it lands on a preset, adopt that preset's color (else keep
-  // the last one, so the slider stays coloured while dragging between presets).
+  // the last one, so the slider stays colored while dragging between presets).
   const applyDpi = (n: number) => {
     setVal(n);
     const idx = presets.indexOf(n);
@@ -288,7 +299,7 @@ function SensorTab({ features }: { features: Record<string, any> }) {
               aria-label="DPI value"
               inputMode="numeric"
             />
-            {/* The DPI slider takes the active preset's colour, not the accent. */}
+            {/* The DPI slider takes the active preset's color, not the accent. */}
             <div className="dc-sensor-dpi-slider" style={{ ['--accent-color' as string]: dpiColor }}>
               <div className="dc-sensor-ticks" aria-hidden="true">
                 {ticks.map((t) => (
@@ -307,7 +318,8 @@ function SensorTab({ features }: { features: Record<string, any> }) {
           <Ng3Label info>Polling Rate</Ng3Label>
           <Dropdown
             aria-label="Polling rate"
-            defaultValue={String(defaultPoll)}
+            value={poll}
+            onChange={setPoll}
             options={polling.map((hz) => ({ label: `${hz} Hz`, value: String(hz) }))}
           />
         </Ng3Field>
@@ -315,7 +327,8 @@ function SensorTab({ features }: { features: Record<string, any> }) {
           <Ng3Label info>Lift-off Distance</Ng3Label>
           <Dropdown
             aria-label="Lift-off distance"
-            defaultValue={liftOff[0]?.value}
+            value={lod}
+            onChange={setLod}
             options={liftOff.map((o) => ({ label: `${o.label} (${o.value})`, value: o.value }))}
           />
         </Ng3Field>
@@ -362,13 +375,15 @@ export function DeviceCanvas({
 
   // ── Button assignment state (Buttons tab) ─────────────────────────────────
   // Owned by the canvas because the hero (callouts) and the panel (chips)
-  // share it — same split as the keyboard canvas. Session-local.
+  // share it — same split as the keyboard canvas. The assignments themselves
+  // belong to the profile (or the onboard slot in view); arming and dragging
+  // are gestures and stay local.
   const callouts: { slot: string; id: string; label: string }[] = Array.isArray(
     sku.features?.buttons?.callouts,
   )
     ? sku.features.buttons.callouts
     : [];
-  const [binds, setBinds] = useState<Record<string, CalloutBind>>({});
+  const [binds, setBinds] = useProfileValue<Record<string, CalloutBind>>(profile, 'buttons.binds', NO_BINDS);
   const [armed, setArmed] = useState<string | null>(null); // callout id awaiting an assignment
   const [armedChip, setArmedChip] = useState<string | null>(null); // chip picked first
   const [drag, setDrag] = useState<{ chip: KeyChip; x: number; y: number } | null>(null);
@@ -376,11 +391,16 @@ export function DeviceCanvas({
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const dragPending = useRef<{ chip: KeyChip; sx: number; sy: number } | null>(null);
 
-  const assign = useCallback((calloutId: string, label: string) => {
-    setBinds((b) => ({ ...b, [calloutId]: { label } }));
-    setArmed(null);
-    setArmedChip(null);
-  }, []);
+  const assign = useCallback(
+    (calloutId: string, label: string) => {
+      setBinds((b) => ({ ...b, [calloutId]: { label } }));
+      setArmed(null);
+      setArmedChip(null);
+    },
+    // The scoped setter resolves functional updates against the committed
+    // value, so it must be the current one — not the one from first render.
+    [setBinds],
+  );
 
   const onCalloutClick = (id: string) => {
     setMenu(null);
@@ -496,8 +516,6 @@ export function DeviceCanvas({
       <button type="button" className="dc-close" aria-label="Close" onClick={onClose}>
         <Icon name="close" />
       </button>
-
-      <ProfileBar state={profile} />
 
       {/* Hero — with the button callouts overlaid while the Buttons tab is up */}
       <div className="dc-hero">
@@ -622,18 +640,18 @@ export function DeviceCanvas({
       {/* Bottom Ng3 product panel */}
       <div className="dc-panel-wrap">
         <Ng3Panel
+          leading={<ProfileBar state={profile} />}
+          trailing={<ProfileActions state={profile} />}
+          width={active.width}
           header={active.title}
           tools={TABS.map((t) => (
-            <button
+            <Ng3Tool
               key={t.id}
-              type="button"
-              className={['ds-ng3-tool', t.id === active.id ? 'active' : ''].filter(Boolean).join(' ')}
-              aria-label={t.title}
-              aria-pressed={t.id === active.id}
+              icon={t.icon}
+              title={t.title}
+              active={t.id === active.id}
               onClick={() => setTabId(t.id)}
-            >
-              <Icon name={t.icon} />
-            </button>
+            />
           ))}
           actions={
             <button type="button" className="ds-ng3-action" aria-label="Duplicate">
@@ -653,7 +671,7 @@ export function DeviceCanvas({
               onResetAll={resetAll}
             />
           ) : active.id === 'sensor' ? (
-            <SensorTab key={profile.revision} features={sku.features} />
+            <SensorTab key={profile.revision} features={sku.features} profile={profile} />
           ) : (
             <div className="dc-placeholder">{active.title} settings — coming soon.</div>
           )}

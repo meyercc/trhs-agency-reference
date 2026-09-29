@@ -1,0 +1,108 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Equalizer preset rail (EqPresetRail) — shared by the Simple and Advanced
+   Equalizer modals: the preset list with its row menu, and the test bench.
+   Class names keep the `seq-` prefix they were born with in the Simple EQ.
+   Every value is a token.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* The rail is a list, not a hero: the sectioned modals' 230px column rather
+   than ModalShell's third-width default, so the editor keeps the room a graph
+   or ten rails need. Both EQ modals carry it. */
+.seq .modal-body,
+.aeq .modal-body {
+  grid-template-columns: 230px 1fr;
+}
+.seq .modal-left,
+.aeq .modal-left {
+  padding: var(--gutter-sm);
+}
+
+/* ── Left rail: presets over the test bench ── */
+.seq-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  height: 100%;
+  min-height: 0;
+}
+.seq-rail-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  min-height: 0;
+}
+/* The preset list takes the slack so the test bench sits at the rail's foot,
+   the same "last block fills the column" rule the ng3 panels follow. */
+.seq-rail-block:first-child {
+  flex: 1;
+  min-height: 0;
+}
+.seq-preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  overflow-y: auto;
+  min-height: 0;
+}
+.seq-bench {
+  gap: var(--gutter-xs);
+}
+.seq-play {
+  width: 100%;
+  justify-content: center;
+}
+
+
+/* ── Preset row: name, and a menu that stays out of the way ── */
+.seq-row {
+  position: relative;
+}
+/* The row's own actions. Hidden until the row is hovered or something in it has
+   focus — but never removed from the tab order, and it shows itself on
+   focus-visible, so the keyboard path is the same as the pointer one. */
+.seq-row-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter-xxxs);
+  margin: calc(var(--gutter-xxxs) * -1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default);
+}
+.seq-row:hover .seq-row-menu,
+.seq-row:focus-within .seq-row-menu,
+.seq-row-menu[aria-expanded='true'] {
+  opacity: 1;
+}
+.seq-row-menu:hover,
+.seq-row-menu[aria-expanded='true'] {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.seq-row-menu:focus-visible {
+  opacity: 1;
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+/* Fixed, not absolute: the preset list is a scroll container, and an absolutely
+   positioned child of one is clipped by it — the menu has to be able to overhang
+   the rail. Coordinates come from the button's rect (see openMenu). */
+.seq-cmenu {
+  position: fixed;
+  /* Portalled to <body>, so it is a sibling of .modal-shell (z-index 51) rather
+     than a descendant — it has to clear the shell itself, not just the rail. */
+  z-index: 52;
+}
+
+/* Renaming turns the label into a field in place, so the row keeps its size. */
+.seq-name {
+  width: 100%;
+}
+

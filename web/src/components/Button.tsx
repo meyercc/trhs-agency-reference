@@ -14,6 +14,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
    * instead of letting the button follow the page and go near-invisible.
    */
   onImage?: boolean;
+  /** Fill the container's width — for a stacked action group such as a rail foot. */
+  block?: boolean;
 }
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
@@ -26,8 +28,8 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
  * Thin wrapper over the design system's `.ds-btn`. Renders the same classes
  * the prototype uses, so the look stays sourced from components.css.
  */
-export function Button({ variant = 'default', size = 'md', onImage, className, children, ...rest }: ButtonProps) {
-  const classes = ['ds-btn', VARIANT_CLASS[variant], size === 'sm' ? 'sm' : '', onImage ? 'on-image' : '', className]
+export function Button({ variant = 'default', size = 'md', onImage, block, className, children, ...rest }: ButtonProps) {
+  const classes = ['ds-btn', VARIANT_CLASS[variant], size === 'sm' ? 'sm' : '', onImage ? 'on-image' : '', block ? 'block' : '', className]
     .filter(Boolean)
     .join(' ');
   return (

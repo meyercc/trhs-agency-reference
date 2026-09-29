@@ -14,7 +14,7 @@
   text-align: center;
   gap: var(--gutter-xs);
   padding: calc(var(--gutter) * 2) var(--gutter);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .admin-modal .admin-empty svg {
   color: var(--text-muted);
@@ -29,7 +29,7 @@
   margin: 0;
   font-size: var(--text-caption);
   line-height: 1.5;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* Tool groups + rows */
@@ -94,4 +94,108 @@
   display: flex;
   gap: var(--gutter-xs);
   flex: 0 0 auto;
+}
+
+/* Second group onward — the dialog now holds more than one heading (shared
+   tools, then the monitor's own). The gap matches `.admin-group`'s own row
+   gap so the two headings read as siblings, not as a nested list. */
+.admin-modal .admin-group + .admin-group {
+  margin-top: var(--gutter);
+}
+
+/* The Desk row (2026-09-21, Cindy): a dropdown and a button, stacked at the
+   right like the other tools' actions; the dropdown sets the width. */
+.admin-modal .admin-desk-actions {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--gutter-xs);
+}
+
+/* The room control, inside the Desk card rather than in a card of its own
+   (2026-09-23, Cindy). It needs a visible label where the two above it do not:
+   the dropdown sits under a scenario picker and a button, and an unlabelled
+   third control in that column would read as another way to pick a desk. The
+   label rides at the same right edge as the rest of the column. */
+.admin-modal .admin-desk-room {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.admin-modal .admin-desk-room-label {
+  color: var(--text-dim);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+/* The scenario picker (2026-09-22): the library dropdown's trigger, opening a
+   library ContextMenu instead of the dropdown's flat list — `Dropdown` has no
+   group headers or dividers, `ContextMenu` + `ContextMenuLabel` + `Separator`
+   do (ProfileMenu is the precedent). 284px holds the longest closed label,
+   `Laptop + desktop · 2 monitors`: 230px of text + the label's 12px sides +
+   the 30px chevron (measured 2026-09-22; at 248px it read `…· 2 moni…`). The
+   dialog's 560px is shared with Chris's tools, so the picture beside it gives
+   way instead (sizes below). */
+.admin-modal .admin-desk-pick {
+  width: 284px;
+}
+.admin-modal .admin-desk-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 100%;
+  z-index: 5;
+}
+/* The review word beside each row — the status line's own type, so the menu
+   says it the same way the row under the picture does. */
+.admin-modal .admin-desk-menu .admin-desk-look {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+/* The chosen desk as a picture — renders bottom-aligned at relative scale
+   (Treehouse 32 the tallest, the laptop the lowest), the tower as the DESK
+   card's own box. Heights, not widths, so each render keeps its proportions. */
+.admin-modal .admin-desk-thumb {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gutter-xxs);
+  height: 30px;
+  margin-top: 10px;
+}
+.admin-modal .admin-desk-thumb img {
+  display: block;
+  width: auto;
+}
+/* Two thirds of the first cut (44 / 36 / 22 / 34): the full desk drew 170px
+   wide and the column beside the 284px picker holds 126 (measured 09-22). */
+.admin-modal .adt-th { height: 30px; }
+.admin-modal .adt-oled { height: 25px; }
+.admin-modal .adt-lap { height: 15px; }
+.admin-modal .adt-tower {
+  display: grid;
+  place-items: center;
+  width: 12px;
+  height: 23px;
+  border: 1px solid var(--border-med);
+  border-radius: 3px;
+  background: var(--bg-mid);
+}
+.admin-modal .adt-tower svg { width: 10px; height: 10px; color: var(--text-muted); }
+.admin-modal .admin-desk-status { margin-top: 8px; }
+
+/* The review word as a link inside the status line: accent, same type. */
+.admin-modal .admin-desk-go {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent-color);
+  cursor: pointer;
+}
+.admin-modal .admin-desk-go:hover {
+  color: var(--text-primary);
+}
+.admin-modal .admin-desk-go:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }

@@ -3,8 +3,8 @@ import { BalanceSlider } from './BalanceSlider';
 
 /**
  * Figma Code Connect — Balance sliders → React <BalanceSlider>. (Hadouken,
- * cross-library.) Two Figma components both map to our one centre-fill
- * BalanceSlider (centre = 50 on a 0–100 range); the Variant chooses the position.
+ * cross-library.) Two Figma components both map to our one center-fill
+ * BalanceSlider (center = 50 on a 0–100 range); the Variant chooses the position.
  * State=Disabled → disabled. (Track/Handle/Value Popup are CSS primitives.)
  */
 

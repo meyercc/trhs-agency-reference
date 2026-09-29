@@ -14,7 +14,7 @@
   scrollbar-color: rgba(255, 255, 255, 0.07) transparent;
 }
 
-/* Note: the benefits/considerations cards and .modal-left scroll behaviour are
+/* Note: the benefits/considerations cards and .modal-left scroll behavior are
    shared across feature modals — see feature-modal.css (.feature-modal). */
 
 /* ── Left hero icon ── */
@@ -78,7 +78,7 @@
 .omenai-modal .ai-status-detail {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* ── Right panel header strip ── */
@@ -102,7 +102,7 @@
 .omenai-modal .ai-right-meta {
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   letter-spacing: 0.04em;
 }
 .omenai-modal .ai-right-stat-row {
@@ -117,7 +117,7 @@
 .omenai-modal .ai-right-stat-label {
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -160,7 +160,7 @@
 .omenai-modal .ai-version-label {
   font-family: var(--font-mono);
   font-size: var(--text-nano);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   letter-spacing: 0.03em;
   white-space: nowrap;
   margin-left: 6px;

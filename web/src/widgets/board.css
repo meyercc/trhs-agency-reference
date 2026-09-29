@@ -1,7 +1,7 @@
 .wb-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  grid-auto-rows: 160px;
+  grid-auto-rows: var(--widget-row);
   grid-auto-flow: row dense;
   gap: var(--gutter);
 }

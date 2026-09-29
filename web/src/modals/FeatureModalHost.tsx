@@ -5,7 +5,9 @@ import { OmenAiModal } from './OmenAiModal';
 import { BoosterModal } from './BoosterModal';
 import { VitalsModal, type VitalsTab } from './VitalsModal';
 import { SettingsModal } from './SettingsModal';
+import { ProfilesModal } from './ProfilesModal';
 import { AdminModal } from './AdminModal';
+import { LightingModal } from '../pages/personalize/LightingModal';
 import { ModuleBrowserModal, type Section } from '../modules/ModuleBrowserModal';
 import { useModules } from '../state/Modules';
 import { MODAL_MODULE } from '../modules/registry';
@@ -26,6 +28,7 @@ export function FeatureModalHost() {
     p.delete('tab');
     p.delete('cat');
     p.delete('module');
+    p.delete('device');
     setParams(p, { replace: true });
   };
 
@@ -59,6 +62,10 @@ export function FeatureModalHost() {
       <VitalsModal onClose={close} initialTab={(params.get('tab') as VitalsTab) || 'overview'} />
     ) : modal === 'settings' ? (
       <SettingsModal onClose={close} />
+    ) : modal === 'profiles' ? (
+      <ProfilesModal onClose={close} />
+    ) : modal === 'lighting' ? (
+      <LightingModal onClose={close} device={params.get('device') || undefined} />
     ) : modal === 'admin' ? (
       <AdminModal onClose={close} />
     ) : modal === 'modules' ? (

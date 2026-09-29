@@ -1,0 +1,90 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Simple Equalizer modal (Figma Audio 7557:272603).
+
+   Chrome, title row and footer band come from ModalShell and the left rail
+   from EqPresetRail (eq-rail.css) — only the band editor's own geometry lives
+   here. Every value is a token.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── The editor: named ranges over the stage over the frequency labels ── */
+.seq-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  height: 100%;
+  min-height: 0;
+}
+
+/* One column per band. --seq-bands is set inline from the band count, so 5 and
+   10 share this grid and the group pills span their own bands. */
+.seq-groups,
+.seq-hz {
+  display: grid;
+  grid-template-columns: repeat(var(--seq-bands), 1fr);
+  gap: var(--gutter-xxs);
+}
+/* The stage indents past the dB axis, so its labels line up with the columns. */
+.seq-groups,
+.seq-hz {
+  margin-left: var(--seq-axis-w);
+}
+
+/* ── Stage: dB axis beside the band rails (axis rules: eq-editor.css) ── */
+.seq-stage {
+  display: flex;
+  align-items: stretch;
+  gap: var(--gutter-xs);
+  flex: 1;
+  min-height: 0;
+  padding: var(--gutter-sm) var(--gutter-xs);
+  background: var(--surface-lightest);
+  border: 1px solid var(--border-light-m);
+  border-radius: var(--radius-sm);
+}
+.seq-bands {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--seq-bands), 1fr);
+  gap: var(--gutter-xxs);
+  height: 100%;
+}
+.seq-band {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+/* The rails take the stage's height rather than a fixed px length, so the
+   editor fills its frame at any modal height — and because the axis is also
+   100%, the two keep sharing one geometry and the ticks stay true. */
+.seq-band .ds-rail.vertical {
+  height: 100%;
+}
+
+/* ── Band count — its own band under the stage, on the same card treatment,
+      so it reads as part of the editor rather than modal chrome. ── */
+.seq-band-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-sm);
+  flex-shrink: 0;
+  padding: var(--gutter-xs) var(--gutter-sm);
+  background: var(--surface-lightest);
+  border: 1px solid var(--border-light-m);
+  border-radius: var(--radius-sm);
+}
+.seq-band-count-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Ten labels in the width of five: step the frequency row down a size so the
+   labels stay on one line rather than wrapping under their own rails. */
+.seq-editor.is-10 .seq-hz-label {
+  font-size: var(--text-nano);
+}

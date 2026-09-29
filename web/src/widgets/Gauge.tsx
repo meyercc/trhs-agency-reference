@@ -3,7 +3,7 @@ import { useId } from 'react';
 // ── Arc gauge (hand-rolled SVG — the vanilla used ECharts, but these 270° arcs
 // don't need a charting library; identical look, zero dependency) ──
 // Geometry mirrors the vanilla ECharts gauge: startAngle 220°, endAngle −40°
-// (a 260° sweep with the gap at the bottom), radius 44, centre (50, 60).
+// (a 260° sweep with the gap at the bottom), radius 44, center (50, 60).
 // Shared by SystemVitalsWidget (card) and MonitoringBar (full-width perf bar).
 const CX = 50;
 const CY = 60;
@@ -12,7 +12,7 @@ const START = 220;
 const SWEEP = 260;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
-// Colour ramp by value — cyan → yellow → orange → red (matches `_ecPalette`).
+// Color ramp by value — cyan → yellow → orange → red (matches `_ecPalette`).
 function palette(v: number): [string, string, string] {
   if (v < 50) return ['rgba(0,200,215,0.65)', 'rgba(140,245,255,1)', 'rgba(0,200,215,0.4)'];
   if (v < 75) return ['rgba(234,179,8,0.7)', 'rgba(255,224,60,1)', 'rgba(234,179,8,0.38)'];
@@ -44,7 +44,7 @@ export function Gauge({
   unit?: string;
   /** Small caption under the value (e.g. 'Celsius'). */
   sublabel?: string;
-  /** Override the centre number (fill/colour still track `value`, 0–100) — e.g.
+  /** Override the center number (fill/color still track `value`, 0–100) — e.g.
    *  a temp gauge fills on the °C scale but shows a °F number. */
   display?: number;
 }) {

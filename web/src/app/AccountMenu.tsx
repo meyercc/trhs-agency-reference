@@ -16,8 +16,15 @@ const SignOutGlyph = () => (
   </svg>
 );
 
-/** Account avatar + dropdown in the top-right of the nav (ports vanilla `user-menu`). */
-export function ProfileMenu() {
+/**
+ * Account avatar + dropdown in the top-right of the nav (ports vanilla `user-menu`).
+ *
+ * Named Account, not Profile: everything in it is about the signed-in ACCOUNT
+ * (identity, sign out, admin). The app's *profiles* — Gaming, Work, Music — are
+ * a different concept entirely, and they now sit in their own switcher to the
+ * left of this one, so the two must not share a word.
+ */
+export function AccountMenu() {
   const { theme, setTheme } = useSettings();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -61,10 +68,10 @@ export function ProfileMenu() {
   }, [open]);
 
   return (
-    <div className="profile-menu-wrap" ref={wrap}>
+    <div className="account-menu-wrap" ref={wrap}>
       <button
         type="button"
-        className={'profile-menu-btn' + (open ? ' active' : '')}
+        className={'account-menu-btn' + (open ? ' active' : '')}
         aria-label="Account"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -74,12 +81,12 @@ export function ProfileMenu() {
       </button>
 
       {open && (
-        <ContextMenu className="profile-menu">
-          <div className="pm-header">
+        <ContextMenu className="account-menu">
+          <div className="am-header">
             <Avatar variant="custom" src={profilePhoto} alt="" size={36} />
             <div>
-              <div className="pm-name">UserName</div>
-              <div className="pm-email">arcanerider@xyz.com</div>
+              <div className="am-name">UserName</div>
+              <div className="am-email">arcanerider@xyz.com</div>
             </div>
           </div>
 
@@ -90,7 +97,7 @@ export function ProfileMenu() {
           />
 
           <ContextMenuLabel>Appearance</ContextMenuLabel>
-          <div className="pm-appearance">
+          <div className="am-appearance">
             <ToggleButtonGroup
               aria-label="Theme"
               value={theme}
@@ -105,7 +112,7 @@ export function ProfileMenu() {
 
           <Separator />
           <div
-            className="pm-admin-wrap"
+            className="am-admin-wrap"
             onMouseEnter={() => setAdminOpen(true)}
             onMouseLeave={() => setAdminOpen(false)}
             onFocus={() => setAdminOpen(true)}
@@ -114,7 +121,7 @@ export function ProfileMenu() {
             }}
           >
             <ListItem
-              className="pm-accent pm-admin-trigger"
+              className="am-accent am-admin-trigger"
               label="Admin Panel"
               leading={<AdminGlyph />}
               trailing={<Icon name="chevron-left" size={14} />}
@@ -123,7 +130,7 @@ export function ProfileMenu() {
               onClick={() => setAdminOpen((o) => !o)}
             />
             {adminOpen && (
-              <ContextMenu className="pm-submenu" aria-label="Admin">
+              <ContextMenu className="am-submenu" aria-label="Admin">
                 <ListItem
                   label="Admin Settings"
                   leading={<Icon name="settings" size={14} />}
@@ -139,6 +146,14 @@ export function ProfileMenu() {
                   leading={<Icon name="grid" size={14} />}
                   onClick={() => goAdmin(() => navigate('/metro'))}
                 />
+                {/* The four-card dashboard concept we put beside our partners'
+                    visual concepts. Sits next to Metro because it answers the
+                    same question — what else could the dashboard be. */}
+                <ListItem
+                  label="Dashboard Concept"
+                  leading={<Icon name="home" size={14} />}
+                  onClick={() => goAdmin(() => navigate('/home-v2'))}
+                />
                 <ListItem
                   label="SKU Registry"
                   leading={<Icon name="devices" size={14} />}
@@ -150,7 +165,7 @@ export function ProfileMenu() {
 
           <Separator />
           <ListItem
-            className="pm-danger"
+            className="am-danger"
             label="Sign Out"
             leading={<SignOutGlyph />}
             onClick={() => setOpen(false)}

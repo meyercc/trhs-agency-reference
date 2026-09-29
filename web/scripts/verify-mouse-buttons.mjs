@@ -2,13 +2,16 @@
 // 4631:41576): assignment callouts anchored on the hero, the arm → assign
 // grammar (click a callout, then press any key or pick a chip), chip
 // drag-and-drop onto a callout, and the Reset/Disable context menu.
-// Dev server :5175, headless Chrome :9222, run from web/.
+// Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
 const OUT = process.argv[2] || '/tmp';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
 let msgId = 0;
 function makeSend(ws) {
@@ -83,7 +86,10 @@ async function main() {
 
   // Unique ?r per run — identical URLs skip the reload and inherit the last
   // run's SPA state (the hash-navigation trap).
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${Date.now() % 1e7}#/?sku=saga-pro&tab=buttons` });
+  // Assignments now persist to the active profile, so start from a clean one —
+  // otherwise a second run in the same browser profile opens already assigned.
+  await evalJs(send, `localStorage.removeItem('trhs-profiles'); 1`);
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${Date.now() % 1e7}#/?sku=saga-pro&tab=buttons` });
   await waitFor(send, `document.readyState === 'complete' && document.querySelector('.dc-canvas .ds-ng3-body')`);
   await waitFor(send, `document.querySelectorAll('[data-callout]').length > 0`);
 
@@ -94,7 +100,7 @@ async function main() {
   check('callouts: default state shows the physical button name',
     s?.value === 'Mouse Left' && !s?.assigned, JSON.stringify(s));
   check('callouts: left-flank slots are mirrored (flip)', s?.flip === true);
-  check('callouts: they are real buttons (focusable, labelled by content)',
+  check('callouts: they are real buttons (focusable, labeled by content)',
     await evalJs(send, `[...document.querySelectorAll('[data-callout] .ds-callout')].every(b => b.tagName === 'BUTTON')`));
 
   // ── Arm → hint → press any key ────────────────────────────────────────────
@@ -203,6 +209,23 @@ async function main() {
     await evalJs(send, `[...document.querySelectorAll('[data-callout] .ds-callout-value')].map(v => v.textContent.trim()).join('/')`)
       === 'Mouse Left/Mouse Right/Mouse Middle/Mouse 5/Mouse 4/DPI'
       || (await evalJs(send, `document.querySelectorAll('.ds-callout.assigned, .ds-callout.disabled').length`)) === 0);
+
+  // ── Assignments belong to the profile: they survive a reload ─────────────
+  await evalJs(send, `document.querySelector('[data-callout="mouse-4"] .ds-callout').click()`);
+  await waitFor(send, `document.querySelector('[data-callout="mouse-4"] .ds-callout.armed')`);
+  await evalJs(send, `[...document.querySelectorAll('.dc-key')].find(k => k.getAttribute('aria-label')?.includes('WHEEL UP')).click()`);
+  await waitFor(send, `document.querySelector('[data-callout="mouse-4"] .ds-callout.assigned')`);
+  check('profile: the assignment is captured under the Buttons tab', await evalJs(send, `(() => {
+    const st = JSON.parse(localStorage.getItem('trhs-profiles') || 'null');
+    const p = st?.profiles.find(x => x.id === st.activeId);
+    return !!p?.devices?.['saga-pro']?.['buttons.binds']?.['mouse-4'];
+  })()`));
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${Date.now() % 1e7}#/?sku=saga-pro&tab=buttons` });
+  await waitFor(send, `document.readyState === 'complete' && document.querySelectorAll('[data-callout]').length > 0`);
+  s = await evalJs(send, CO('mouse-4'));
+  check('profile: the assignment is still on the button after a reload', s?.assigned === true && s?.value === 'WHEEL UP', JSON.stringify(s));
+  await evalJs(send, `document.querySelector('.dc-reset').click()`);
+  await waitFor(send, `!document.querySelector('.ds-callout.assigned')`);
 
   // ── Callouts belong to the Buttons tab only ───────────────────────────────
   await evalJs(send, `[...document.querySelectorAll('.ds-ng3-tool')].find(b => b.getAttribute('aria-label') === 'Sensor').click()`);

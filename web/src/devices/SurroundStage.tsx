@@ -37,7 +37,7 @@ const RING: ChannelNode[] = [
   { id: 'fl', label: 'Front left', bearing: 315, virtual: true },
 ];
 
-/** Distance from stage centre to a ring node's centre, in px (stage is 198). */
+/** Distance from stage center to a ring node's center, in px (stage is 198). */
 const RING_RADIUS = 82;
 
 export function SurroundStage({ output }: { output: string }) {

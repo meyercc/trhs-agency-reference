@@ -26,7 +26,7 @@ import './perform-v4.css';
 import './perform-v5.css';
 
 // ── PerformV5 (#/perform-v5) — framework-showcase variant ──
-// An ISOLATED, clearly-labelled PROPOSAL. Three posture domains only:
+// An ISOLATED, clearly-labeled PROPOSAL. Three posture domains only:
 // Monitoring / Performance / Maintenance.
 // Performance layout: Power Mode owns a FULL row (the P4 anchor); below it a
 // half/half row — Network Booster (1/2) + OMEN AI (1/2). Optimization lives

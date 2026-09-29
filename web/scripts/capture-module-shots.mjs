@@ -11,7 +11,10 @@
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
-const BASE = 'http://localhost:5175/';
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
+const BASE = `http://localhost:${APP_PORT}/`;
 const OUT = process.argv[2] || '/tmp/mod-shots';
 const ONLY = process.argv.slice(3); // optional list of ids to (re)capture
 const VW = 1440, VH = 900, DSF = 2;
@@ -39,7 +42,7 @@ const MAINT_EL = `(() => {
   return sec ? sec.querySelector('.feature-card-grid') : null;
 })()`;
 
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let msgId = 0;

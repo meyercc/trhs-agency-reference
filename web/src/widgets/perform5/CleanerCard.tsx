@@ -6,7 +6,7 @@ import { CardDoor, Facts, FeatStatus } from './CardKit';
 // anatomy as the other Performance feature cards: header = title + door
 // ("Schedule", a config door, top-right); body leads with the big bold status
 // "reading" (Ready / Good, from CardKit's vocabulary); "Clean" is the actionable
-// step → footer. Cleaning shows a progress Dialogue (see CleanProgressDialog);
+// step → footer. Cleaning shows a progress Dialog (see CleanProgressDialog);
 // Schedule opens the scheduler modal.
 //   · System Cleaner = storage/junk (space).
 //   · Fan Cleaner    = reverse-fan dust removal (thermal).

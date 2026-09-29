@@ -1,0 +1,117 @@
+/* Personalize › Lighting window — glue over System Vitals' .vm-* layout.
+   What the Modes window left behind, trimmed to the pieces Light Studio uses. */
+.mm-mode-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: calc(var(--control-height) * 2);
+  height: calc(var(--control-height) * 2);
+  border-radius: var(--radius);
+  background: var(--accent-dimmest);
+  border: 1px solid var(--border);
+  color: var(--accent-color);
+}
+.mm-mode-icon .ds-icon {
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+}
+.mm-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  margin-bottom: var(--gutter-xs);
+}
+.mm-name-row .vm-detail-name {
+  margin-bottom: 0;
+}
+.mm-sub {
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.mm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gutter-xs);
+  flex-shrink: 0;
+}
+
+@media (max-width: 1200px) {
+  .vm-detail-header:has(.mm-actions) {
+    flex-wrap: wrap;
+  }
+}
+.mm-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gutter-sm);
+  padding: var(--gutter);
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+}
+.mm-card > .ds-slider,
+.mm-card > .ds-dropdown {
+  align-self: stretch;
+}
+.mm-lighting {
+  align-items: stretch;
+}
+.mm-shell .vm-detail-header {
+  margin-bottom: var(--gutter-sm);
+  padding-bottom: var(--gutter-sm);
+}
+.mm-studio .ls {
+  height: auto;
+}
+.mm-studio .ls-viewport {
+  flex: 1;
+  height: auto;
+  min-height: calc(var(--control-height) * 10);
+}
+.mm-card.mm-section {
+  align-items: stretch;
+  gap: 0;
+}
+.mm-power {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  margin-left: var(--gutter-xs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.mm-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--control-height) * 10);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.lm-panel {
+  display: flex;
+  flex-direction: column;
+}
+.lm-panel > .lm-status {
+  flex-shrink: 0;
+  margin-bottom: var(--gutter-sm);
+  padding-bottom: var(--gutter-sm);
+}
+.lm-status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--gutter-xs);
+}
+.lm-panel > .ls,
+.lm-panel > .mm-loading {
+  flex: 1;
+  min-height: calc(var(--control-height) * 14);
+}

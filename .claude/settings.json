@@ -3,7 +3,13 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(curl http://localhost:*)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "Bash(node scripts/verify-*)",
+      "Bash(node .claude/skills/token-audit/scripts/audit-compliance.mjs:*)",
+      "Bash(npx vite *)",
+      "Bash(mktemp -d)",
+      "Bash(lsof -nP -iTCP:*)",
+      "Bash(pgrep -f remote-debugging-port)"
     ]
   }
 }

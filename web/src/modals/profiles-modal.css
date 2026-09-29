@@ -1,0 +1,320 @@
+/* ── Profiles modal (?modal=profiles) ────────────────────────────────────────
+   Rides the shared `.stx-modal` sectioned-settings chrome (settings-modal.css:
+   230px rail, static group headers, group padding) on ModalShell. Only what's
+   specific to profiles lives here: the list rail, the override affordance, and
+   the read-only device manifest. */
+
+.profiles-modal .pfm-lede {
+  margin: 0 0 var(--gutter);
+  color: var(--text-dim);
+  font-size: var(--text-body);
+}
+
+/* ── Left rail: New Profile + the list, with the file actions at the foot ──
+   Three fixed parts and one that scrolls. The rail itself never scrolls: New
+   Profile stays at the top and the file actions stay at the foot however many
+   profiles there are, and the LIST between them takes the overflow. Otherwise
+   the window's height decides how many profiles can exist. */
+.profiles-modal .modal-left {
+  overflow: hidden;
+}
+.pfm-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  /* Fill the rail, so the foot's margin-top: auto pins to the rail's bottom
+     rather than to the bottom of the list. */
+  flex: 1;
+  min-height: 0;
+}
+.pfm-nav .pfm-new,
+.pfm-nav-actions {
+  flex: none;
+}
+.pfm-nav .ds-modal-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-med) transparent;
+}
+/* Whole-collection actions, pinned to the foot and ruled off from the list
+   they act on. Same shape as a modal nav's foot, holding buttons instead of a
+   caption. */
+.pfm-nav-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.pfm-nav-actions .ds-separator {
+  margin-bottom: var(--gutter-xxs);
+}
+/* One line of feedback for the two off-screen acts (a download, a file
+   picker). It sits ABOVE the rule so the pinned buttons never move: the note
+   grows upward into the rail's slack and retires on its own. */
+.pfm-nav-status {
+  padding: 0 var(--gutter-xs);
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+  text-align: center;
+}
+.pfm-nav-status:empty {
+  display: none;
+}
+/* Sits in the same column as the nav items, so its label lines up with
+   theirs: rail inset + icon + gap = the nav item's inset + dot + gap. Declared
+   at html:root specificity because the ghost-button override layer in
+   components.css sets padding at that level and would otherwise win. */
+.pfm-nav .pfm-new {
+  justify-content: flex-start;
+  gap: var(--gutter-xs);
+}
+html:root .pfm-nav .pfm-new {
+  padding: 0 var(--gutter-xs);
+}
+.pfm-nav .ds-modal-nav-item {
+  gap: var(--gutter-xs);
+}
+.pfm-nav-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+/* Which profile is RUNNING, as distinct from which one you're editing. The rail
+   carries both states at once, so the running one is named rather than just
+   highlighted — the highlight already means "selected for editing". */
+.pfm-nav-badge {
+  flex: none;
+  padding: 0 var(--gutter-xxs);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: var(--text-nano);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Override affordance ── */
+.pfm-override {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--gutter-xxs);
+}
+.pfm-clear {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent-color);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.pfm-clear:hover {
+  color: var(--text-primary);
+}
+.pfm-clear:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+/* The wallpaper kicker carries the "Use app setting" link at its far end. */
+.profiles-modal .stx-preview-label {
+  justify-content: space-between;
+}
+
+.pfm-hint,
+.pfm-empty {
+  margin: 0 0 var(--gutter-sm);
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+  line-height: 1.5;
+}
+
+/* ── Game Link ── */
+.pfm-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+  margin-bottom: var(--gutter-sm);
+}
+.pfm-gamelist {
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: var(--gutter-xs);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+}
+.pfm-game-platform {
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+
+/* ── Schedule days ── */
+.pfm-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xs) 0;
+}
+
+/* ── Disclosures ──
+   One expander look for both reveals in this modal (the game picker and the
+   read-only manifest): a full-width bordered bar, so neither reads as a
+   floating ghost button with a mystery inset. */
+.pfm-disclosure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xs);
+  width: 100%;
+  padding: var(--gutter-xs);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-default), border-color var(--dur-fast) var(--ease-default);
+}
+.pfm-disclosure:hover {
+  color: var(--text-primary);
+  border-color: var(--border-light-m);
+}
+.pfm-disclosure:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* ── Manifest ──
+   One device card per device (the Ng3 section surface, via Ng3Section), a
+   sunken sub-card per tab inside it, and 32px name/value rows. Titles are the
+   Ng3 caps label, so the manifest speaks the device panels' own vocabulary. */
+.pfm-manifest {
+  display: grid;
+  gap: var(--gutter-xs);
+  margin-top: var(--gutter-sm);
+}
+.pfm-device {
+  gap: var(--gutter-tablet);
+}
+.pfm-device-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  margin: 0;
+  color: var(--text-primary);
+}
+.pfm-device-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--gutter-xs);
+  align-items: start;
+}
+.pfm-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-tablet) var(--gutter-tablet) var(--gutter-xxs);
+  min-width: 0;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.pfm-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+/* The tab's own icon beside its title — the same pairing the device panel's
+   tab strip uses, so a group here is recognizably that tab. */
+.pfm-group-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  color: var(--text-muted);
+}
+.pfm-rows {
+  margin: 0;
+  display: grid;
+  gap: var(--gutter-xxxs);
+}
+/* A record, not a control surface — dt/dd rather than rows that look pressable,
+   because these values are set in the device panel, never here. */
+.pfm-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  min-height: var(--control-height);
+  padding: 0 var(--gutter-xs);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+}
+.pfm-row dt {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+.pfm-row dd {
+  margin: 0;
+  flex: none;
+  color: var(--text-dim);
+}
+
+/* ── Footer ── */
+.pfm-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  width: 100%;
+}
+.pfm-footer .pfm-delete {
+  color: var(--red);
+}
+.pfm-active-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  color: var(--text-dim);
+  font-size: var(--text-body);
+}
+
+@media (max-width: 1024px) {
+  .pfm-device-groups {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Stacked above the content, the rail is part of the page flow: it grows
+     with the list rather than scrolling inside a fixed height. */
+  .profiles-modal .modal-left {
+    overflow: visible;
+  }
+  .pfm-nav .ds-modal-nav {
+    overflow: visible;
+  }
+}
+
+/* The Photo row's control: the current photo at preview size, the wallpaper
+   choices as image swatches, and the upload button — one line, like the
+   accent row above it. */
+.pfm-photo {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  flex-wrap: wrap;
+}
+.pfm-photo .wg-swatch-row {
+  margin-top: 0;
+}

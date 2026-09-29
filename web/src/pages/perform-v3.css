@@ -54,7 +54,7 @@
 .pv3-rig-label {
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   width: 64px;
   flex-shrink: 0;
 }
@@ -65,7 +65,7 @@
   gap: var(--gutter);
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .pv3-rig-log {
   font-family: var(--font-mono);
@@ -117,7 +117,7 @@
 .pv3-ai-header-scope {
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* ── Blocks ── */
@@ -130,7 +130,7 @@
 .pv3-block-note {
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .pv3-envelope {
   display: grid;
@@ -144,7 +144,7 @@
 .pv3-attribution-meta {
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .pv3-escape,
 .pv3-unleash-entry {
@@ -188,5 +188,5 @@
 .pv3-opt-row-sub {
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }

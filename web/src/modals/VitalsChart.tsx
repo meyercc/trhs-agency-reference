@@ -5,7 +5,7 @@ import type { Point } from './vitalsData';
 
 export interface ChartSeries {
   label: string;
-  /** hex colour, e.g. "#00c8d7" */
+  /** hex color, e.g. "#00c8d7" */
   color: string;
   data: Point[];
 }

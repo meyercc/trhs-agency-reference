@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from '../state/Settings';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -71,12 +72,18 @@ function buildEdges(): Edge[] {
   });
 }
 
-const MINIMAP_COLOR: Record<SurfaceKind, string> = {
-  page: '#00c8d7',
-  'feature-modal': '#7cc5ff',
-  'device-modal': '#f6a13c',
-  panel: '#56d364',
-  alt: '#b38cf0',
+/* The node card carries its kind accent through the `--_accent` custom property
+   (see atlas.css), so the legend key and the minimap have to read the same
+   tokens or they drift out of sync -- and, since the semantic ramp flips with
+   the theme, a hardcoded hex here would also be wrong in light. React Flow's
+   MiniMap paints an SVG `fill`, where `var()` does not resolve, so the values
+   are read off the document once per theme instead of being passed as var(). */
+const KIND_TOKEN: Record<SurfaceKind, string> = {
+  page: '--cyan',
+  'feature-modal': '--blue',
+  'device-modal': '--orange',
+  panel: '--green',
+  alt: '--purple',
 };
 
 export function AppAtlas() {
@@ -91,6 +98,13 @@ export function AppAtlas() {
 
 function AtlasCanvas() {
   const navigate = useNavigate();
+  const { isLight } = useSettings();
+  const kindColor = useMemo(() => {
+    const cs = getComputedStyle(document.documentElement);
+    return Object.fromEntries(
+      Object.entries(KIND_TOKEN).map(([k, t]) => [k, cs.getPropertyValue(t).trim()]),
+    ) as Record<SurfaceKind, string>;
+  }, [isLight]);
   const [nodes, setNodes, onNodesChange] = useNodesState(useMemo(buildNodes, []));
   const [edges, , onEdgesChange] = useEdgesState(useMemo(buildEdges, []));
 
@@ -155,7 +169,7 @@ function AtlasCanvas() {
         <MiniMap
           pannable
           zoomable
-          nodeColor={(n) => MINIMAP_COLOR[(n.data as { kind: SurfaceKind }).kind] ?? '#888'}
+          nodeColor={(n) => kindColor[(n.data as { kind: SurfaceKind }).kind] ?? 'var(--text-muted)'}
           maskColor="rgba(0,0,0,0.55)"
         />
 
@@ -177,7 +191,7 @@ function AtlasCanvas() {
             <div className="atlas-legend-heading">Surfaces</div>
             {(Object.keys(KIND_LABEL) as SurfaceKind[]).map((k) => (
               <div key={k} className="atlas-legend-row">
-                <span className="atlas-legend-dot" style={{ background: MINIMAP_COLOR[k] }} />
+                <span className="atlas-legend-dot" style={{ background: kindColor[k] }} />
                 {KIND_LABEL[k]}
               </div>
             ))}

@@ -96,7 +96,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.04em;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* ── Bottom meter ── */
@@ -133,7 +133,7 @@
   top: 50%;
   transform: translateY(-50%);
   display: flex;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   transition: color var(--dur-fast) var(--ease-default);
   pointer-events: none;
 }

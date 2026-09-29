@@ -1,0 +1,240 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Advanced (parametric) Equalizer modal (Figma Audio 7364:426542 / 426556).
+
+   Chrome, title row and footer come from ModalShell, the left rail from
+   EqPresetRail (eq-rail.css) and the axis/pill/label furniture from
+   eq-editor.css. Only the graph and the parameter bar live here. Every value
+   is a token; the band colors are the --eq-band-N tokens.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Editor column: range pills over the stage over the frequency labels over
+      the parameter bar ── */
+.aeq-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  height: 100%;
+  min-height: 0;
+}
+
+/* The named ranges. Each pill spans its range on the log scale (flex set
+   inline from the range's width in octaves), indented past the dB axis like
+   the labels below the graph. */
+.aeq-refs {
+  display: flex;
+  gap: var(--gutter-xxxs);
+  margin-left: var(--seq-axis-w);
+}
+.aeq-refs .seq-group {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Stage: dB axis beside the plot ── */
+.aeq-stage {
+  display: flex;
+  align-items: stretch;
+  gap: var(--gutter-xs);
+  flex: 1;
+  min-height: 0;
+  padding: var(--gutter-sm) var(--gutter-xs);
+  background: var(--surface-lightest);
+  border: 1px solid var(--border-light-m);
+  border-radius: var(--radius-sm);
+}
+/* The plot box is what the axis measures: ±12 dB are its top and bottom
+   edges, so a tick and a point at the same gain sit on one line. */
+.aeq-plot {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+.aeq-plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Grid: the 0 dB line carries more weight than the other gain lines; decade
+   lines more than the in-between frequency lines. */
+.aeq-grid-db {
+  stroke: var(--border-light);
+}
+.aeq-grid-db.zero {
+  stroke: var(--border-med);
+}
+.aeq-grid-hz {
+  stroke: var(--border-light);
+}
+.aeq-grid-hz.minor {
+  stroke: var(--border-light);
+  opacity: 0.5;
+}
+
+/* The response: a plain line until a band is picked; then the line and the
+   area under it take that band's color (`--band`, set on .aeq-editor). The
+   accent is deliberately absent here — it would say "app", not "this band". */
+.aeq-fill {
+  fill: var(--band, transparent);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.aeq-editor.has-band .aeq-fill {
+  opacity: 0.12;
+}
+.aeq-line {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transition: stroke var(--dur-fast) var(--ease-default);
+}
+.aeq-editor.has-band .aeq-line {
+  stroke: var(--band);
+}
+
+/* A band's point: white disc, the band's own color inside, a dark hairline so
+   it reads on any part of the curve. Selected = a soft white ring (the color is
+   already the band's); bypassed = hollow and dim, still in place so it can be
+   brought back. */
+.aeq-point {
+  cursor: grab;
+  outline: none;
+}
+.aeq-point:active {
+  cursor: grabbing;
+}
+.aeq-point-disc {
+  fill: var(--text-primary);
+  stroke: var(--ksg-b40);
+}
+.aeq-point-color {
+  fill: var(--band);
+  stroke: var(--ksg-b30);
+}
+.aeq-point-ring {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 2;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.aeq-point.selected .aeq-point-ring {
+  opacity: 0.45;
+}
+.aeq-point:focus-visible .aeq-point-ring {
+  opacity: 1;
+}
+.aeq-point.off .aeq-point-color {
+  fill: transparent;
+  stroke: var(--band);
+}
+.aeq-point.off .aeq-point-disc {
+  opacity: 0.5;
+}
+
+/* The selected band's Q anchors (see the graph): hairlines and dots in the
+   same soft white as the ring — the color on this row is already the band's.
+   Dragging a dot is the direct way to set Q; hover brightens the dot so it
+   reads as a handle rather than a tick. */
+.aeq-q-line {
+  stroke: var(--text-primary);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.aeq-q-anchor {
+  cursor: ew-resize;
+}
+.aeq-q-hit {
+  fill: transparent;
+}
+.aeq-q-dot {
+  fill: var(--text-primary);
+  opacity: 0.7;
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.aeq-q-anchor:hover .aeq-q-dot,
+.aeq-q-anchor:active .aeq-q-dot {
+  opacity: 1;
+}
+
+/* ── Frequency labels: each sits at its tick's position on the log scale ── */
+.aeq-hz {
+  position: relative;
+  height: var(--text-body);
+  margin-left: var(--seq-axis-w);
+}
+/* Ten labels on a log scale, the last two close together: the small size the
+   Simple editor uses for its ten-band row keeps them apart. Each is centered
+   on its tick; the ends overhang into the axis gutter and the modal padding. */
+.aeq-hz .seq-hz-label {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: var(--text-nano);
+}
+
+/* ── Parameter bar: the selected band's filter, frequency, gain and Q, with
+      bypass and reset at the end. Takes the selected band's color as its
+      border, since everything in it is about that one point. ── */
+.aeq-params {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xs);
+  flex-shrink: 0;
+  min-height: var(--control-height);
+  margin-left: var(--seq-axis-w);
+  padding: var(--gutter-xs) var(--gutter-sm);
+  background: var(--surface-lightest);
+  border: 1px solid var(--border-light-m);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--dur-fast) var(--ease-default);
+}
+.aeq-params.has-band {
+  border-color: var(--band);
+}
+.aeq-param {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  min-width: 0;
+}
+/* Three fields side by side in a bar that also holds the picker: the fields
+   take the width of their widest value ("20.00 kHz") and no more. Component
+   geometry, set by type metrics. */
+.aeq-params .ds-stepper-field {
+  width: 76px;
+}
+.aeq-param-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+/* The filter's name doubles as the first label, so it reads "HIGH PASS" and
+   then the picker, the way the Figma sets it. */
+.aeq-param-label.filter {
+  color: var(--text-primary);
+}
+.aeq-params .ds-separator.vertical {
+  height: var(--control-height);
+}
+.aeq-param-actions {
+  display: flex;
+  gap: var(--gutter-xxs);
+  margin-left: auto;
+}
+
+/* ── Light theme ── */
+html[data-theme='light'] .aeq-point-disc,
+html.light .aeq-point-disc {
+  stroke: var(--ksg-b25);
+}

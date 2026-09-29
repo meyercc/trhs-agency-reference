@@ -26,7 +26,7 @@ function decodeSpec(b64: string | null): ReturnType<typeof resolveSku> | undefin
 /**
  * Renders the device modal driven by `?sku=<id>` (against configurator/skus.json),
  * so it overlays whatever route you're on and is deep-linkable (mirrors the
- * prototype's `?sku=` behaviour). `?device=<id>` is still honored as a legacy
+ * prototype's `?sku=` behavior). `?device=<id>` is still honored as a legacy
  * alias. Mounted once at the app shell level.
  */
 export function DeviceModalHost() {

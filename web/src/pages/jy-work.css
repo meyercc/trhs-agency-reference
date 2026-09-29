@@ -4,12 +4,12 @@
 .jyw-root { max-width: 1100px; margin: 0 auto; padding: 8px 0 64px; }
 
 .jyw-hero { padding: 12px 0 8px; }
-.jyw-eyebrow { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-subtle); margin: 0 0 6px; }
+.jyw-eyebrow { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-muted); margin: 0 0 6px; }
 .jyw-title { font-size: 34px; line-height: 1.1; color: var(--text-primary); margin: 0 0 10px; }
 .jyw-sub { max-width: 62ch; font-size: var(--text-body); color: var(--text-muted); margin: 0; }
 
 .jyw-section { margin-top: 40px; }
-.jyw-section-title { font-family: var(--font-mono); font-size: var(--text-caption); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle); margin: 0 0 var(--gutter); padding-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+.jyw-section-title { font-family: var(--font-mono); font-size: var(--text-caption); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 0 0 var(--gutter); padding-bottom: 8px; border-bottom: 1px solid var(--border-light); }
 
 .jyw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--gutter); }
 

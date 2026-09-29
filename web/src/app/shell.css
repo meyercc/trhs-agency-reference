@@ -55,12 +55,78 @@
   align-items: center;
   gap: var(--gutter-sm);
 }
-/* ── Account avatar + dropdown (ProfileMenu) ── */
-.profile-menu-wrap {
+/* ── Software-profile switcher (ProfileSwitcher) ── */
+/* Sits left of the account avatar. Reads as a status chip you can act on, not
+   as another nav tab — so it carries the profile's color and name, and only
+   picks up a surface on hover/open. */
+.profile-switcher-wrap {
   position: relative;
   display: inline-flex;
 }
-.profile-menu-btn {
+.profile-switcher-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  height: 30px;
+  padding: 0 var(--gutter-xs);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--text-dim);
+  /* Matches .ds-dropdown-trigger — this is a dropdown trigger in all but name,
+     and a <button> does not inherit the page font. */
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default),
+    background-color var(--dur-fast) var(--ease-default);
+}
+.profile-switcher-btn:hover,
+.profile-switcher-btn.active {
+  color: var(--text-primary);
+  border-color: var(--border);
+  background: var(--surface-sunken);
+}
+.profile-switcher-btn:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+  color: var(--text-primary);
+}
+.ps-name {
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The identity dot. Carries a hairline so it stays a visible shape against a
+   surface close to its own color — never the sole carrier of state. */
+.ps-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 0 0 1px var(--ksg-b20);
+}
+.profile-switcher-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 232px;
+  z-index: 50;
+}
+.ps-note {
+  padding: var(--gutter-xxs) var(--gutter-xs) 0;
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+
+/* ── Account avatar + dropdown (AccountMenu) ── */
+.account-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.account-menu-btn {
   display: inline-flex;
   padding: 0;
   border: none;
@@ -72,19 +138,19 @@
   outline-offset: 2px;
   transition: outline-color var(--dur-fast) var(--ease-default);
 }
-.profile-menu-btn:hover,
-.profile-menu-btn.active,
-.profile-menu-btn:focus-visible {
+.account-menu-btn:hover,
+.account-menu-btn.active,
+.account-menu-btn:focus-visible {
   outline-color: var(--accent-color);
 }
-.profile-menu {
+.account-menu {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
   width: 232px;
   z-index: 50;
 }
-.profile-menu .pm-header {
+.account-menu .am-header {
   display: flex;
   align-items: center;
   gap: var(--gutter-xs);
@@ -92,43 +158,43 @@
   border-bottom: 1px solid var(--border);
   margin-bottom: var(--gutter-xxs);
 }
-.profile-menu .pm-name {
+.account-menu .am-name {
   font-size: var(--text-caption);
   font-weight: var(--font-medium);
   color: var(--text-primary);
 }
-.profile-menu .pm-email {
+.account-menu .am-email {
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   margin-top: 1px;
 }
-.profile-menu .pm-appearance {
+.account-menu .am-appearance {
   padding: var(--gutter-xxs) var(--gutter-sm) var(--gutter-xs);
 }
-.profile-menu .pm-appearance .ds-toggle-group {
+.account-menu .am-appearance .ds-toggle-group {
   width: 100%;
 }
 /* accent / danger menu rows (icon + label follow currentColor) */
-.profile-menu .pm-accent {
+.account-menu .am-accent {
   color: var(--accent-color);
 }
-.profile-menu .pm-danger {
+.account-menu .am-danger {
   color: var(--red);
 }
 
 /* Admin submenu — a hover/focus flyout off the "Admin Panel" row. Anchored to
    the row and opens to the LEFT (the dropdown hugs the screen's right edge). */
-.profile-menu .pm-admin-wrap {
+.account-menu .am-admin-wrap {
   position: relative;
 }
-.profile-menu .pm-admin-trigger {
+.account-menu .am-admin-trigger {
   cursor: pointer;
 }
-.profile-menu .pm-admin-trigger .ds-list-item-trailing {
+.account-menu .am-admin-trigger .ds-list-item-trailing {
   margin-left: auto;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
-.profile-menu .pm-submenu {
+.account-menu .am-submenu {
   position: absolute;
   top: calc(var(--gutter-xxs) * -1);
   /* Flush against the row (no dead gap that would drop the hover). */
@@ -138,7 +204,7 @@
 }
 /* Transparent bridge so crossing from the row into the flyout never leaves the
    hover region (keeps the submenu open through the sub-pixel seam). */
-.profile-menu .pm-submenu::before {
+.account-menu .am-submenu::before {
   content: '';
   position: absolute;
   top: 0;

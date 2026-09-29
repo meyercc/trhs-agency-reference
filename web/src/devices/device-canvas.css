@@ -8,7 +8,7 @@
   z-index: 51; /* above .ds-backdrop (50) */
   display: flex;
   flex-direction: column;
-  background: var(--ksg-b60);
+  background: var(--ksg-canvas-surface);
   overflow: hidden;
   backdrop-filter: blur(24px);
   /* The immersive background stays full-bleed behind the translucent top nav
@@ -30,10 +30,10 @@
   align-items: center;
   gap: 6px;
   height: 32px;
-  padding: 0 12px;
+  padding: 0 var(--gutter-tablet);
   border-radius: 24px;
   background: var(--ksg-b20);
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   backdrop-filter: blur(4px);
   box-shadow: var(--shadow-lv-2, 0 1px 8px rgba(0, 0, 0, 0.3));
   color: var(--text-primary);
@@ -67,7 +67,7 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--ksg-w20);
+  border: 1px solid var(--border);
   border-radius: 50%;
   background: var(--ksg-b20);
   backdrop-filter: blur(4px);
@@ -82,7 +82,10 @@
 /* ── Hero ────────────────────────────────────────────── */
 .dc-hero {
   flex: 1;
-  min-height: 0;
+  /* The floor the hero keeps when the panel below wants the room (a long
+     preset list): the product image is the canvas's identity, so the panel
+     shrinks and scrolls before the hero becomes a speck. */
+  min-height: var(--dc-hero-min-h);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -131,7 +134,7 @@
   position: static;
   pointer-events: auto;
 }
-/* Per-slot leader length — centre anchors (wheel, DPI) need longer lines to
+/* Per-slot leader length — center anchors (wheel, DPI) need longer lines to
    carry their labels clear of the mouse body. */
 .dc-co .ds-callout-line {
   width: var(--co-line, 20px);
@@ -157,8 +160,8 @@
   flex-direction: column;
   min-width: 180px;
   padding: var(--gutter-xxs);
-  background: var(--ksg-n900);
-  border: 1px solid var(--ksg-w20);
+  background: var(--bg-mid);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lv-3);
   -webkit-backdrop-filter: blur(16px);
@@ -179,7 +182,7 @@
   text-align: left;
 }
 .dc-cmenu-item:hover {
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
 }
 .dc-cmenu-item:focus-visible {
   outline: var(--focus-ring);
@@ -195,7 +198,45 @@
   max-width: 960px;
   margin: 0 auto;
   padding: 0 var(--gutter) var(--gutter);
-  flex: 0 0 auto;
+  /* The canvas is a fixed, overflow-hidden viewport, so a panel that grows
+     with its content (a long preset list) used to run off the bottom and get
+     cut. It may now shrink to the room the hero leaves it (.dc-hero's floor),
+     and the min-height chain below hands that constraint down to the tab
+     body, so a list that opts in (.hc-eq-presets, .dc-keys-list) scrolls
+     inside the panel instead. */
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dc-canvas {
+  /* Canvas geometry, like .ds-ng3-panel's --ng3-w-narrow: the least height
+     the hero keeps (its padding plus a legible image) before the panel below
+     has to scroll. */
+  --dc-hero-min-h: 160px;
+}
+.dc-panel-wrap .ds-ng3-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.dc-panel-wrap .ds-ng3-body {
+  flex: 1;
+  min-height: 0;
+}
+/* Every canvas renders the panel `bare`, so the tab body's grid is the body's
+   own flex child — through .pb-scope-body, which is `display: contents` (a
+   layout no-op the child combinator still has to name). The .ds-ng3-content
+   pair covers a canvas that does not render bare. */
+.dc-panel-wrap .ds-ng3-body > .ds-ng3-grid,
+.dc-panel-wrap .pb-scope-body > .ds-ng3-grid,
+.dc-panel-wrap .ds-ng3-content > .ds-ng3-grid {
+  flex: 1;
+  min-height: 0;
+}
+.dc-panel-wrap .ds-ng3-content {
+  display: flex;
+  flex-direction: column;
 }
 .dc-placeholder {
   display: flex;
@@ -281,7 +322,7 @@
 .dc-divider {
   height: 1px;
   width: 100%;
-  background: var(--ksg-w10);
+  background: var(--surface-hover);
   border-radius: 2px;
 }
 .dc-reset {
@@ -315,7 +356,7 @@
   align-items: center;
   gap: var(--gutter-xs);
   width: 100%;
-  padding: 6px 8px;
+  padding: 6px var(--gutter-xs);
   border: 0;
   background: none;
   border-radius: var(--radius-sm);
@@ -324,7 +365,7 @@
   text-align: left;
 }
 .dc-keygroup-head:hover {
-  background: var(--ksg-w5);
+  background: var(--surface);
 }
 .dc-keygroup-label {
   flex: 1;
@@ -345,12 +386,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: var(--gutter-xxxs);
   width: 46px;
   height: 46px;
-  padding: 8px 2px;
+  padding: var(--gutter-xs) var(--gutter-xxxs);
   border-radius: 6px;
-  background: var(--ksg-n800);
+  background: var(--bg-elevated);
   border: 1px solid var(--ksg-w40);
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -376,7 +417,7 @@
 /* Picked as the next assignment — accent outline, mirrors an armed callout. */
 .dc-key.armed {
   border-color: var(--accent-color);
-  background: color-mix(in srgb, var(--accent-color) 12%, var(--ksg-n800));
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--bg-elevated));
 }
 .dc-key-top,
 .dc-key-bot {
@@ -417,8 +458,8 @@
   row-gap: var(--gutter-tablet);
   padding: var(--gutter-mobile) var(--gutter-tablet);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--ksg-w10);
-  background: var(--ksg-n800);
+  border: 1px solid var(--border-light-m);
+  background: var(--bg-elevated);
   cursor: pointer;
   text-align: left;
   transition: border-color var(--dur-fast) var(--ease-default), background var(--dur-fast) var(--ease-default);
@@ -431,7 +472,7 @@
 }
 .dc-sensor-preset.selected {
   border-color: var(--accent-color);
-  background: color-mix(in srgb, var(--accent-color) 8%, var(--ksg-n800));
+  background: color-mix(in srgb, var(--accent-color) 8%, var(--bg-elevated));
 }
 .dc-sensor-preset-num {
   font-family: var(--font-mono);
@@ -460,7 +501,7 @@
   font-size: var(--text-caption);
   text-transform: uppercase;
   color: var(--text-muted);
-  padding-bottom: 8px;
+  padding-bottom: var(--gutter-xs);
 }
 .dc-sensor-dpi-input {
   width: 78px;

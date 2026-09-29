@@ -268,8 +268,8 @@ export const ATLAS_EDGES: AtlasEdge[] = [
 export const EDGE_STYLE: Record<EdgeKind, { color: string; label: string; dashed?: boolean }> = {
   nav: { color: 'var(--text-muted)', label: 'Top nav', dashed: true },
   'opens-feature': { color: 'var(--accent-color)', label: 'Opens feature modal' },
-  'opens-device': { color: '#f6a13c', label: 'Opens device modal' },
-  alt: { color: '#b38cf0', label: 'Alt dashboard' },
+  'opens-device': { color: 'var(--orange)', label: 'Opens device modal' },
+  alt: { color: 'var(--purple)', label: 'Alt dashboard' },
 };
 
 export const KIND_LABEL: Record<SurfaceKind, string> = {

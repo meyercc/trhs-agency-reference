@@ -85,7 +85,7 @@
 .power-mode-watts {
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   letter-spacing: 0.04em;
 }
 

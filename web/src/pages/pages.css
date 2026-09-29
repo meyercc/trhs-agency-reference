@@ -22,7 +22,7 @@
 .pg-section-count {
   font-family: var(--font-mono);
   font-size: var(--text-caption);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* (The old Play featured-hero styles were replaced by the full-bleed slideshow
@@ -37,6 +37,21 @@
 .pg-grid-wide {
   grid-template-columns: auto;
 }
+/* Personalize › Devices — the four devices the desk's look is composed from.
+   Four across on a wide desk, two on a laptop, one on a phone. */
+/* Personalize shows what a device is DOING for the desk. Battery and
+   connection are Devices' and Perform's (TH-350) — hidden here by rule, not
+   by whichever size the card happens to land on. */
+.pg-devices .dev-battery {
+  display: none;
+}
+.pg-devices {
+  /* The card has to stay wide enough to keep its shortcut buttons (they hide
+     under 260px, and those shortcuts are why the cards are on this page), so
+     the track has a floor and the count follows the width: three across on a
+     wide desk, two on a laptop, one on a phone. */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
 /* Two equal half-width cards side by side (collapses to one on narrow widths). */
 .pg-pair {
   display: grid;
@@ -48,6 +63,52 @@
   .pg-pair {
     grid-template-columns: 1fr;
   }
+}
+
+/* A wide figure beside its own controls. Same columns and same breakpoint as
+   Light Studio's `.ls` one section below (light-studio.css) — reused rather
+   than re-authored, so the two halves of this page break at the same width.
+   `align-items: start` keeps a short rail from stretching to the figure. */
+.pg-rail {
+  display: grid;
+  gap: var(--gutter);
+  grid-template-columns: 1fr 300px;
+  align-items: start;
+}
+/* Grid children default to `min-width: auto`, which stops the figure shrinking
+   below its content and pushes the rail off the row. */
+.pg-rail > * {
+  min-width: 0;
+}
+/* Two columns end together (2026-09-13, Cindy): the figure card stretches to the
+   rail's height and its stage fills the card, so the desk is drawn larger rather
+   than sitting above a band of air. Same rule as the Ng3 panel's last section
+   growing to close the column. `.w` is already a flex column (Chris's). */
+.pg-rail-fill {
+  align-items: stretch;
+}
+.pg-rail-fill .dov {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+.pg-rail-fill .dov-stage {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: var(--dov-need, var(--dov-vref));
+}
+@media (max-width: 900px) {
+  .pg-rail {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cards stacked one under another at the page's own gutter — the rail's inside,
+   and the fallback shape when there is no figure to sit beside. */
+.pg-stack {
+  display: grid;
+  gap: var(--gutter);
+  align-content: start;
 }
 
 /* settings rows (Personalize) */

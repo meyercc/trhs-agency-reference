@@ -1,0 +1,84 @@
+/* What is on each screen of the desk pictures — see ScreenContent.tsx.
+   Boxes = the lit area of each render, measured off the file (fractions of the
+   tight-cropped image, so they hold at any tile size). Inert: the picture's own
+   box owns clicks and drags. */
+.scr {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+.scr[data-screen='treehouse-32'] { left: 1.63%; top: 1.38%; width: 96.73%; height: 72.08%; }
+.scr[data-screen='oled-27'] { left: 0.81%; top: 0.62%; width: 97.97%; height: 77.62%; }
+.scr[data-screen='builtin'] {
+  left: 9.54%; top: 3.31%; width: 81%; height: 70.65%;
+  /* The lid's screen has its top corners rounded, the bottom square. */
+  border-radius: 2% 2% 0 0 / 3% 3% 0 0;
+}
+/* Glass: a faint sheen across the top, so a flat fill reads as a lit panel on
+   the photograph rather than a sticker on it (the 09-22 note on the old split
+   line: "read as pasted on"). */
+.scr::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.07) 0%, transparent 38%);
+}
+
+.scr-pane { position: absolute; overflow: hidden; }
+/* The MacBook's desktop: our own dusk gradient, not Apple's artwork. */
+.scr-pane[data-wall='mac'] {
+  background:
+    radial-gradient(ellipse 85% 70% at 78% 105%, #f2a65a 0%, #d0567a 38%, transparent 72%),
+    radial-gradient(ellipse 95% 85% at 18% -5%, #6a4bc0 0%, #33256e 48%, #140f2e 100%);
+}
+/* The OMEN 35L's desktop: verbatim the X-ray overlay's Windows desktop
+   (`.xray-desk` + `.xd-swirl`, monitor-xray.css), so both places read as the
+   same computer. Copied rather than imported because the X-ray stylesheet only
+   loads with the monitor window and this also draws on Personalize. */
+.scr-pane[data-wall='win'] {
+  background:
+    radial-gradient(ellipse 40% 90% at 22% 40%, rgba(190, 215, 255, 0.5), transparent 60%),
+    radial-gradient(ellipse 55% 70% at 62% 78%, rgba(25, 42, 110, 0.85), transparent 72%),
+    radial-gradient(ellipse 90% 120% at 28% 18%, #3f6ad8 0%, #274091 34%, #101c4e 62%, #0a1030 100%);
+}
+/* Two panes side by side meet on a hairline of panel black. */
+.scr-pane + .scr-pane:not(.is-inset) { box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.6); }
+/* The inset window sits ON the main pane. */
+.scr-pane.is-inset {
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55), 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+/* The pane the keyboard & mouse are NOT on, while the screen is split and Gear
+   Switch is moving them: dimmed, so the lit pane is where your hands are. No
+   outline — see ScreenContent for why. */
+.scr-pane.is-idle { filter: brightness(0.72) saturate(0.8); }
+/* 0.5 until 2026-09-24: the idle pane read as a screen that was OFF (Cindy's PBP
+   note). It is on — only the keyboard is elsewhere. */
+
+/* The OS chrome that makes a pane a desktop (see `Desktop` in ScreenContent). */
+.scr-menubar {
+  position: absolute; left: 0; right: 0; top: 0;
+  height: 5.5%; min-height: 1px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.scr-dock {
+  position: absolute; left: 50%; bottom: 3.5%;
+  width: 30%; height: 6.5%; min-height: 1.5px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.25);
+}
+.scr-taskbar {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 8%; min-height: 1.5px;
+  /* The X-ray desktop's taskbar colour (`.xd-task`), with a few centred icons. */
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.55) 0 22%, transparent 26%),
+    radial-gradient(circle at 50% 50%, rgba(120, 180, 255, 0.85) 0 22%, transparent 26%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.45) 0 22%, transparent 26%),
+    rgba(16, 20, 32, 0.9);
+  background-size: 8% 100%, 8% 100%, 8% 100%, auto;
+  background-position: 44% 0, 50% 0, 56% 0, 0 0;
+  background-repeat: no-repeat;
+}

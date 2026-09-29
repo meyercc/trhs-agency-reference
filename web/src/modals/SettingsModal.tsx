@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, ModalShell, Slider, Toggle, ToggleButtonGroup, Menu, type MenuItem } from '../components';
 import { Icon, type IconName } from '../components/Icon';
 import { useSettings, type Theme, type Density } from '../state/Settings';
+import { useProfiles, type OverridableName } from '../state/Profiles';
 import { WALLPAPERS } from '../app/wallpapers';
 import '../widgets/widgets.css'; // wp-thumb / wg-swatch — same controls as the board widgets
 import './settings-modal.css';
@@ -12,19 +13,48 @@ function SettingsRow({
   label,
   sublabel,
   control,
+  note,
 }: {
   label: string;
   sublabel: string;
   control: React.ReactNode;
+  /** Optional status line under the sublabel (e.g. a profile-override note). */
+  note?: React.ReactNode;
 }) {
   return (
     <div className="ds-settings-row">
       <div className="ds-settings-row-labels">
         <div className="ds-settings-row-label">{label}</div>
         <div className="ds-settings-row-sublabel">{sublabel}</div>
+        {note}
       </div>
       {control}
     </div>
+  );
+}
+
+/**
+ * Says when the active profile has taken a setting over.
+ *
+ * Without this the Appearance section is a trap: the rows edit the BASELINE,
+ * but an override wins, so changing accent while a profile overrides it looks
+ * like a broken control — the swatch moves and the app doesn't. The note names
+ * who is winning and offers the one gesture that hands the key back.
+ */
+function OverrideNote({ name }: { name: OverridableName }) {
+  const { isOverridden } = useSettings();
+  const { activeProfile, setOverride } = useProfiles();
+  if (!isOverridden(name)) return null;
+  return (
+    <span className="stx-override">
+      <Icon name="info" size={13} aria-hidden />
+      <span>
+        Set by the <strong>{activeProfile.name}</strong> profile
+      </span>
+      <button type="button" className="stx-override-clear" onClick={() => setOverride(activeProfile.id, name, undefined)}>
+        Clear
+      </button>
+    </span>
   );
 }
 
@@ -77,13 +107,21 @@ const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
  */
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   const {
-    theme, setTheme, accent, setAccent, density, setDensity,
-    wallpaper, setWallpaper, wpBlur, setWpBlur, wpOpacity, setWpOpacity, isLight,
+    theme, setTheme, setAccent, density, setDensity,
+    setWallpaper, setWpBlur, setWpOpacity, isLight, getBaseline,
     hideNavLabels, setHideNavLabels, hideNavIcons, setHideNavIcons,
     persona, setPersona,
   } = useSettings();
   const navigate = useNavigate();
   const [section, setSection] = useState<Section>('appearance');
+
+  // These rows write the baseline, so they must render the baseline — showing
+  // the resolved value would make an overridden control look unresponsive.
+  // `OverrideNote` is what explains the gap.
+  const accent = getBaseline<string>('accent');
+  const wallpaper = getBaseline<string>('wallpaper');
+  const wpBlur = getBaseline<number>('wpBlur');
+  const wpOpacity = getBaseline<number>('wpOpacity');
 
   // Leaving for the full-screen flow: the route change drops ?modal=settings.
   const redoSetup = () => navigate('/onboarding');
@@ -116,7 +154,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   );
 
   return (
-    <ModalShell title="Settings" className="settings-modal" onClose={onClose} left={nav}>
+    <ModalShell title="Settings" className="stx-modal settings-modal" onClose={onClose} left={nav}>
       {section === 'appearance' && (
         <div className="ds-settings-group expanded">
           <GroupTitle>Appearance</GroupTitle>
@@ -155,6 +193,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             <SettingsRow
               label="Accent Color"
               sublabel="Used for selection, focus, and highlights across the app"
+              note={<OverrideNote name="accent" />}
               control={
                 <div className="wg-swatch-row" role="group" aria-label="Accent color">
                   {ACCENTS.map((id) => (
@@ -176,7 +215,10 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
               }
             />
             <div className="stx-wallpaper">
-              <div className="stx-preview-label">Wallpaper</div>
+              <div className="stx-preview-label">
+                Wallpaper
+                <OverrideNote name="wallpaper" />
+              </div>
               <div className="wp-thumbs">
                 {WALLPAPERS.map((wp) => {
                   const img = (isLight ? wp.light : wp.dark).img;

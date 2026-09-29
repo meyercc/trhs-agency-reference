@@ -11,12 +11,14 @@ import '../../shared/tokens.css';
 import '../../shared/components.css';
 import './app.css';
 import { SettingsProvider } from './state/Settings';
+import { ProfilesProvider } from './state/Profiles';
 import { ModulesProvider } from './state/Modules';
 import { DeviceProfilesProvider } from './state/DeviceProfiles';
 import { DeviceSimProvider } from './state/DeviceSim';
 import { ModuleGate } from './modules/ModuleGate';
 import { AppShell } from './app/AppShell';
 import { Home } from './pages/Home';
+import { HomeV2 } from './pages/HomeV2';
 import { Play } from './pages/Play';
 import { Perform } from './pages/Perform';
 import { PerformV2 } from './pages/PerformV2';
@@ -39,6 +41,9 @@ import { Onboarding } from './onboarding/Onboarding';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    {/* Profiles sits OUTSIDE Settings: Settings resolves every read against the
+        active profile's overrides, so it has to be able to see them. */}
+    <ProfilesProvider>
     <SettingsProvider>
       <ModulesProvider>
       <DeviceProfilesProvider>
@@ -47,6 +52,9 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<Home />} />
+            {/* Dashboard concept for the partner comparison — four cards, no
+                carousel. Reached from Admin Panel → Dashboard Concept. */}
+            <Route path="home-v2" element={<HomeV2 />} />
             <Route path="play" element={<Play />} />
             {/* Perform IS V7 at scope 1.0 (promoted 2026-08-19, agreed with Junchao):
                 the same component the exploration route renders, minus the Simulator.
@@ -102,5 +110,6 @@ createRoot(document.getElementById('root')!).render(
       </DeviceProfilesProvider>
       </ModulesProvider>
     </SettingsProvider>
+    </ProfilesProvider>
   </React.StrictMode>,
 );

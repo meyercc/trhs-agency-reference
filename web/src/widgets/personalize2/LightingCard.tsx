@@ -4,7 +4,7 @@ import { CardDoor } from '../perform5/CardKit';
 import { GrowArea } from './GrowArea';
 import towerImg from '../../../../Assets/devices/OMEN35L.webp';
 import monitorImg from '../../../../Assets/devices/oled-27-qhd.webp';
-import micImg from '../../../../Assets/devices/quadcast-2-s.webp';
+import micImg from '../../../../Assets/devices/solocast-2-pro-rgb-filled.webp';
 import headsetImg from '../../../../Assets/devices/cloud-iii-black.webp';
 import keyboardImg from '../../../../Assets/devices/origins-65.webp';
 import mouseImg from '../../../../Assets/devices/haste-3.webp';
@@ -43,7 +43,7 @@ interface Device {
 const DEVICES: Device[] = [
   { id: 'tower', name: 'OMEN 35L', img: towerImg, row: 'back', w: 62 },
   { id: 'monitor', name: 'OMEN 27', img: monitorImg, row: 'back', w: 168 },
-  { id: 'mic', name: 'QuadCast', img: micImg, row: 'back', w: 44 },
+  { id: 'mic', name: 'SoloCast', img: micImg, row: 'back', w: 44 },
   { id: 'headset', name: 'Cloud III', img: headsetImg, row: 'front', w: 74 },
   { id: 'keyboard', name: 'Origins 65', img: keyboardImg, row: 'front', w: 186 },
   { id: 'mouse', name: 'Haste 3', img: mouseImg, row: 'front', w: 40 },

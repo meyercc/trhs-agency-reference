@@ -14,7 +14,6 @@
 .xr{margin-bottom:var(--gutter);}
 .xr-head{margin-bottom:var(--gutter-sm);}
 .xr-actions{display:flex;align-items:center;gap:var(--gutter-xs);}
-.xr-tipable{background:none;border:0;padding:0;color:var(--text-muted);cursor:help;display:flex;position:relative;}
 .xrb{position:relative;display:flex;justify-content:center;margin-bottom:var(--gutter-sm);}
 .xrb-wrap{position:relative;height:300px;}
 .xrb-wrap img{height:300px;width:auto;display:block;object-fit:contain;filter:drop-shadow(0 10px 26px rgba(0,0,0,.6));}
@@ -63,32 +62,48 @@
 .pm-usba .pmp-stroke{border-radius:0.478cqw;}
 .pm-usbc .pmp-stroke{border-radius:2.392cqw;}
 .pm-audio .pmp-stroke{border-radius:50%;inset:5.3%;}
-.pmport.plug .pmp-stroke,.pmport:hover .pmp-stroke{border-color:var(--accent-color);}
+.pmport.plug .pmp-stroke,.pmport:is(:hover,.is-hi) .pmp-stroke{border-color:var(--accent-color);}
 .pmp-fill{position:absolute;inset:0.478cqw;background:color-mix(in srgb,var(--accent-color) 80%,transparent);border-radius:0.478cqw;}
 .pm-usbc .pmp-fill{border-radius:2.392cqw;}
 .pmp-glow{display:none;position:absolute;inset:0;border:0.478cqw solid var(--accent-color);filter:blur(0.478cqw);}
 .pm-usba .pmp-glow{border-radius:0.478cqw;}
 .pm-usbc .pmp-glow{border-radius:2.392cqw;}
 .pm-audio .pmp-glow{border-radius:50%;inset:5.3%;}
-.pmport.plug:hover .pmp-glow{display:block;}
+.pmport.plug:is(:hover,.is-hi) .pmp-glow{display:block;}
 /* HDMI / DP = Cindy silhouette SVG assets (default ↔ hover-glow swap).
    Hover asset bleeds outside the port box by the Figma glow insets. */
 .pmp-img-default{position:absolute;inset:0;width:100%;height:100%;display:block;}
 .pmp-img-hover{display:none;position:absolute;max-width:none;}
-.pm-hdmi .pmp-img-hover{left:-39.13%;right:-39.13%;top:-17.65%;bottom:-17.65%;width:auto;height:auto;}
-.pm-dp .pmp-img-hover{left:-37.5%;right:-37.5%;top:-15.79%;bottom:-15.79%;width:auto;height:auto;}
-.pmport:hover .pmp-img-default{display:none;}
-.pmport:hover .pmp-img-hover{display:block;}
+/* Explicit % width/height, not auto+insets: an <img> is a replaced element, so
+   width:auto resolves to the PNG's intrinsic size and ignores the inset box —
+   the hover connector rendered ~4x the port instead of the Figma framing
+   (1.78x/1.35x, measured 2026-08-03). Percentages resolve against the port box,
+   so the swap scales with the map again. */
+.pm-hdmi .pmp-img-hover{left:-39.13%;top:-17.65%;width:178.26%;height:135.3%;}
+.pm-dp .pmp-img-hover{left:-37.5%;top:-15.79%;width:175%;height:131.58%;}
+.pmport:is(:hover,.is-hi) .pmp-img-default{display:none;}
+.pmport:is(:hover,.is-hi) .pmp-img-hover{display:block;}
 /* Limited power mode = USB hub port off */
 .pmport.off{cursor:default;}
 .pmport.off .pmp-stroke{opacity:.45;}
-.pmport.off:hover .pmp-stroke{border-color:rgba(255,255,255,.75);}
-/* tooltip (ours, carried over from the approved card) */
-.pmport::before{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#000;color:var(--text-primary);font-size:10px;font-weight:500;padding:4px 8px;border-radius:5px;border:1px solid var(--border-med);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s;z-index:5;}
-.pmport:hover::before{opacity:1;}
-/* per-port silhouette glyph — still used by the full-screen overlay hotspots */
-.pg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible;}
-.pg-shape{fill:transparent;stroke:transparent;stroke-width:1.5;transition:fill .12s,stroke .12s;}
+.pmport.off:is(:hover,.is-hi) .pmp-stroke{border-color:rgba(255,255,255,.75);}
+/* tooltip = the DS tooltip (.ds-tooltip-popup), not a bespoke box.
+   Each port is absolutely placed from Figma coordinates, so it cannot be
+   wrapped in the Tooltip component without moving the anchor. The library's
+   other form covers exactly that: the popup sits inside the positioned item and
+   that item's hover drives it — the same wiring shared/components.css uses for
+   .ds-menu.has-tips. Only the trigger is ours; every visual value stays the
+   library's, so this tooltip matches the ones on the tab bar and the nav.
+   z-index lifts it over neighbouring ports (siblings paint in DOM order). */
+.pmport:hover .ds-tooltip-popup{opacity:1;visibility:visible;}
+/* Pointed at from the `RENAME INPUTS` card opens the same card — but only
+   while the mouse is not on a port itself, or a hover and a selection would
+   both open one and the map would be answering two questions at once. */
+.pm:not(:has(.pmport:hover)) .pmport.is-hi .ds-tooltip-popup{opacity:1;visibility:visible;}
+.pmport .ds-tooltip-popup{z-index:5;}
+/* (The overlay's hand-drawn `.pg` glyph is gone — 2026-08-06. Both views now
+   draw a port with the `.pmport` rules above; the overlay's own size overrides
+   sit with `.xhots` further down.) */
 /* foot = native .dm-row: connection summary (.dm-note) + status badges */
 .xr-foot{flex-wrap:wrap;gap:var(--gutter-sm);}
 .xr-foot .dm-note strong{color:var(--text-primary);}
@@ -100,62 +115,198 @@
    ② ports = the real ports in the image only (no vector redraw), hover = card
    ③ only the image's port-strip region stays fixed regardless of Transparency
    ④ mirrored render (flipped HP logo = approved original design) */
-.xray-ov{position:fixed;inset:0;z-index:100;font-family:"Segoe UI",system-ui,sans-serif;color:var(--text-primary);overflow:hidden;}
+/* Body font comes from the token, never a copy of its value: --font-display
+   resolves to Segoe UI today, but the moment the library re-points it (the
+   commented-out Miranda Sans block at tokens.css:76 says that is the intent)
+   a transcribed value silently stops following. Rule 15 — reuse, don't copy. */
+.xray-ov{position:fixed;inset:0;z-index:100;font-family:var(--font-display);color:var(--text-primary);overflow:hidden;}
 /* layer 0: Windows desktop (demo backdrop) */
 .xray-desk{position:absolute;inset:0;background:radial-gradient(ellipse 90% 120% at 28% 18%,#3f6ad8 0%,#274091 34%,#101c4e 62%,#0a1030 100%);}
 .xd-swirl{position:absolute;inset:0;background:radial-gradient(ellipse 40% 90% at 22% 40%,rgba(190,215,255,.5),transparent 60%),radial-gradient(ellipse 55% 70% at 62% 78%,rgba(25,42,110,.85),transparent 72%);filter:blur(2px);}
-.xd-task{position:absolute;left:0;right:0;bottom:0;height:40px;background:rgba(16,20,32,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;padding:0 14px;gap:10px;z-index:6;}
-.xd-wx{display:flex;align-items:center;gap:7px;font-size:11px;color:rgba(255,255,255,.75);line-height:1.3;white-space:nowrap;}
+/* Taskbar — the front-most thing on the screen, so it is NOT inside
+   `.xray-desk` (which dims) and it stacks ABOVE the rear panel at full
+   strength (Cindy, 2026-09-23: the bottom bar has to read clearly). Scenery
+   standing in for Windows: the colours below are the OS's look, not ours, so
+   they stay literal and do not follow the theme; the glyphs are the library's
+   own icons (they replaced coloured squares that read as a mock-up). */
+.xd-task{position:absolute;left:0;right:0;bottom:0;height:40px;background:rgba(22,26,38,.86);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;padding:0 var(--gutter-tablet);z-index:6;}
+.xd-wx{display:flex;align-items:center;gap:var(--gutter-xs);font-size:var(--text-nano);color:var(--text-on-image);line-height:1.3;white-space:nowrap;opacity:.8;}
 .xd-wx::before{content:'';width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe58a,#f5b62e);}
-.xd-search{width:190px;height:26px;border-radius:13px;background:rgba(255,255,255,.12);display:flex;align-items:center;padding:0 12px;font-size:11px;color:rgba(255,255,255,.55);margin-left:8px;}
-.xd-task .ti{width:22px;height:22px;border-radius:5px;background:var(--surface-hover);}
-.xd-task .ti.c1{background:linear-gradient(135deg,#3b82f6,#22d3ee);}
-.xd-task .ti.c2{background:linear-gradient(135deg,#f59e0b,#ef4444);}
-.xd-task .ti.c3{background:linear-gradient(135deg,#22c55e,#84cc16);}
-.xd-clock{margin-left:auto;text-align:right;font-size:10.5px;line-height:1.35;color:rgba(255,255,255,.78);}
+.xd-apps{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:var(--gutter-xxs);}
+.xd-app{display:grid;place-items:center;width:32px;height:32px;border-radius:var(--radius-sm);color:var(--text-on-image);}
+.xd-search{display:flex;align-items:center;gap:var(--gutter-xs);width:176px;height:30px;padding:0 var(--gutter-tablet);margin:0 var(--gutter-xxs);border-radius:var(--radius-full);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.06);font-size:var(--text-nano);color:var(--text-on-image-dim);}
+.xd-clock{margin-left:auto;text-align:right;font-size:var(--text-nano);line-height:1.35;color:var(--text-on-image);opacity:.85;}
 /* layer 1: rear panel 1:1 — panel height = screen height. Stand column shows
    inside the screen; neck/base below get cropped by the viewport naturally */
-.xray-back{position:absolute;inset:0;overflow:hidden;opacity:.7;}
-/* LOCKED-START — approved 2026-07-13 (Cindy), do not "improve".
-   1:1 "through the screen": panel height ≈ screen height, ports at the bottom.
-   The neck + stand base sit BELOW the screen, so the viewport naturally crops
-   them off — only the stand COLUMN inside the screen shows, fading with
-   Transparency. Do NOT shrink to fit the whole monitor in the viewport.
-   Changes here require Cindy approval (design-craft-guard hard-block). */
-.xr-img{position:absolute;left:50%;transform:translateX(-50%);height:145.3vh;width:auto;max-width:none;top:-13.6vh;}
-/* layer 1.5: same image, port-strip region only, clipped + fixed (pixel-identical → no double image) */
-.xray-fix{position:absolute;left:0;right:0;top:81vh;height:8.8vh;overflow:hidden;z-index:4;}
-.xray-fix .xr-img{top:-94.6vh;}
+.xray-back{position:absolute;inset:0;overflow:hidden;opacity:.35;}
+/* LOCKED-START — approved 2026-07-13 (Cindy), re-measured 2026-08-06 (Cindy).
+   1:1 "through the screen": the monitor's SCREEN fills the viewport, so the
+   body edge is pushed off-screen on every side. Get this wrong and the overlay
+   reads as "a photo of a monitor" rather than a look through the glass — the
+   one-to-one relationship is the whole reason this is called X-ray (Cindy to
+   the team, 2026-07-27 display review).
+   Numbers, measured off the render's own alpha channel (body spans 9.6–75% of
+   image height and 6.2–93.7% of its width, ratio 1.682 ≈ the real 722×430mm
+   body): the screen is ~92.6% of body height, so the body has to be 1.08
+   viewports tall → image height 165vh. `top` then parks the screen's top edge
+   just above 0. The neck + base sit below the screen and the viewport crops
+   them naturally; only the stand COLUMN shows, fading with Transparency.
+   Do NOT shrink to fit the whole monitor in. Changes need Cindy approval
+   (design-craft-guard hard-block). */
+.xr-img{position:absolute;left:50%;transform:translateX(-50%);height:165vh;width:auto;max-width:none;top:-20vh;}
+/* layer 1.5: same image, port BLOCK only, clipped + fixed (pixel-identical → no double image).
+   The block (recess with labels + apertures) spans 64.1–70.1% of image height
+   → 85.8–95.7vh on screen at the sizing above; the band starts higher so the
+   lens can grow upward on approach (Cindy 2026-09-23: margin above the labels,
+   the old 88vh band cut right at them). What is visible is set by the lens
+   clip below, not by this band. */
+.xray-fix{position:absolute;left:0;right:0;top:82vh;height:18vh;overflow:hidden;z-index:4;}
+.xray-fix .xr-img{top:-102vh;}
 /* hotspot layer: image coordinate space (%) — congruent with .xr-img (aspect 4096/3259) */
-.xhots{position:absolute;left:50%;transform:translateX(-50%);width:182.7vh;height:145.3vh;top:-13.6vh;z-index:5;}
+.xhots{position:absolute;left:50%;transform:translateX(-50%);width:207.4vh;height:165vh;top:-20vh;z-index:5;pointer-events:none;}
 /* LOCKED-END */
-.xhot{position:absolute;transform:translate(-50%,-50%);cursor:pointer;}
-/* same per-port silhouette glyph as the card (.pg/.pg-shape defined above) */
-.xhot:hover .pg-shape{stroke:var(--border-med);}
-.xhot.on .pg-shape{fill:color-mix(in srgb,var(--accent-color),transparent 42%);}
-.xhot.on:hover .pg-shape{stroke:var(--accent-color);}
-/* port hover info card (structured — title/warn/Use for/Speed/Status) */
-.xtip{position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);width:250px;background:color-mix(in srgb,var(--bg-elevated) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:none;z-index:5;box-shadow:0 8px 16px rgba(0,0,0,.4);text-align:left;cursor:default;}
-.xhot:hover .xtip{display:block;}
-.xtip-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:6px;}
-.xtip-warn{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--orange);margin-bottom:6px;}
-.xtip-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:2px 0;}
-.xtip-row span:first-child{color:var(--text-muted);}
-.xtip-row span:last-child{color:var(--text-dim);text-align:right;}
+/* Depth at rest (2026-09-23, Jaewoo 1:1 → Cindy picked the recommended
+   preview in design-assets/xray-depth-2026-09-23): the panel sits BEHIND the
+   desktop — faint (`.xray-back` opacity), a little soft, and with its colour
+   pulled down so the lit ring baked into the render stops reading as the
+   front-most thing. The locked geometry above is untouched; this is only how
+   it looks. The entry animation ends on exactly this filter, so nothing snaps. */
+.xray-back .xr-img{filter:blur(3px) saturate(.6);}
+/* Parallax (2026-09-24, Cindy «4번까지»): the panel — and the port marks that
+   sit on it — follow the pointer by a few px, same direction, as a thing seen
+   through a window does; the lens window, desktop and taskbar stay put. The
+   two custom properties are set from JS after the entry finishes. Geometry is
+   the locked one whenever they are 0 (the default), so this only ADDS motion.
+   Transform only: it never repaints the image. */
+.xray-ov .xr-img{transform:translate(calc(-50% + var(--px,0px)),var(--py,0px));transition:transform 1100ms var(--ease-out);}
+.xray-ov .xhots{transform:translate(calc(-50% + var(--px,0px)),var(--py,0px));transition:transform 1100ms var(--ease-out);}
+/* ── The lens (2026-09-23 → reworked 2026-09-24 on Cindy's review) ─────────
+   A rounded window over the port block through which the ports read crisp.
+   What went wrong in the first cut, and the rule that replaces it:
+   · The window showed the render at FULL opacity and colour while the panel
+     around it sat at 35% and desaturated, so the monitor's back surface inside
+     it read as a pasted black patch (switch-tested 2026-09-24: give the window
+     the panel's tone and the patch disappears). Now the window is TONED DOWN at
+     rest — the scene's own tone and softness (09-24, Cindy: faint before the
+     pointer arrives, 100% when it does) — and only comes up to full
+     when you approach it (Jaewoo 09-23: "톤 다운을 하되 hover 했을 때 선명").
+   · Its edge sat exactly on the block's edge, so the block's frame was cut and
+     the corner radius bit into it. Now it carries a margin on every side
+     (block = 37.8–62.5% × 64.1–70.1% of the render → ±25.3/25.9vh, top 85.8vh;
+     margin 1.4vh), bottom tucked under the taskbar.
+   · It no longer grows on approach: growing uncovered more panel surface and
+     outran the pinned band (a 3.6px strip at its top had no image). Approach
+     changes tone and edge only. */
+/* Approach / release speeds (Cindy 2026-09-24: "too fast"): the lens layer
+   answers in --xray-in and lets go in --xray-out; the port layer stays on the
+   library's fast/normal so a port still feels immediate under the pointer. */
+.xray-ov{--lens-top:84.4vh;--lens-l:26.7vh;--lens-r:27.3vh;--xray-in:700ms;--xray-out:1000ms;}
+.xray-fix{clip-path:inset(calc(var(--lens-top) - 82vh) calc(50vw - var(--lens-r)) 0 calc(50vw - var(--lens-l)) round var(--radius-card) var(--radius-card) 0 0);opacity:.4;transition:opacity var(--xray-out) var(--ease-default);}
+/* Two copies of the same pixels, both with a STATIC filter, cross-faded by
+   opacity (2026-09-24): animating `filter: blur()` re-renders a ~1900px image
+   every frame and stutters on a weak GPU; opacity is composited for free.
+   Soft copy shows at rest, sharp copy fades in over it on approach. */
+.xray-fix .xr-soft{filter:blur(2px) saturate(.6);}
+.xray-fix .xr-sharp{opacity:0;transition:opacity var(--xray-out) var(--ease-default);}
+/* Approach answers fast (--dur-slow) and lets go slowly (--dur-xslow): the
+   transition on the approach rule runs on the way in, the base rule's on the
+   way out. */
+.xray-ov:is(:has(.xray-zone:hover),:has(.xhot:hover),:has(.xhot:focus-visible)) .xray-fix{opacity:1;transition-duration:var(--xray-in);}
+.xray-ov:is(:has(.xray-zone:hover),:has(.xhot:hover),:has(.xhot:focus-visible)) .xray-fix .xr-sharp{opacity:1;transition-duration:var(--xray-in);}
+/* Empty ports recede with the block at rest; in-use fills stay (they are the
+   information — and, with the ring, the cue for where to point). Approach
+   brings the outlines back. Limited-off ports keep their own dimming. */
+.xhot:not(.plug) :is(.pmp-stroke,.pmp-img-default){opacity:.3;transition:opacity var(--dur-normal) var(--ease-default);}
+.xray-ov:is(:has(.xray-zone:hover),:has(.xhot:hover),:has(.xhot:focus-visible)) .xhot:not(.off) :is(.pmp-stroke,.pmp-img-default){opacity:1;transition-duration:var(--dur-fast);}
+/* Keyboard: a focused port counts as "approached" and opens its card, so the
+   reveal is not hover-only. */
+.xhot:focus-visible{outline:none;}
+.xhot:focus-visible .ds-tooltip-popup{opacity:1;visibility:visible;}
+.xhot.plug:focus-visible .pmp-glow{display:block;}
+/* edge = a hairline, neutral. Approach brightens it and lets a faint glow out;
+   no accent line (Cindy 09-24: the blue ring was too loud). */
+.xray-lens{position:absolute;z-index:4;pointer-events:none;top:var(--lens-top);left:calc(50vw - var(--lens-l));right:calc(50vw - var(--lens-r));bottom:0;border-radius:var(--radius-card) var(--radius-card) 0 0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);transition:box-shadow var(--xray-out) var(--ease-default);}
+.xray-ov:is(:has(.xray-zone:hover),:has(.xhot:hover),:has(.xhot:focus-visible)) .xray-lens{box-shadow:inset 0 0 0 1px rgba(255,255,255,.26),0 0 32px rgba(255,255,255,.05),0 0 48px color-mix(in srgb,var(--accent-color) 8%,transparent);;transition-duration:var(--xray-in)}
+/* zone = "near the ports": a wider, taller invisible area around the lens.
+   Sits under the hotspots so a port still wins the pointer. */
+.xray-zone{position:absolute;z-index:4;top:76vh;bottom:0;left:calc(50vw - var(--lens-l) - 8vw);right:calc(50vw - var(--lens-r) - 8vw);}
+/* Entry reveal (replaces the scan line, Cindy 09-24: the line read as crude).
+   The panel appears top-to-bottom through a SOFT edge — no drawn line, the
+   picture itself arrives as if the screen were being seen through. The mask is
+   three screens tall: top third opaque, a soft band, the rest clear; sliding
+   it from bottom (all clear) to top (all opaque) sweeps the soft band down.
+   Rest state = mask-position 0 0 = fully visible. */
+.xray-back{-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 33.3%,transparent 45%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0%,#000 33.3%,transparent 45%,transparent 100%);-webkit-mask-size:100% 300%;mask-size:100% 300%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:0 0;mask-position:0 0;}
+/* In-use ports stay marked at rest (information, and hover does not exist on
+   touch or keyboard) but softer than the card map's 80%, so the marks sit in
+   the scene; pointing at one port fades the others so only that one is strong. */
+.xhot .pmp-fill{background:color-mix(in srgb,var(--accent-color) 55%,transparent);}
+.xhots .xhot{transition:opacity var(--dur-normal) var(--ease-default);}
+.xhots:has(.xhot:hover) .xhot:not(:hover),.xhots:has(.xhot:focus-visible) .xhot:not(:focus-visible){opacity:.45;transition-duration:var(--dur-fast);}
+.xhot{position:absolute;transform:translate(-50%,-50%);cursor:pointer;pointer-events:auto;}
+/* Ports here reuse the card map's `.pmport` rules, so empty / plugged / hover
+   say the same thing in both views. Only the weights are re-scaled: this layer
+   is ~2.7x wider than the card's crop while the ports themselves render
+   SMALLER, so the map's own cqw values would put a 4px border on an 11px port.
+   Ratios below match the card's (stroke ≈ 9% of port width; USB-C radius = half
+   the width so it stays a pill). `container-type` is set outside the LOCKED
+   block on purpose — the locked numbers are the geometry, this is plumbing. */
+.xhots{container-type:inline-size;}
+.xhot .pmp-stroke{border-width:0.055cqw;border-radius:0;}
+.xhot.pm-usba .pmp-stroke{border-radius:0.1cqw;}
+.xhot.pm-usbc .pmp-stroke{border-radius:0.3cqw;}
+.xhot.pm-audio .pmp-stroke{border-radius:50%;}
+.xhot .pmp-fill{inset:0.12cqw;border-radius:0.06cqw;}
+.xhot.pm-usbc .pmp-fill{border-radius:0.3cqw;}
+.xhot.pm-audio .pmp-fill{border-radius:50%;}
+.xhot .pmp-glow{border-width:0.12cqw;filter:blur(0.12cqw);}
+.xhot.pm-usba .pmp-glow{border-radius:0.1cqw;}
+.xhot.pm-usbc .pmp-glow{border-radius:0.3cqw;}
+.xhot.pm-audio .pmp-glow{border-radius:50%;}
+/* HDMI/DP carry their outline inside the asset, so the fill sits under it and
+   is inset far enough to stay within the tapered part of the silhouette. */
+.xhot.pm-hdmi .pmp-fill,.xhot.pm-dp .pmp-fill{inset:0.16cqw;border-radius:0.08cqw;}
+/* The render behind these is mirrored (SPEC: xray #3), so the HDMI/DP silhouette
+   assets — authored against the un-mirrored card — get flipped back here. */
+.xhot .pmp-img-default,.xhot .pmp-img-hover{transform:scaleX(-1);}
+/* Port hover card — layout INSIDE the library's tooltip (2026-08-06).
+   What used to be here was `.xtip`: a hand-built 250px panel with its own
+   background, blur, border, radius and shadow — every one of those a copy of a
+   value the library's tooltip already owns, and none of them its arrow. The box
+   is now `.ds-tooltip-popup` (see PortTipCard); only the rows below are ours,
+   because the library's tooltip is a single run of text and has no label/value
+   form to reuse (checked: shared/components.css + web/src/components/).
+   Wider than a text tooltip so the value column doesn't wrap. */
+.pm-tip{display:flex;flex-direction:column;width:max-content;min-width:190px;max-width:250px;text-align:left;cursor:default;}
+.pm-tip-title{font-weight:600;color:var(--text-primary);margin-bottom:6px;}
+.pm-tip-warn{display:flex;align-items:center;gap:5px;font-size:var(--text-micro);color:var(--orange);margin-bottom:6px;}
+.pm-tip-row{display:flex;justify-content:space-between;gap:var(--gutter-mobile);font-size:var(--text-micro);padding:var(--gutter-xxxs) 0;}
+.pm-tip-row span:first-child{color:var(--text-muted);}
+.pm-tip-row span:last-child{color:var(--text-dim);text-align:right;}
 /* layer 2: chrome — always visible regardless of transparency.
-   (3-class selector: outranks the button base rule `html:root .ds-btn`
-   (0,2,1) that sets position:relative) */
-.xray-ov .ds-btn.xray-close{position:absolute;top:22px;right:26px;left:auto;z-index:10;}
+   Both controls sit on ONE surface: the app's own floating nav pill (the
+   `.ds-menu.horizontal` recipe — nav-bg, light border, lv-3 shadow, 12px
+   blur), read from its tokens rather than copied. They used to be a bare
+   text button and a separately-tinted pill, which read as two prototypes.
+   The close control inside is the library's ghost Button, unstyled. */
+.xray-pill{position:absolute;z-index:10;display:flex;align-items:center;background:var(--nav-bg);border:1px solid var(--border-light);border-radius:var(--radius-full);box-shadow:var(--shadow-lv-3);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.xray-close-wrap{top:22px;right:26px;padding:var(--gutter-xxs);}
 /* slider = bottom right, below the strip · above the taskbar (approved position) */
-.xray-tr{position:absolute;right:26px;bottom:48px;z-index:10;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:8px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
-.xray-tr label{font-size:14px;color:var(--text-dim);white-space:nowrap;}
+.xray-tr{right:26px;bottom:52px;gap:var(--gutter-tablet);padding:var(--gutter-xs) var(--gutter-sm);}
+.xray-tr label{font-size:var(--text-caption);color:var(--text-dim);white-space:nowrap;}
 .xray-tr .ds-slider{width:200px;}
 .xray-tr .ds-slider input{margin:0;}
-.xr-tr-val{font-family:var(--font-mono);font-size:12px;color:var(--text-primary);min-width:30px;text-align:right;}
-/* generic hover tooltip (ⓘ button) */
-.xr-tipable{position:relative;}
-.xr-tipable::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);right:0;width:max-content;max-width:280px;white-space:normal;background:#000;color:var(--text-primary);font-family:"Segoe UI",system-ui,sans-serif;font-size:12px;font-weight:400;text-transform:none;letter-spacing:0;line-height:1.5;padding:8px 10px;border-radius:6px;border:1px solid var(--border-med);opacity:0;pointer-events:none;transition:opacity .12s;z-index:40;text-align:left;}
-.xr-tipable:hover::after{opacity:1;}
+.xr-tr-val{font-family:var(--font-mono);font-size:var(--text-micro);color:var(--text-primary);min-width:30px;text-align:right;}
+/* ⓘ button tooltip = REMOVED (2026-08-04). Was `.xr-tipable` + `::after`
+   painting `attr(data-tip)`: the last hand-rolled tooltip in this file, carried
+   over from the pre-library mockup. It had drifted (no arrow, pure black, its
+   own 280px width and 6px radius) and read as a different component beside the
+   DS tooltips on the same screen. The button is now the library's
+   `.ds-tooltip-trigger` inside `<Tooltip>` — the pairing Input.tsx and
+   PowerThermal.tsx already use, so every visual value is the library's and
+   nothing here needs to describe it. (The port map above needs the library's
+   OTHER form instead — see the `.pmport .ds-tooltip-popup` note: absolutely
+   placed items cannot be wrapped.) */
 
 /* ── Connectivity hero (XrayHero) ─────────────────────────────────────────────
    The rear render as that tab's hero. Sizing is the canvas's own `.dc-hero-fig`
@@ -172,7 +323,7 @@
    old `stretch` — that was written when the figure sat in the band's ROW
    flexbox (stretch = vertical); in this COLUMN it would stretch width and
    un-hug the overlays. */
-.xr-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--gutter-sm); height: 100%; min-height: 0; width: 100%; }
+.xr-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; gap:var(--gutter-sm); height: 100%; min-height: 0; width: 100%; }
 .xr-hero .dc-hero-fig { align-self: center; flex: 1 1 auto; min-height: 0; }
 .xr-hero .dc-hero-fig img { height: 100%; width: auto; max-width: 100%; }
 /* map width: the render is the hero's subject, so it keeps the height budget —
@@ -186,5 +337,87 @@
    % offsets), so undo all three for anything inside the map */
 .xr-hero .pm img { max-width: none; max-height: none; filter: none; }
 .xr-hero .pm .pmp-img-default { max-width: 100%; }
-button.port-hl { background: transparent; padding: 0; appearance: none; }
+button.port-hl { background: transparent; padding:0; appearance: none; }
 button.port-hl:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+
+/* PROTOTYPE 2026-08-04 — the port map living in the panel instead of the hero.
+   The Figma frame is 836x237 with the 740x152 plate parked at y=45, so 45px sit
+   above it and 40px below — that band held the arrow that used to point up at
+   the rear render. With no render above it the band is dead space, so the panel
+   instance shows an 836x168 window (the plate plus a small breath either side)
+   and slides the frame up by 37px to line the window up with it. cqw is used
+   for the shift because the offset has to track the frame's WIDTH, which is
+   what its aspect ratio is driven from. */
+/* `width:100%` is load-bearing: the section is a flex container, and a flex item
+   with auto side margins and no width shrinks to its content — which here is all
+   absolutely positioned, so the window collapsed to 0. */
+/* No margins of its own — the Ng3 section already supplies its gap and padding,
+   and the card's own `.xr-head` bottom gutter is dropped here for the same
+   reason (it was written for the old card, which had no section around it). */
+/* Centred plate, as the card had it (two-zone layout tried and reverted the
+   same day, 2026-08-20 — a card split into columns is not a library pattern;
+   Cindy).
+   ⚠️ `overflow` REMOVED here (2026-08-20). This box never needed to clip: the
+   render is clipped by `.pm-basewrap` inside it, so a `clip` here shows no less
+   image — all it ever cut was the port hover card. It went `hidden` -> `clip` +
+   140px margin -> and the honest answer is neither: no clipping, and the card
+   is free to open upward past the section edge like every other DS tooltip.
+   Anything that must not leak is clipped by the panel itself. */
+/* Window = the PORT RUN, not the whole render frame (2026-08-29, Cindy: "꽉
+   채워야 이미지랑 포트 사이즈가 커질 거 아냐"). Measured at 1440 before this:
+   of the 586px box, ports used 393px (67%) — two layers of dead space, the
+   frame's own 5.742% side margins AND ~61/65px of bare plate inside the photo
+   before the first port and after the last. The window now starts 20px of
+   plate before the first port and ends 20px after the last (breathing room,
+   not a mid-port cut), which in the 836-wide frame is x 106.5 → 723.9:
+   width 617.4, full plate height 152 kept — the printed port labels live in
+   the photo ABOVE the ports, so vertical stays. */
+.pm-crop{width:100%;max-width:680px;margin:0 auto;position:relative;aspect-ratio:617.4/152;container-type:inline-size;}
+.ds-ng3-section > .xr-head{margin-bottom:0;}
+/* The plate opens the full-size view, so it says so on hover — the same
+   neutral white edge the desk map's navigable tiles wear (`.dsa-disp.navigable`
+   in display-arrange.css), not the accent, which is reserved for state. Focus
+   gets the library ring so the keyboard path is visible too. */
+/* `.pm-crop-open` (the plate as a second door to X-ray, with a hover ring) is
+   gone — 2026-09-22, Cindy: one door, the labelled `X-ray view` button. A
+   photograph does not say it is a control, and two doors to one place read
+   as two places. */
+/* Window = exactly the plate (2026-08-20, Cindy: 위아래 여백 타이트하게). The
+   836/168 window carried 8px of dead canvas above and below the plate; 152 is
+   the plate's own Figma height and -5.383cqw (45/836) puts its top edge at the
+   window's top edge.
+   ⚠️ `top`, NOT `transform: translateY()` (2026-08-20). A transform makes this
+   element a stacking context, and that trapped every port's hover card below
+   the panel's tab strip (`.ds-ng3-tab`, z-index 1) no matter what z-index the
+   card carried — the tab's chamfer painted straight across the tip's title.
+   `top` moves the same distance and creates no context, so the tooltip's own
+   z-index works again. Do not put a transform back on this element; if an
+   animation ever needs one, animate a child. */
+/* Scaled so the window above fills the box: 836/617.4 = 135.41%. left shifts
+   the window start to the box edge (106.5/617.4), top is the old 45/836 plate
+   alignment × the same scale. Hotspots are children of this element, so they
+   ride the scale untouched. */
+.pm-crop .pm{position:absolute;left:-17.25%;top:-7.289cqw;width:135.41%;margin:0;pointer-events:none;}
+/* The oversized box above is a CROP: 135% wide so the clip-path shows the
+   middle of the plate. Without this line it also took the CLICKS 106px to the
+   right of the visible plate — the first tile in every Viewing Mode row and the
+   card's own `X-ray view` button pressed the plate instead (2026-09-22,
+   measured with elementFromPoint at 1440; Cindy: "어떤 버튼은 눌렀을 때 X-ray로
+   넘어가거든"). Ports keep their hover cards. */
+.pm-crop .pmport{pointer-events:auto;}
+/* The scaled plate leaks past the box on both sides, and the box itself must
+   NOT clip — the 2026-08-20 note above is still right, an overflow here cuts
+   the port hover cards. So the clip rides the IMAGE layer alone: basewrap
+   holds nothing but the photo (pointer-events: none), no tooltip can be hurt
+   there. Insets translate the box edges into basewrap coordinates:
+   left (12.738−5.742)/88.517, right (94.259−86.588)/88.517. */
+/* `round var(--radius)` — the window's own corners, not the box's (2026-08-31,
+   Cindy: "corner radius는 또 어디 갔어"). basewrap's border-radius rounds the
+   ELEMENT edge, but this clip cuts a rectangle inside that edge, so the visible
+   corners were the clip's — square. Any crop window here must carry the app
+   radius itself. */
+.pm-crop .pm-basewrap{clip-path:inset(0 8.667% 0 7.904% round var(--radius));}
+/* The detail line — the `mt-note` voice the other cards on this tab already use
+   for their quiet line. min-height so the card does not change height between a
+   short line and a long one. */
+.pm-detail{min-height:1.25em;}

@@ -21,7 +21,7 @@ type Story = StoryObj<typeof Avatar>;
 /** Empty placeholder — the double-ringed circle with no content. */
 export const Empty: Story = {};
 
-/** Solid wallpaper-colour fill. */
+/** Solid wallpaper-color fill. */
 export const Wallpaper: Story = { args: { variant: 'wallpaper' } };
 
 /** App glyph inset on the surface. */

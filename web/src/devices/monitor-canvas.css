@@ -2,6 +2,51 @@
    chrome + .ds-ng3-* primitives. Only monitor-specific layout lives here;
    the KVM tab's stage/columns are in kvm.css. */
 
+/* The hero sits on the SAME library panel the tab body uses — `Ng3Panel bare`
+   inside `.dc-panel-wrap` (see MonitorCanvas.tsx). That is what makes the band
+   the card row's width, its surface the panel's surface and its corner the
+   panel's corner, without this file restating any of the three.
+   ⚠️ Do not reintroduce a hand-rolled band here. The first attempt (2026-08-05)
+   copied `--ng3-surface`'s colour-mix into a local variable and set
+   `border-radius: var(--radius-sm)` by hand — a transcription of the library
+   rather than a use of it, and the wrong radius token (the panel's is
+   `--radius-card`). Cindy caught all three: width, component, radius/colour. */
+.mc-hero-panel {
+  /* No tools passed, so there is no chamfered tab to leave room for — the
+     panel's reserved tab strip would otherwise sit as 40px of dead space above
+     the desk map. */
+  padding-top: 0;
+}
+/* No outline, no shadow, and since 2026-08-19 no surface either — the hero panel
+   is a box model with nothing drawn in it. All three went for one reason, given
+   three times: it was drawing a card around something that is not a card.
+   · border + shadow (Cindy, 2026-08-06) — they are what makes a box read as a
+     CARD floating on the canvas. Two cards stacked read as peers, and these two
+     are not: the desk map stays put while the tab body changes underneath it, so
+     the map is the stage and the panel is the content.
+   · surface, halfway to black (Cindy, 2026-08-06: "배경색이 너무 밝은데") — it came
+     in a step ABOVE `--bg-base` while the modal scrim behind it is black at 60%
+     over that same base, so the band read as a lit slab laid on a dark room.
+   · surface, gone (Cindy, 2026-08-19: "혹시 우리가 뒷배경 박스없애면서 빛표현이
+     잘나오게 할방법은 없을까?") — see the `background: transparent` rule further
+     down for what it bought and what it cost (5/255, measured).
+   There is no borderless variant to reuse — checked every `.ds-ng3-*` class in
+   shared/components.css (21 of them; the only variant Chris ships is
+   `.ds-ng3-label.plain`) — so this is a scoped override, not a new component.
+   ⚠️ Do not put a floor back "so the glow reads against something": the glow is
+   read against the modal's own scrim now, which is DARKER than any floor this
+   panel drew (rgb 10,10,10 vs 15,15,15). */
+.mc-hero-panel .ds-ng3-body {
+  border: none;
+  box-shadow: none;
+}
+/* The hero's wrap carries the panel's own horizontal insets (that is the point
+   — same box as the row below), but not its bottom gutter: the hero band and the
+   tab panel are separated by the tab strip, not by a second gap. */
+.mc-hero-wrap {
+  padding-bottom: 0;
+}
+
 /* Tab body — sections packed into columns by height, not by a hand-written
    grouping. Which sections exist is SKU data (Gear Switch, OLED Care,
    Under-Glow, OSD, the inputs list all come and go), so a fixed set of
@@ -16,23 +61,168 @@
    240px to 509px and shoved the hero around. One height for every tab means
    the tab strip, the console and the hero above it all hold still. */
 .mc-grid {
-  height: 380px;
-  /* An extra column means a tab outgrew the body — visible rather than
-     silently cropped, so it gets fixed instead of shipped. */
-  overflow-x: auto;
+  /* ⚠️ `height: 380px` lived here from 2026-07-31 (61fe809) to 2026-08-19, and
+     taking it out is the point of this change. It was ours, not the library's:
+     Chris's monitor canvas shipped 2026-07-28 (5f675fe, "columns + section
+     scroll") with no height, and `.ds-ng3-body` / `.ds-ng3-grid` in
+     shared/components.css still declare none — in his grammar the panel is as
+     tall as its content. The box was added to stop the panel breathing
+     240→509px and shoving the hero, which it did, at two costs nobody priced:
+       · a tab that outgrew 380 spilled SIDEWAYS, because `column-count` answers
+         a height cap by opening another column and the fourth falls off the
+         panel's right edge (Cindy, 2026-08-19, with a screenshot of Color
+         hanging outside: "왜 카드 디자인이 옆으로 빠져? 위아래로 스크롤하게
+         해야할꺼아냐")
+       · four cards over three columns means one column holds two, and the two
+         shortest were Sharpness 202 + OLED Care collapsed 167 = 373 against a
+         376 ceiling. Display fitted by 3px of luck.
+     With no height, `column-count` balances into three columns and grows DOWN,
+     and `.mc-canvas` scrolls. Do not put a height back to "hold the hero
+     still" — the hero is sticky now, which holds it without capping content. */
+  /* No overflow declared here, and the absence is load-bearing.
+     `overflow-x: auto` used to sit on this line as a development signal — an
+     extra column means a tab outgrew the body, and a scrollbar shows that
+     rather than cropping it silently. It cost far more than it was worth: CSS
+     will not let one axis stay visible while the other scrolls, so declaring
+     the x axis turned the y axis into a clipper as well, and this element
+     quietly became the ceiling for every popup in every monitor tab. That is
+     what cut the Under-Glow swatch tooltip in half (2026-08-06). Not the card,
+     and not `.dc-canvas` — that one is the full viewport, so what it clips is
+     the screen edge, which is the one place clipping is right.
+     The signal survives in a louder form: a tab that outgrows the body now
+     paints its extra column past the panel instead of tucking it behind a
+     scrollbar. Same intent, without holding every tooltip hostage. */
+  /* 2026-09-24 (Chris): the body DOES scroll now — vertically only. The canvas
+     is fixed like every other device canvas, the panel shrinks to the room the
+     hero leaves, and a tab taller than that scrolls here, inside the panel,
+     the way the headset's preset list and the keyboard's key list do. The cost
+     named above is real and taken: a popup near the bottom edge of a long tab
+     clips at the panel, not the screen. `min-height: 0` is the flex-chain link
+     (`.dc-panel-wrap … > .ds-ng3-grid` in device-canvas.css names the shared
+     grid; this one is ours, so it takes its own). */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-med) transparent;
 }
-.mc-grid.mc-grid--packed {
-  display: block;
-  column-count: var(--mc-cols, 3);
-  column-gap: var(--gutter-xs);
-}
-.mc-grid--packed > .ds-ng3-section {
-  break-inside: avoid;
+/* Three real columns, filled by MonitorGrid — not `column-count` (2026-08-21).
+   The browser's own column flow re-packed the WHOLE body every time any card
+   changed height, so opening a fold moved cards the person never touched, and
+   a body with no room answered by opening a fourth column outside the panel.
+   Both were the browser deciding; now the count and the packing are ours.
+   `align-items: flex-start` so a short column keeps its cards at their own
+   height instead of the library's `stretch` pulling the last one tall. */
+/* The port plate and the names that point at its ports, one row (2026-08-21).
+   The plate draws 680px inside a 934px card, so a 306px card — one grid column
+   wide, which keeps the tab's rhythm — fits in the margin it was already
+   wasting, and the tab gets ~190px of its height back. `flex-start` so each
+   card keeps its own height.
+   ⚠️ Stretching this row was tried and REVERTED on 2026-08-24. Since the right
+   slot became a column of two cards it is the taller side by 78px (277 vs 355
+   at 1440), and matching looked like the app's own two-sided rule — the mouse
+   and keyboard canvases both align to 0px. But the plate is a photograph with a
+   fixed 836/152 ratio, so a taller card cannot spend the height on the picture;
+   whichever way the extra is distributed it becomes a gap INSIDE the card, with
+   the plate's divider floating over it. That reads worse than a card that
+   simply ends. The 78px is what this arrangement is — one tall picture beside
+   two stacked cards — and the honest version of it is a short card, not a
+   padded one. Do not re-apply `stretch` here without a plan for what fills it.
+
+   ── Asked and answered a THIRD time, 2026-09-01 (Cindy). Read this before
+   measuring it again. ──
+   The columns were reported as "not matching" on Connectivity. Measured: with
+   TWO PCs the side column runs 37px PAST the port card (313 vs 350); with ONE
+   PC they land at 313 / 314, near exact. The display count changes nothing here
+   at all — 1 and 3 displays are pixel-identical.
+   So the direction is the mirror of the 78px case above: the side column is
+   LONGER than its neighbour rather than shorter. Same family, same answer — the
+   arrangement is one tall picture beside a stack, and a stack is as long as what
+   is in it.
+   The cause is worth knowing before anyone reaches for CSS: `VIEWING MODE` is
+   the only card on this tab that responds to the desk's shape. Two PCs give it
+   the split-layout tiles and it asks for 224px; the port card beside it does not
+   move for anything. The lean is a shadow of that asymmetry, not of the spacing.
+   Reopen only if content actually arrives for the left card, or if two PCs
+   becomes the standing demo state. Do not equalise the heights.
+
+   ── REVERSED 2026-09-23 (Cindy, the fourth time this was asked: «이런 룰을
+   내가 너한테 매번 설명을 해야 하니 … right 탭에 가면 … left column이랑 항상
+   높이가 똑같잖아. 밑에 공간이 있어도»). The two sides of this row now end on
+   one line, like every other tab (SPEC: tab-card-rows 2). What changed is the
+   card, not the taste: on 08-24 the plate WAS the card, so a taller card meant
+   a gap inside the picture. Since the rear-panel card became plate on top and
+   folds below it, the extra lands under its last row — the same place the
+   Display tab puts it. The shorter side takes the height; nothing stretches
+   the photo. Checked by verify-tab-walk («나란한 칸 바닥»), folds shut and
+   open. Measured before: 41px folded (default desk) and ~22px with Gear Switch
+   on + PIP (Cindy's capture). */
+.mc-toprow {
+  display: flex;
+  gap: var(--gutter-xs);
+  align-items: stretch;
   margin-bottom: var(--gutter-xs);
+}
+.mc-toprow > :first-child {
+  flex: 1 1 auto;
   min-width: 0;
 }
-/* One or two sections: the DS flex row, so the cards stretch to the body
-   height instead of sitting as two short blocks in a tall frame. */
+/* 306px BORDER box, so its left edge lands on the third column's — the card has
+   padding, and a content-box basis put it 34px to the left of that line. */
+.mc-toprow > :last-child {
+  flex: 0 0 306px;
+  box-sizing: border-box;
+}
+
+/* ⚠️ `min-height: 120px` lived here for one afternoon (2026-08-25) and is
+   REMOVED the same day. It was meant to stop a short card reading as a crumb —
+   the OSD card measured 78px beside neighbours of 263 / 245 / 146. It did make
+   the box taller, and that is all it did: the content stayed where it was and
+   the difference became empty space INSIDE the card. Measured before removal —
+   OSD 146px with 81px of it blank, `EQ preset` 146px with 78px blank. Cindy,
+   seeing it: "밑에 텅 비어있잖아".
+   This is the same lesson the port plate taught on 2026-08-24, arrived at from
+   the other direction: a card cannot be given a height its content will not
+   fill. A card is small because it holds little, and the honest fixes are to
+   give it more to hold or to merge it with its neighbour — never to pad it.
+   Do not re-add a floor here. */
+
+/* Rows, not columns (2026-08-26, Cindy — "패턴 설정"). The column stack is
+   retired: every staggered bottom, inter-card hole and padded crumb of the
+   preceding two days came from it, and the sibling canvases never had it —
+   they lay cards in rows and let the row stretch its members level. Pairing
+   and the full pattern: MonitorGrid's doc comment + component-specs.md
+   SPEC: tab-card-rows. */
+.mc-grid.mc-grid--rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.mc-row {
+  display: flex;
+  gap: var(--gutter-xs);
+  align-items: stretch;
+}
+.mc-row > .ds-ng3-section {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* One or two sections: the DS flex row. `flex: 1` shares the WIDTH evenly —
+   that part stays. What is gone is the height stretch that came free with it
+   (2026-08-25, Cindy: "밑에 텅 비어있잖아. 둘 다 높이 맞추느라고").
+   The row's default `align-items: stretch` pulled both cards to the taller
+   one's height, and a card whose content stops earlier just carries the
+   difference as empty space: measured on Audio, `EQ preset` holds one row of
+   chips and was drawn at 154px to match `Speaker`, ~100px of it blank.
+   `flex-start` lets each card end where its content ends. This is the same
+   call the port plate forced on 2026-08-24 — matched heights are worth having
+   only when the content can fill them, and a floor (`.mc-grid .ds-ng3-section`
+   min-height) is what keeps a short card from reading as a crumb. */
+.mc-grid--wide {
+  align-items: flex-start;
+}
 .mc-grid--wide > .ds-ng3-section {
   flex: 1;
   min-width: 0;
@@ -69,13 +259,46 @@
 .mc-hero {
   flex: 0 0 var(--mc-hero-h);
   min-height: 0;
-  overflow: hidden;
+  /* ⚠️ NOT `overflow: hidden` (Cindy, 2026-08-19: "빛이 네모에 안 짤리게 자연스럽게
+     퍼지는거면 난 최대한 넓게 퍼져도 좋을거같아"). The band is a height budget, not
+     a frame: it has no surface, no border and no corner, so anything it cut was
+     cut at a line the eye cannot find — and the under-glow was being cut there,
+     51px of live wash above the band (measured 2026-08-19).
+     What bounds the light now is `.dc-canvas`, the modal's full-viewport scrim,
+     which is the one place clipping is right (its own note says so). The modal's
+     own chrome is unaffected: the mode bar carries `z-index: 1` and the tab panel
+     comes later in the DOM, so both paint OVER the wash rather than under it.
+     Kept safe by the flex chain below — the band's content is sized to the band
+     exactly now, so there is no longer any layout overflow for this to reveal
+     (it used to run 14px past and be quietly clipped here). */
+  overflow: visible;
+  /* Not sticky any more (2026-09-24, Chris): the canvas is fixed like every
+     other device canvas and the TAB BODY scrolls (see .mc-grid), so the hero
+     simply holds its band at the top. */
+  position: relative;
+  z-index: 0;
   /* The shared 56px top inset clears the status chips for heroes that run the
-     full canvas width. The arrangement is 780px centred and the chips end at
-     x≈257, so here that inset only costs the map height it needs. */
-  padding-top: 8px;
+     full canvas width. The desk map is centred inside the panel and the chips
+     end at x≈257, so here that inset only costs the map height it needs.
+     The step itself is the ramp's, not a number of ours (Cindy, 2026-08-18:
+     hero 안의 여백은 라이브러리 사이즈대로) — `--gutter-xs` is the 8px rung. */
+  padding-top: var(--gutter-xs);
+  /* Side padding is off because the band inside carries the panel's own insets
+     (`.mc-hero-wrap` = `.dc-panel-wrap`); keeping both would inset it twice. */
+  padding-inline: 0;
 }
 .mc-panel-wrap {
+  /* z-index 1 over the hero's 0 so the strip's menus and the under-glow wash
+     layer correctly. The wrap itself is the shared `.dc-panel-wrap`: it shrinks
+     to the room the hero leaves (`flex: 0 1 auto; min-height: 0`) and hands the
+     constraint down to the tab body, which scrolls (2026-09-24). */
+  position: relative;
+  z-index: 1;
+  /* Anchored to the bottom of the window, like the mouse, headset and every
+     other device panel (2026-09-25, Chris). Elsewhere the hero is `flex: 1`
+     and takes the slack; here the hero is a fixed band, so the slack sits in
+     this auto margin instead — a short tab leaves breathing room ABOVE the
+     panel, and a tall one closes it and scrolls inside. */
   margin-top: auto;
 }
 /* Band = the map's own height (header + stage + name row), so the map fills it
@@ -91,24 +314,311 @@
 
    652px = app chrome 88 + hero padding 32 + console 500 (body 380 + panel
    chrome 120) + bottom 24, plus a few px of slack. Change the body height and
-   this number moves with it. Below ~770px tall the floor wins and the map
-   crops — the same floor the sibling canvases have. */
+   this number moves with it.
+
+   ⚠️ FLOOR RAISED 120 → 240 (Cindy, 2026-08-05). The old floor did not "crop a
+   bit", it deleted the feature: measured on a 1280×720 window the band came to
+   118px, and after the header and insets the draggable stage was **32px** — a
+   third of the tallest tile (98px), so every display was cut off at the stand
+   and no arrangement was possible at all. 240 is the first height where a full
+   row fits: tile 98 + name row 24 + breathing room 32 = 154 of stage, and the
+   stage is the band minus its 88px of fixed overhead.
+
+   The cost is honest and Cindy took it deliberately: on a window shorter than
+   ~892px the band no longer shrinks out of the panel's way, so the panel loses
+   that room instead.
+   ⚠️ That sentence used to end "That is what the collapse control is for — see
+   `.mc-hero.is-collapsed` below." There is no such rule and no such control:
+   searched 2026-08-05 across shared/ and web/src, the class appears in this
+   comment and nowhere else. The pointer is removed rather than left promising a
+   third rung that was never built; if the short-window case needs a control, it
+   needs designing, not finding.
+
+   ⚠️ CEILING RAISED 298 → 356 (Cindy, 2026-08-05), so a TWO-ROW desk fits.
+   Displays can be stacked now (Arrange window → drag one above another), and a
+   stack is taller than a row by construction:
+     row 1  Treehouse 32 tile 98 + its name row 24  = 122
+     gap    --gutter-xxs (the arm's clearance)      =   4
+     row 2  OMEN OLED 27 tile 74 + its name row 24  =  98
+     insets 16 top + 16 bottom                      =  32
+                                                  → 256 of stage = 344 of band
+   356 keeps ~12px of slack over that. Below the ceiling nothing changes: the
+   clamp still tracks the window, and a one-row desk never asks for the extra
+   room. Three rows do NOT fit and are out of scope — the roster is three
+   displays, so the only way to reach three rows is to stack all of them. */
 .mc-canvas {
-  --mc-hero-h: clamp(120px, calc(100vh - 652px), 298px);
+  --mc-hero-h: clamp(240px, calc(100vh - 652px), 356px);
+  /* The canvas is `.dc-canvas`: fixed, full-viewport, `overflow: hidden` —
+     the same as every other device canvas (2026-09-24, Chris). It used to
+     carry a scoped `overflow-y: auto` so a heavy tab could scroll the whole
+     window, hero and close button included. Now the hero holds its band, the
+     panel takes what is left and the tab body scrolls inside it (.mc-grid). */
 }
 /* Stage = band minus the map's fixed overhead (title row + name row), so the
    arrangement always fills its band exactly at any window height. */
 .mc-arrange .dsa-stage {
-  height: calc(var(--mc-hero-h) - 88px);
+  /* ⚠️ The height here used to be `calc(var(--mc-hero-h) - 42px)`, and the 42
+     was honest about itself: a MEASURED fit carrying a note to re-measure it by
+     hand whenever a button height or an outer padding moved. It had already
+     drifted — the band's content came out 14px taller than the band, which
+     `.mc-hero`'s own `overflow: hidden` absorbed by centring and clipping.
+     Nothing is subtracted now. The stage takes whatever the band has left after
+     the paddings above it (the panel body's, then `.dsa-hero`'s), through the
+     flex chain below, so the only spacing in this hero is the library's own and
+     a change to any of it carries here for free (Cindy, 2026-08-18: hero 안의
+     margin·padding은 UI 라이브러리 사이즈대로). */
+  flex: 1;
+  min-height: 0;
+  /* ⚠️ The stage does NOT clip here (Cindy, 2026-08-18). `.dsa-stage` hides its
+     overflow, which is right for a box of draggable furniture and wrong for a
+     lamp: the under-glow is a light, and a light that ends in a straight line
+     at an invisible rectangle is the one thing it cannot do. The fit above now
+     reserves the lamp's reach, so this is the second half of the same answer —
+     what a display's light does past its own tile (a drag near the edge, the
+     soft tail of the blur) spills onto the panel it is standing on, and is
+     finally cut by the hero band, which is a real edge the eye can see.
+     Nothing escapes the modal: `.mc-hero` still hides its own overflow.
+     Scoped to this hero — the class belongs to every arrangement surface, and
+     the ones drawing schematic tiles have no light to let out. */
+  overflow: visible;
+  /* The width a saved `left` is a fraction OF — the STAGE the arrangement was
+     authored and reviewed on, which is the 780px box this rule's neighbour used
+     to impose less that box's two `--gutter` insets. The number did not appear
+     here, it MOVED here: it stopped being how wide the desk is drawn and became
+     what the saved coordinates mean, which is what lets the box grow to the
+     panel without the displays drifting apart (see `hRef` on fitScale).
+     ⚠️ It is the stage and not the box on purpose. Every saved layout and every
+     entry in DEFAULTS is a fraction of the stage it was dragged on, so reading
+     them against the 48px-wider box would spread the whole desk by 6.6% — the
+     gaps between displays would grow against tiles that did not, which is a
+     change to a reviewed arrangement and not a coordinate change. Measured
+     2026-08-18: with the box the three tiles came out 128/342/525 in reference
+     space against the authored 120/321/493.
+     A constant, like `--dsa-vref` beside it: changing either moves every desk
+     anyone has already arranged, so neither tracks the live band. */
+  --dsa-href: 732px;
+  /* The height a saved `top` is a fraction of — the stage at the band's CEILING
+     (356 − 64), not whatever the window makes it right now. Tops are fractions
+     and tiles are fixed px, so measuring them against a live stage pulls stacked
+     rows into each other as the window shortens: measured 2026-08-06 at 800px,
+     the 27" was 21px inside the 32". Against a fixed reference the arm gap is the
+     same real distance at every window size and `fitScale` does the shrinking,
+     which is the one place shrinking belongs. Keep in step with the clamp's
+     ceiling above and with the 64 on the line before it. */
+  --dsa-vref: 292px;
 }
+/* ⚠️ This rule used to hand-roll the caption chip — padding, radius and a
+   `--bg-elevated` scrim. All three now come from the library's `.ds-tag.overlay`
+   (components.css:398), applied on the element itself; see DisplayArrange.
+   ⚠️ The `z-index: 5` that used to be here is GONE (Cindy, 2026-08-04). It
+   lifted names above every tile — including the tile being dragged — so a
+   buried display's label floated in front of the hardware sitting on top of it.
+   A display stacks as one object now; see the `.dsa-disp` z-index ladder in
+   display-arrange.css. */
+/* The desk box = the hero panel, not an island inside it (Cindy, 2026-08-18:
+   "모니터 사이즈도 전체 화면에 꽉 맞춰서 수정해야 될 것 같아. 다른 디바이스
+   메뉴처럼"). It was capped at 780px inside a 960px panel, and the cap cost two
+   things at once: the desk was drawn small with background either side of it,
+   and the floating Identify/Arrange pill — which pins to this box's corner —
+   floated 360px short of the panel's own corner, reading as a control dropped
+   in mid-air rather than an overlay on the picture (Cindy, same session: "너무
+   뜬금없이 중앙에 떠 있고 … 그냥 오버레이처럼 코너에서 조금 떨어져 있는 거였으면").
+   Removing the cap fixes the pill by construction: it is positioned off
+   `.dsa-hero`, so the corner it finds is now the panel's.
+   What stops the desk from merely SPREADING into the extra width is
+   `--dsa-href` above — the coordinates keep their old frame and `fitScale`
+   spends the new room on zoom instead. */
 .mc-arrange {
   width: 100%;
-  max-width: 780px;
   margin: 0 auto;
+}
+/* The band's height, handed down. Each step passes on what it was given minus
+   its own (library) padding, so the stage at the bottom can simply take the
+   rest — see the `flex: 1` on `.mc-arrange .dsa-stage`. This chain is the whole
+   reason no hand-measured height is left in this hero.
+   Flex, not `height: 100%`: this project is content-box, so a percentage height
+   plus a padding overflows its parent by exactly that padding at every step —
+   which is the class of drift the 42px it replaces was an instance of. A flex
+   item's `flex: 1` is the outer box, padding included, so each level lands
+   exactly. `align-self` on the first step because `.dc-hero` is a centred ROW:
+   its items are as tall as their content until one asks to stretch. */
+.mc-hero-wrap {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.mc-hero-panel {
+  display: flex;
+  flex-direction: column;
+}
+/* ⚠️ The hero's card is GONE — surface and all (Cindy, 2026-08-19: "혹시 우리가
+   뒷배경 박스없애면서 빛표현이 잘나오게 할방법은 없을까?"). It is the last of four
+   things this panel has given up, and the reason is the same each time: it was
+   drawing a box around something that is not a box. Border and shadow went on
+   2026-08-06, the surface was taken halfway to black the same day ("배경색이 너무
+   밝은데"), and now the surface itself.
+   What made this safe to answer with "yes": the box was costing the light
+   everything and worth almost nothing. MEASURED 2026-08-19 — the panel surface is
+   rgb(15,15,15) and the modal scrim directly behind it is rgb(10,10,10), a step
+   of 5/255 that nobody can see, and that 5/255 was the only thing the light was
+   being clipped for. Taking it away makes the ground DARKER, which is the
+   direction a light wants: the old note here worried the glow "needs a floor it
+   can be read against", and a darker floor is a better one.
+   True in the light theme too — the ground under this is the modal's own scrim
+   (black at 60%), not the page, so the desk keeps a dark room to be lit in
+   whichever theme is on.
+   The panel is still HERE as a box model — it carries the hero's width and the
+   flex chain that hands the stage its height. Only the paint is gone. */
+.mc-hero-panel .ds-ng3-body {
+  background: transparent;
+}
+.mc-hero-panel,
+.mc-hero-panel .ds-ng3-body,
+.mc-arrange,
+.mc-arrange .dsa-hero {
+  flex: 1;
+  min-height: 0;
+}
+.mc-arrange,
+.mc-arrange .dsa-hero {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The floating Identify/Arrange pair, re-anchored to a line the eye can see
+   (Cindy, 2026-08-19: "배경 박스가 없으니까 floating 버튼이 조금 misaligned 된
+   것처럼 보이거든"). They were pinned to the hero panel's corner — right while
+   that panel drew a box, orphaned the moment it stopped: measured after the
+   surface went, their right edge sat 37px inside the MODE bar's right edge,
+   two almost-aligned lines being the exact distance that reads as a mistake.
+   The MODE bar is the nearest visible edge and shares the hero's own grid
+   (both live in `.dc-panel-wrap`), so the buttons align to IT. The -12px undoes
+   `.ds-ng3-body`'s own 12px inset — a library value with no token to read, so
+   if the panel body's padding ever changes, this is the number that follows it.
+   Hover-reveal was considered and declined (Cindy asked): Arrange is the only
+   thing telling a first visit that arranging exists, and hover does not exist
+   on touch. Identify stays beside it because it is a DESK verb — it numbers
+   every display at once — not a per-display one that could ride a tile. */
+.mc-arrange .dsa-hero-head {
+  right: -12px;
 }
 
 @media (max-width: 600px) {
   .mc-grid {
     column-count: 1;
   }
+}
+
+/* The tab strip's shoulders. `.ds-ng3-tab` is a chamfered trapezoid pinned to
+   the middle of the panel's 40px reserved strip (components.css:7227), so the
+   strip is OPEN either side of it. At rest that shows the canvas, which is what
+   it should show. Once the panel rides up over the hero it shows the desk map,
+   and the icon row lands across the device name tags.
+   A flat fill is wrong: the canvas is a 60% black scrim with a 24px backdrop
+   blur, so an opaque colour reads as a patch at rest and repeating the scrim
+   double-darkens. Dimming alone is not enough either — the selected display's
+   name tag is an accent chip and stays legible through 60% black. Blur is what
+   removes it, and it is the canvas's own move.
+   The ramp lives in the mask so the blur fades WITH the scrim: an un-masked
+   `backdrop-filter` runs at full strength to the strip's top edge, and that edge
+   shows at rest as a faint band across the panel (seen at 1440x900, unscrolled).
+   Masking composites both through one ramp, so the strip starts at nothing and
+   arrives at the panel's edge with no line of its own. */
+.mc-panel-wrap > .ds-ng3-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--ng3-tab-h);
+  background: var(--ksg-b60);
+  backdrop-filter: blur(12px);
+  /* Two ramps, intersected (2026-08-21, Cindy: *"탭 양옆으로 gradient가 보이는
+     게 좀 이상하고"*). The vertical one was doing its job; the problem was the
+     horizontal absence — the scrim ran the panel's whole width while the thing
+     it exists to hide behind, the tab, occupies only the middle third
+     (measured: the notch spans 33.1% to 66.9% of the panel, 324px of 960).
+     Beside the notch the wash had no object explaining it, so it read as a
+     smudge on the desk photo rather than as the tab's own ground.
+     Shoulders are wide on purpose: the notch is content-sized, so a monitor
+     with fewer tabs has a narrower one, and a soft ramp degrades into "a little
+     wide" instead of into a visible edge. */
+  mask-image: linear-gradient(to bottom, transparent, #000 70%),
+    linear-gradient(to right, transparent 12%, #000 32%, #000 68%, transparent 88%);
+  mask-composite: intersect;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 70%),
+    linear-gradient(to right, transparent 12%, #000 32%, #000 68%, transparent 88%);
+  -webkit-mask-composite: source-in;
+  /* Under the tab (z-index 1) so the chamfer keeps its edge, over the hero. */
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Mode bar — the "Add new preset" editor's name field, in the tab strip's
+   trailing slot beside Cancel/Save. A fixed chip-scale width instead of the
+   `.ds-input` default 100% — full width would shove the buttons off the row. */
+.mb-name {
+  width: 148px;
+}
+
+/* A standing-state tag beside a label — the mode bar's `Auto-switch` and the
+   Brightness card's `All monitors` (2026-09-23/24). The part is the library's
+   `Badge` (status, the read-only mark); only its size is ours. As shipped it is
+   14px type on a 23px pill, sized for a card header; beside a 14px row label it
+   grew the row 9px, so the slider under it jumped every time matching turned
+   on or off (measured: Brightness row 23px vs Contrast 14px). Here it takes
+   the label's own step down (`--text-nano`, the mode bar kicker's size) and
+   half the badge's vertical padding (its own `4px 6px 2px`, components.css
+   BADGES), and the wrapper takes no height of its own — so the row it sits in
+   keeps the height it had (Brightness row 15px with and without the tag; the
+   ⓘ sets that 15). The gap is the token one step up from the ⓘ's, so the tag
+   reads as a separate mark rather than as part of the ⓘ it would otherwise
+   touch (measured 0px). The library has no small Badge size (checked
+   shared/components.css BADGES and components/Badge.tsx) — a size variant is a
+   question for Chris if a third surface needs this. Lives here, not in
+   monitor-tabs.css, because the bar is drawn by MonitorCanvas and must not
+   depend on a tab body's stylesheet being loaded. */
+.mc-label-tag {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  height: 0;
+  margin-left: var(--gutter-xs);
+}
+.mc-label-tag .ds-badge {
+  font-size: var(--text-nano);
+  line-height: 1;
+  padding: var(--gutter-xxxs) 6px 0;
+}
+/* The column beside the rear-panel card (2026-08-24 sketch). Two cards stacked
+   in the 306px slot `.mc-toprow > :last-child` already defines, so the tall
+   plate on the left has something the same height beside it instead of a single
+   short card and a ragged row underneath.
+
+   The column SPLITS the plate's height between its two cards (2026-08-29,
+   Cindy — "오른쪽만 왼쪽 높이에 맞춰서 ... 둘이 2등분"). Her screenshot was the
+   one-PC default: both cards folded down to stubs (131 + 75 beside a 277 plate)
+   and the column ended in a void. `align-self: stretch` hands the column the
+   row's height — which is the PLATE's when the column is shorter — and
+   `flex: 1 1 0` on the cards splits it evenly; measured, that lands 143/143
+   with the stub absorbing ~68px, inside the 70px line the row spec accepts
+   everywhere else (component-specs.md SPEC: tab-card-rows).
+
+   ⚠️ This is NOT the stretch the 2026-08-24 note below forbids. That note is
+   about the PLATE growing — a fixed-ratio photo cannot fill given height, so
+   the plate keeps `align-items: flex-start` from the row and never stretches.
+   Only the column does. With two PCs the column's own content (355) exceeds
+   the plate (277), the row height follows the column, each card's content
+   floor (`min-height: auto`) blocks compression, and this rule changes
+   nothing — the two-PC state keeps its recorded shape.
+   (2026-09-23: the row now stretches, so in that two-PC state the rear-panel
+   card grows to the column's height instead — its extra sits under its last
+   fold, never inside the plate. See `.mc-toprow`.) */
+.mc-sidecol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  align-self: stretch;
+}
+.mc-sidecol > * {
+  flex: 1 1 0;
 }

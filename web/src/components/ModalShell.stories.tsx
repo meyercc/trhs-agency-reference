@@ -27,7 +27,8 @@ const meta: Meta<typeof ModalShell> = {
         component:
           'The page-level modal template: breadcrumb bar (back + title + close) over a ' +
           '`.modal-body` that is two-column with a `left` hero/sidebar (~300px) or single-column ' +
-          'without one. Every routed modal surface composes this shell — see Pages/Module ' +
+          'without one, plus an optional `footer` band pinned under the body for commit ' +
+          'actions. Every routed modal surface composes this shell — see Pages/Module ' +
           'Browser for it filled with real content. Toggle `open` to see the enter/exit ' +
           'transition; in the app the shell stays mounted and `open` drives it.',
       },
@@ -65,6 +66,30 @@ export const SingleColumn: Story = {
     <ModalShell {...args}>
       <div style={{ color: 'var(--text-dim)' }}>
         <p style={{ marginTop: 0 }}>Single-column modal — no left panel.</p>
+      </div>
+    </ModalShell>
+  ),
+};
+
+/**
+ * The `footer` slot is a sibling of the body, not part of the scroll area, so
+ * its actions stay reachable however long the content is. The band owns the
+ * separator and spacing; the row placed inside carries none.
+ */
+export const WithFooter: Story = {
+  args: { title: 'Profiles' },
+  render: (args) => (
+    <ModalShell {...args}
+      left={<div style={{ color: 'var(--text-dim)' }}>Left rail</div>}
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Button variant="ghost">Delete</Button>
+          <Button variant="accent">Activate</Button>
+        </div>
+      }
+    >
+      <div style={{ color: 'var(--text-dim)' }}>
+        <p style={{ marginTop: 0 }}>Body content scrolls; the footer stays put.</p>
       </div>
     </ModalShell>
   ),

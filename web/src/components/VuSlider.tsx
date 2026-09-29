@@ -12,7 +12,7 @@ export interface VuSliderProps
   /** Uncontrolled initial value. */
   defaultValue?: number;
   onChange?: (value: number) => void;
-  /** Meter colouring: neutral, all-green, green→amber, or green→amber→red. */
+  /** Meter coloring: neutral, all-green, green→amber, or green→amber→red. */
   variant?: VuVariant;
   /** Level marks per row. */
   marks?: number;
@@ -23,7 +23,7 @@ export interface VuSliderProps
   disabled?: boolean;
 }
 
-/** Colour class for a mark at fractional position `frac` (0–1) given the variant. */
+/** Color class for a mark at fractional position `frac` (0–1) given the variant. */
 function markClass(variant: VuVariant, frac: number): string {
   switch (variant) {
     case 'reference':
@@ -40,7 +40,7 @@ function markClass(variant: VuVariant, frac: number): string {
 /**
  * VU slider over the shared `.ds-rail` slider chrome plus a `.ds-vu` meter:
  * a left-origin slider (accent fill + white handle, value popup while active)
- * flanked by two rows of level marks. The `variant` colours the marks to show
+ * flanked by two rows of level marks. The `variant` colors the marks to show
  * a VU scale — green (reference), amber peak zone, or a red clipping zone.
  *
  * Avalonia: a Slider ControlTheme with an ItemsControl of level marks bound to

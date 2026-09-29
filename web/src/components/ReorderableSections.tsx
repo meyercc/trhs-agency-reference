@@ -70,13 +70,18 @@ function Section({ id, header, children, draggable }: ReorderableSectionData & {
       whileDrag={{ scale: 1.01, zIndex: 5 }}
       transition={{ type: 'spring', stiffness: 480, damping: 42 }}
     >
-      {/* No grip with a single section — nothing to reorder against. */}
-      {draggable && (
-        <button type="button" className="rs-grip" aria-label="Drag to reorder section" onPointerDown={(e) => controls.start(e)}>
-          <Grip />
-        </button>
-      )}
-      {header}
+      {/* Wide: the grip is absolute, in the page gutter. Narrow: there is no
+          gutter, so it joins the header row at its right end rather than
+          sitting on the label. No grip with a single section — nothing to
+          reorder against. */}
+      <div className={'rs-head' + (header ? '' : ' bare')}>
+        {header}
+        {draggable && (
+          <button type="button" className="rs-grip" aria-label="Drag to reorder section" onPointerDown={(e) => controls.start(e)}>
+            <Grip />
+          </button>
+        )}
+      </div>
       {children}
     </Reorder.Item>
   );

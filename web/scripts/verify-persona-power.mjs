@@ -1,5 +1,5 @@
 // One-off CDP walkthrough for the persona-differentiated Power & Thermal
-// surface (TH-324). Dev server on :5175, headless Chrome on :9222, run from web/.
+// surface (TH-324). Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 //
 // NOTE (2026-08-19): these checks are about persona curation, which lives on the
 // Perform page that /perform rendered until V7 was promoted over it. That page is
@@ -8,9 +8,12 @@
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
 const OUT = process.argv[2] || '/tmp';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
 let msgId = 0;
 function makeSend(ws) {
@@ -37,6 +40,17 @@ async function evalJs(send, expr) {
   });
   if (exceptionDetails) throw new Error(exceptionDetails.text + ' ' + (exceptionDetails.exception?.description || ''));
   return result.value;
+}
+
+// Poll until `expr` is truthy. Replaces fixed sleeps: under CPU contention (the
+// parallel verify lane) a sleep that was "long enough" reads mid-render. An eval
+// that throws (execution context torn down by a navigation) counts as not-yet.
+async function waitFor(send, expr, timeoutMs = 8000) {
+  for (let waited = 0; waited < timeoutMs; waited += 100) {
+    try { if (await evalJs(send, `!!(${expr})`)) return true; } catch {}
+    await sleep(100);
+  }
+  return false;
 }
 
 const results = [];
@@ -70,8 +84,11 @@ async function loadPerform(send, { persona, modules, modal } = {}) {
     ${persona ? `localStorage.setItem('persona', ${JSON.stringify(persona)});` : ''}
     ${modules ? `localStorage.setItem('trhs-modules', ${JSON.stringify(JSON.stringify(modules))});` : ''}
   `);
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#/perform-v1${modal ? '?modal=' + modal : ''}` });
-  await sleep(1100);
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#/perform-v1${modal ? '?modal=' + modal : ''}` });
+  // The unique ?r= proves the new document committed; then wait for the
+  // surface SNAPSHOT reads (or the modal, when one was requested).
+  await waitFor(send, `location.search.includes('r=${loadN}') && document.readyState === 'complete'
+    && document.querySelector(${JSON.stringify(modal ? '.settings-modal .ds-modal-nav-item' : '.power-mode-btn')})`);
   return evalJs(send, SNAPSHOT);
 }
 
@@ -102,7 +119,7 @@ async function main() {
 
   // 2b. Learner takes over: click Performance → note gone, fan badge Custom
   await evalJs(send, `[...document.querySelectorAll('.power-mode-btn')].find(b => b.textContent.includes('Performance')).click()`);
-  await sleep(300);
+  await waitFor(send, `document.querySelector('.power-mode-btn.active .power-mode-label')?.textContent.trim() === 'Performance'`);
   s = await evalJs(send, SNAPSHOT);
   check('learner takeover: Performance active', s?.activeMode === 'Performance', String(s?.activeMode));
   check('learner takeover: note gone', s?.autoNote === null);
@@ -128,13 +145,14 @@ async function main() {
   // settings modal opens on Appearance — the persona pills live under Setup.
   await loadPerform(send, { persona: 'tinkerer', modal: 'settings' });
   await evalJs(send, `[...document.querySelectorAll('.settings-modal .ds-modal-nav-item')].find(b => b.textContent.trim() === 'Setup').click()`);
-  await sleep(250);
+  await waitFor(send, `document.querySelector('.settings-modal .ds-toggle-group-btn')`);
   await evalJs(send, `[...document.querySelectorAll('.settings-modal .ds-toggle-group-btn')].find(b => b.textContent.trim() === 'Guided').click()`);
-  await sleep(400);
+  await waitFor(send, `document.querySelector('.power-mode-btn.active .power-mode-label')?.textContent.trim() === 'Auto'`);
   s = await evalJs(send, SNAPSHOT);
   check('live flip → Guided: Auto active behind modal', s?.activeMode === 'Auto' && s?.cardTitles.length === 2, `${s?.activeMode}, ${s?.cardTitles.length} cards`);
   await evalJs(send, `[...document.querySelectorAll('.settings-modal .ds-toggle-group-btn')].find(b => b.textContent.trim() === 'Hands-on').click()`);
-  await sleep(800);
+  await waitFor(send, `document.querySelector('.power-mode-btn.active .power-mode-label')?.textContent.trim() === 'Performance'
+    && [...document.querySelectorAll('.rs-section')].find(s => s.textContent.includes('Power & Thermal'))?.querySelectorAll('.ds-feature-card').length === 4`);
   s = await evalJs(send, SNAPSHOT);
   check('live flip → Hands-on: manual surface back', s?.activeMode === 'Performance' && s?.cardTitles.length === 4, `${s?.activeMode}, ${s?.cardTitles.length} cards`);
 

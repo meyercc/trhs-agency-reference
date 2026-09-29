@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// LIGHTING DATA — presets + colour maths for the keyboard modal's Lighting tab.
+// LIGHTING DATA — presets + color maths for the keyboard modal's Lighting tab.
 // Ported from the vanilla `personalize-peripherals.js` (LIGHT_PRESETS + the
 // HSL↔hex↔rgb helpers + the preset-editor swatch palette).
 // ══════════════════════════════════════════════════════════════════════════════
@@ -14,7 +14,7 @@ export interface LightPreset {
   name: string;
   /** CSS background for the preset swatch. */
   swatch: string;
-  /** "r,g,b" — the hero glow + all-key colour when applied. */
+  /** "r,g,b" — the hero glow + all-key color when applied. */
   glow: string;
   /** effect glyph (icon name). */
   fx: IconName;
@@ -53,7 +53,7 @@ export const SWATCHES = [
 /** Hue-band gradient for the hue slider track. */
 export const HUE_GRADIENT = 'linear-gradient(90deg,#ff0000,#ff0,#0f0,#0ff,#00f,#f0f,#ff0000)';
 
-// ── Colour maths — HSL (h 0-360, s/l 0-100) ↔ rgb/hex ────────────────────────
+// ── Color maths — HSL (h 0-360, s/l 0-100) ↔ rgb/hex ────────────────────────
 
 export interface Hsl {
   h: number;
@@ -102,7 +102,7 @@ export function hexToHsl(hex: string): { h: number; s: number; l: number } {
   return rgbToHsl(parseInt(x.slice(0, 2), 16), parseInt(x.slice(2, 4), 16), parseInt(x.slice(4, 6), 16));
 }
 
-/** `rgb(...)` string for an HSL colour (ignores alpha — used to paint keys). */
+/** `rgb(...)` string for an HSL color (ignores alpha — used to paint keys). */
 export const hslToRgbStr = (c: Hsl): string => {
   const [r, g, b] = hslToRgb(c.h, c.s, c.l);
   return `rgb(${r}, ${g}, ${b})`;

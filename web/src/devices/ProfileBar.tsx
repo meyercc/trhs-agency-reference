@@ -1,38 +1,43 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import './profile-bar.css';
-import { Icon, Button, ListBox, ListItem, SoftwareOnlyProvider } from '../components';
-import { useSettings } from '../state/Settings';
+import { Icon, Button, Dropdown, SoftwareOnlyProvider, type DropdownGroup } from '../components';
+import { useProfiles } from '../state/Profiles';
 import { useDeviceProfiles, type SlotSettings, type SlotSource } from '../state/DeviceProfiles';
 import { useDeviceSim } from '../state/DeviceSim';
-import { profileName } from '../state/profiles';
 import { onboardSlotCount, slotLabel, isOnboardScope, type ProfileScope } from './onboard';
 import type { ResolvedSku } from './skus';
 
 /**
- * The profile bar above a device's hero: the software profile and this
- * device's onboard memory, as one row of what the user is looking at.
+ * The profile selector of a device canvas: the software profile and this
+ * device's onboard memory, as one dropdown in the leading aside of the panel's
+ * tab strip (Figma Hardware-Mode "Profile Selector"), with the slot's status
+ * and Save/Undo in the trailing aside. It used to be a two-half radio bar above
+ * the hero; folding it into the strip hands that band back to the product
+ * image and leaves one control where the eye already is — beside the tabs.
  *
- * Two halves, 50/50, because there are exactly two kinds of place settings can
- * live. The onboard slots collapse into the right half's list rather than
- * running along the bar as peers — a mouse has five of them, which both
- * overflowed the bar and made "software profile" read as the sixth option in a
- * set instead of the other kind of thing.
+ * The menu is two groups, because there are exactly two kinds of place
+ * settings can live: "Software" holds the active profile, "Onboard" the slots.
+ * The headings carry the kind; a slot never reads as a sixth peer of the
+ * profile, and a mouse's five slots no longer need collapsing.
  *
- * The bar is a *switch*: selecting a slot puts the device on it, and selecting
+ * The selector is a *switch*: picking a slot puts the device on it, and picking
  * the software profile hands the device back. There is no preview step and no
  * separate "Activate" — what you are looking at and what the device is running
  * are one fact, so `scope` is derived from `activeSlot` rather than tracked
- * beside it. A device-side button press therefore moves the bar with it.
+ * beside it. A device-side button press therefore moves the selector with it.
  *
  * Saving is still its own act. Activation is free; a Save writes flash, which
  * has finite cycles, so edits sit in a draft until the user commits them.
  *
- * A disconnected device disables the bar outright — you cannot switch a device
- * that isn't here.
+ * A disconnected device disables the selector outright — you cannot switch a
+ * device that isn't here.
  *
  * Devices with no onboard memory (`onboard.slots: 0` — the monitor, every
- * long-tail component) render no bar at all rather than a one-option radio.
+ * long-tail component) render no selector at all rather than a one-option menu.
  */
+
+/** Stable empty bag, so a device with nothing captured yet doesn't churn deps. */
+const EMPTY_BAG: SlotSettings = {};
 
 /** How long the onboard confirmation stays up before it retires itself. */
 const NOTE_LINGER_MS = 5000;
@@ -61,11 +66,13 @@ export interface ProfileBarState {
   save: () => void;
   undo: () => void;
   profileId: string;
+  /** Display name of the active software profile. */
+  profileName: string;
 }
 
 /** Owns the open panel's working copy and dirty state. */
 export function useDeviceProfileBar(sku: ResolvedSku): ProfileBarState {
-  const { activeProfileId } = useSettings();
+  const { activeProfile, mergeDeviceSettings } = useProfiles();
   const { deviceState, saveSlot, activateSlot } = useDeviceProfiles();
   const { simState } = useDeviceSim();
 
@@ -84,9 +91,13 @@ export function useDeviceProfileBar(sku: ResolvedSku): ProfileBarState {
   const [draft, setDraft] = useState<SlotSettings>(() =>
     dev.activeSlot != null ? { ...(dev.slots[dev.activeSlot] ?? {}) } : {},
   );
-  // Software-scope values are state, not a ref — controlled controls (sliders)
-  // have to re-render when they're moved. Session-local, like the old app.
-  const [softwareValues, setSoftwareValues] = useState<SlotSettings>({});
+  // Software-scope values live ON the active profile. They used to be local
+  // state seeded empty on every mount — "session-local, like the old app" —
+  // so everything set in software scope was thrown away when the panel closed.
+  // Now the profile is the store, which is what makes the two halves of this
+  // bar genuinely parallel: a software profile holds, per device, the same
+  // shape a flash slot holds. Switching profiles swaps this bag wholesale.
+  const softwareValues = activeProfile.devices[sku.id] ?? EMPTY_BAG;
 
   // Reload the draft whenever the running slot changes — whoever changed it.
   // A device-side press lands here too, which is the point: the panel follows
@@ -125,10 +136,16 @@ export function useDeviceProfileBar(sku: ResolvedSku): ProfileBarState {
         setDraft((d) => ({ ...d, [key]: v }));
         setDirty(true);
       } else {
-        setSoftwareValues((s) => ({ ...s, [key]: v }));
+        // Straight to the profile — no draft and no Save, because nothing here
+        // writes flash. Only the onboard half has a cost worth deferring.
+        //
+        // MERGE, never replace: spreading `softwareValues` here would capture
+        // the bag as it was at render, so two settings changed in the same tick
+        // would each start from that same copy and the first would vanish.
+        mergeDeviceSettings(activeProfile.id, sku.id, { [key]: v });
       }
     },
-    [scope],
+    [scope, activeProfile.id, sku.id, mergeDeviceSettings],
   );
 
   const markDirty = useCallback(() => {
@@ -163,8 +180,43 @@ export function useDeviceProfileBar(sku: ResolvedSku): ProfileBarState {
       setDirty(false);
       setRevision((r) => r + 1);
     },
-    profileId: activeProfileId,
+    profileId: activeProfile.id,
+    profileName: activeProfile.name,
   };
+}
+
+/**
+ * `useState`, but the value lives in the active scope — the software profile, or
+ * the onboard slot the device is running.
+ *
+ * Shaped as a drop-in for `useState` on purpose. Most device settings were
+ * written as plain local state, which meant they survived nothing: not closing
+ * the panel, not switching profile, not a slot save. Migrating one is a
+ * one-line change with an identical call site, so the diff stays readable and
+ * the risk stays low.
+ *
+ * `key` is namespaced by the tab that owns it (`sensor.dpi`) because that
+ * prefix is what the Profiles modal groups the read-only manifest by.
+ */
+export function useProfileValue<T>(
+  state: ProfileBarState,
+  key: string,
+  fallback: T,
+): [T, (next: T | ((prev: T) => T)) => void] {
+  const value = state.value<T>(key, fallback);
+  const set = useCallback(
+    (next: T | ((prev: T) => T)) => {
+      // Functional updates resolve against the last committed value. Two
+      // functional updates to the SAME key in one tick would still collapse —
+      // no caller does that, and writes to different keys compose correctly
+      // because the store merges inside its updater.
+      const resolved =
+        typeof next === 'function' ? (next as (prev: T) => T)(state.value<T>(key, fallback)) : next;
+      state.setValue(key, resolved);
+    },
+    [state, key, fallback],
+  );
+  return [value, set];
 }
 
 /**
@@ -191,65 +243,74 @@ export function ProfileScopeBody({ state, children }: { state: ProfileBarState; 
   );
 }
 
+/** Hand a device type to a sentence: "notebook-keyboard" → "keyboard". */
+const useDeviceNoun = (sku: ResolvedSku) => useMemo(() => sku.type.replace(/^notebook-|^desktop-/, ''), [sku.type]);
+
+const SOFTWARE = 'software';
+
+/**
+ * The profile dropdown — goes in `Ng3Panel`'s `leading` slot. Two groups:
+ * the software profile, then the device's onboard slots; the row the device
+ * is running says "Running" in words as well as by being the selected row.
+ */
 export function ProfileBar({ state }: { state: ProfileBarState }) {
-  const {
-    sku, slotCount, scope, setScope, activeSlot, dirty, profileId,
-    connected, slotSource,
-  } = state;
+  const { sku, slotCount, scope, setScope, activeSlot, profileName, connected } = state;
+  const deviceNoun = useDeviceNoun(sku);
 
-  const deviceNoun = useMemo(() => sku.type.replace(/^notebook-|^desktop-/, ''), [sku.type]);
-  const swName = profileName(profileId);
+  if (slotCount === 0) return null;
 
-  // Which slot the collapsed onboard half is showing. On a slot that is simply
-  // the scope; on the software profile it offers the last slot the device ran,
-  // so the half is a one-click way back to where you were.
-  const [pickedSlot, setPickedSlot] = useState<number | null>(null);
-  const shownSlot = isOnboardScope(scope) ? scope : (pickedSlot ?? 0);
-  // Remember the last slot the device ran, however it got there — including a
-  // press on the device itself — so handing back to software leaves the half
-  // pointing at where you were.
-  useEffect(() => {
-    if (activeSlot != null) setPickedSlot(activeSlot);
-  }, [activeSlot]);
+  const groups: DropdownGroup[] = [
+    { label: 'Software', options: [{ value: SOFTWARE, label: profileName, icon: 'profile' }] },
+    {
+      label: 'Onboard',
+      options: Array.from({ length: slotCount }, (_, i) => ({
+        value: String(i),
+        label: slotLabel(i),
+        icon: 'profile' as const,
+        // The running slot says so in words as well as by its selected surface —
+        // the state never rides on shade alone.
+        trailing:
+          activeSlot === i ? (
+            <span className="pb-running">
+              <span className="pb-live" aria-hidden="true" />
+              Running
+            </span>
+          ) : undefined,
+      })),
+    },
+  ];
 
-  const [open, setOpen] = useState(false);
-  const halfRef = useRef<HTMLDivElement>(null);
-  const chevRef = useRef<HTMLButtonElement>(null);
-
-  const rows = useCallback(
-    () => Array.from(halfRef.current?.querySelectorAll<HTMLElement>('.pb-pop .ds-list-item') ?? []),
-    [],
+  return (
+    <div className="pb">
+      <Dropdown
+        className="pb-select"
+        aria-label={`Profile — the software profile or an onboard slot on the ${deviceNoun}`}
+        groups={groups}
+        value={isOnboardScope(scope) ? String(scope) : SOFTWARE}
+        onChange={(v) => setScope(v === SOFTWARE ? SOFTWARE : Number(v))}
+        disabled={!connected}
+        openUp
+      />
+    </div>
   );
+}
 
-  // Open lands focus on the row you are already on, so the list starts where
-  // the eye is.
-  useEffect(() => {
-    if (!open) return;
-    rows()[shownSlot]?.focus();
-    const onDoc = (e: MouseEvent) => {
-      if (halfRef.current && !halfRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open, shownSlot, rows]);
-
-  // Close hands focus back to the chevron that opened it — but only once the
-  // list has actually unmounted. Focusing inside the handler is undone by the
-  // commit that removes the focused row, which drops focus to the body.
-  const refocusRef = useRef(false);
-  useEffect(() => {
-    if (open || !refocusRef.current) return;
-    refocusRef.current = false;
-    chevRef.current?.focus();
-  }, [open]);
+/**
+ * What the current scope means right now, and what you can do about it — goes
+ * in `Ng3Panel`'s `trailing` slot. One note at a time: disconnected outranks
+ * everything; on a slot, either the unsaved warning with its Undo/Save or a
+ * confirmation that retires itself. Nothing in software scope while connected.
+ */
+export function ProfileActions({ state }: { state: ProfileBarState }) {
+  const { sku, slotCount, scope, dirty, connected, slotSource } = state;
+  const deviceNoun = useDeviceNoun(sku);
 
   // The onboard confirmation is a moment, not a standing fact. It says how the
-  // device got onto this slot, which stops being news — and the bar itself
-  // already carries the standing state (the "On the <device>" kicker, the green
-  // dot, "Running" in the list), so retiring the sentence loses nothing. It
-  // fades in place rather than unmounting: the actions row keeps its height, so
-  // nothing below the bar moves on a timer. The unsaved-changes warning never
-  // retires — it is actionable and belongs with its buttons.
+  // device got onto this slot, which stops being news — and the selector itself
+  // carries the standing state (the slot is the selected row, marked Running),
+  // so retiring the sentence loses nothing. It fades in place rather than
+  // unmounting so the strip's height never changes. The unsaved-changes warning
+  // never retires — it is actionable and belongs with its buttons.
   const noteLive = connected && isOnboardScope(scope) && !dirty;
   const [noteFaded, setNoteFaded] = useState(false);
   useEffect(() => {
@@ -261,200 +322,50 @@ export function ProfileBar({ state }: { state: ProfileBarState }) {
     // of getting there, or a Save that hands the row back from the warning.
   }, [noteLive, scope, slotSource]);
 
-  const close = (refocus: boolean) => {
-    refocusRef.current = refocus;
-    setOpen(false);
-  };
-  const pick = (i: number) => {
-    setScope(i);
-    close(true);
-  };
-
-  const onPopKeyDown = (e: React.KeyboardEvent, i: number) => {
-    const list = rows();
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      const d = e.key === 'ArrowDown' ? 1 : -1;
-      list[(i + d + list.length) % list.length]?.focus();
-    } else if (e.key === 'Home') { e.preventDefault(); list[0]?.focus(); }
-    else if (e.key === 'End') { e.preventDefault(); list[list.length - 1]?.focus(); }
-    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(i); }
-    else if (e.key === 'Escape' || e.key === 'Tab') {
-      // Escape dismisses the list, not the whole device modal — the host closes
-      // on a document-level Escape, so this one must not reach it.
-      if (e.key === 'Escape') e.stopPropagation();
-      close(e.key === 'Escape');
-    }
-  };
-
-  // A radiogroup promises arrow-key navigation, so it has to actually work:
-  // arrows move (and select) between the two halves, Home/End jump to the ends.
-  // The selected half is the only tab stop, per the roving-tabindex pattern —
-  // the chevron is a separate stop, reached with Tab.
-  const scopes: ProfileScope[] = ['software', shownSlot];
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    // The chevron and the open list own their own keys; everything else in the
-    // row drives the roving selection.
-    if ((e.target as HTMLElement).closest?.('.pb-chev, .pb-pop')) return;
-    const i = isOnboardScope(scope) ? 1 : 0;
-    let next = i;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (i + 1) % scopes.length;
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (i - 1 + scopes.length) % scopes.length;
-    else if (e.key === 'Home') next = 0;
-    else if (e.key === 'End') next = scopes.length - 1;
-    else return;
-    e.preventDefault();
-    setScope(scopes[next]);
-    const row = e.currentTarget as HTMLElement;
-    (row.querySelectorAll('.pb-opt')[next] as HTMLElement | undefined)?.focus();
-  };
-
   if (slotCount === 0) return null;
 
+  // The strip is a single line, so every sentence here is short and truncates
+  // with an ellipsis before it wraps; the full text rides on `title`.
+  const note = (text: string, extra?: string, role?: 'status') => (
+    <span role={role} className={'pb-note' + (extra ? ' ' + extra : '')} title={text}>
+      <Icon name={extra?.startsWith('pb-ok') ? 'check' : 'alert'} size="sm" aria-hidden />
+      <span className="pb-note-text">{text}</span>
+    </span>
+  );
+
+  if (!connected) {
+    return <div className="pb-actions">{note(`Disconnected — the ${deviceNoun} is away, running its onboard memory`)}</div>;
+  }
+  if (!isOnboardScope(scope)) return null;
+
   return (
-    <div className="pb" role="group" aria-label="Profile">
-      <div
-        className={'pb-row' + (connected ? '' : ' disabled')}
-        role="radiogroup"
-        aria-label="Profile source"
-        onKeyDown={onKeyDown}
-      >
-        <div className={'pb-half' + (scope === 'software' ? ' active' : '')}>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={scope === 'software'}
-            tabIndex={scope === 'software' ? 0 : -1}
-            className="pb-opt"
-            disabled={!connected}
-            onClick={() => setScope('software')}
-          >
-            <span className="pb-opt-kicker">Software profile</span>
-            <span className="pb-opt-name">{swName}</span>
-          </button>
-        </div>
-
-        <span className="pb-sep" aria-hidden="true" />
-
-        {/* Onboard half: a split control. The body selects the onboard scope at
-            the slot on show; the chevron opens the list to change which slot.
-            Collapsing the slots keeps the bar a 50/50 read of the two kinds of
-            thing rather than a run of up to six equal-looking options. */}
-        <div
-          className={
-            'pb-half pb-onboard' +
-            (isOnboardScope(scope) ? ' active' : '') +
-            (activeSlot === shownSlot ? ' on-device' : '') +
-            (open ? ' open' : '')
-          }
-          ref={halfRef}
-        >
-          <button
-            type="button"
-            role="radio"
-            aria-checked={isOnboardScope(scope)}
-            tabIndex={isOnboardScope(scope) ? 0 : -1}
-            className="pb-opt"
-            disabled={!connected}
-            onClick={() => setScope(shownSlot)}
-          >
-            <span className="pb-opt-kicker">
-              On the {deviceNoun}
-              {activeSlot === shownSlot && <span className="pb-live" aria-label="running on the device" />}
-            </span>
-            <span className="pb-opt-name">{slotLabel(shownSlot)}</span>
-          </button>
-          <button
-            type="button"
-            ref={chevRef}
-            className="pb-chev"
-            disabled={!connected}
-            aria-haspopup="listbox"
-            aria-expanded={open}
-            aria-label={`Choose an onboard slot on the ${deviceNoun} — ${slotCount} available`}
-            onClick={() => setOpen((o) => !o)}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setOpen(true);
-              } else if (e.key === 'Escape' && open) {
-                // Same guard as the list: dismiss the list, keep the modal.
-                e.stopPropagation();
-                close(false);
-              }
-            }}
-          >
-            <Icon name="chevron-down" size={12} aria-hidden />
-          </button>
-
-          {open && (
-            <ListBox className="pb-pop" aria-label={`Onboard slots on the ${deviceNoun}`} maxHeight={240}>
-              {Array.from({ length: slotCount }, (_, i) => (
-                <ListItem
-                  key={i}
-                  label={slotLabel(i)}
-                  selected={scope === i}
-                  // The running slot says so in words as well as with the dot —
-                  // the state never rides on color alone.
-                  trailing={
-                    activeSlot === i ? (
-                      <span className="pb-pop-live">
-                        <span className="pb-live" aria-hidden="true" />
-                        Running
-                      </span>
-                    ) : undefined
-                  }
-                  onClick={() => pick(i)}
-                  onKeyDown={(e) => onPopKeyDown(e, i)}
-                />
-              ))}
-            </ListBox>
-          )}
-        </div>
-      </div>
-
-      {/* One note at a time. Disconnected outranks everything — a device that
-          isn't here can't be switched, so the bar says so and goes inert. */}
-      {!connected ? (
-        <div className="pb-actions">
-          <span className="pb-note">
-            <Icon name="alert" size={14} aria-hidden />
-            Disconnected — the {deviceNoun} is away, running its onboard memory
-          </span>
-        </div>
-      ) : isOnboardScope(scope) ? (
-        <div className="pb-actions">
-          {dirty ? (
-            <>
-              <span className="pb-note pb-warn">
-                <Icon name="alert" size={14} aria-hidden />
-                Unsaved changes — not on the {deviceNoun} yet
-              </span>
-              <Button size="sm" onClick={state.undo}>
-                Undo
-              </Button>
-              <Button size="sm" variant="accent" onClick={state.save}>
-                Save to {slotLabel(scope)}
-              </Button>
-            </>
-          ) : (
-            <span
-              // role="status" because it now leaves: a message that retires has
-              // to be announced when it arrives, or a screen-reader user meets
-              // an empty row. The standing state stays readable on the bar.
-              role="status"
-              className={'pb-note pb-ok pb-transient' + (noteFaded ? ' faded' : '')}
-            >
-              <Icon name="check" size={14} aria-hidden />
-              {slotSource === 'device'
-                ? `Switched to ${slotLabel(scope)} on the ${deviceNoun} — travels with it`
-                : slotSource === 'reconnect'
-                  ? `Came back running ${slotLabel(scope)} — it was switched while away`
-                  : `Running on the ${deviceNoun} — travels with it`}
-            </span>
-          )}
-        </div>
-      ) : null}
+    <div className="pb-actions">
+      {dirty ? (
+        <>
+          {/* Short on purpose: the strip is one line and the Save button already
+              names where the changes are going. */}
+          {note('Unsaved changes', 'pb-warn')}
+          <Button size="sm" onClick={state.undo}>
+            Undo
+          </Button>
+          <Button size="sm" variant="accent" onClick={state.save}>
+            Save to {slotLabel(scope)}
+          </Button>
+        </>
+      ) : (
+        // role="status" because it leaves: a message that retires has to be
+        // announced when it arrives, or a screen-reader user meets an empty
+        // strip. The standing state stays readable in the selector.
+        note(
+          slotSource === 'device'
+            ? `Switched to ${slotLabel(scope)} on the ${deviceNoun} — travels with it`
+            : slotSource === 'reconnect'
+              ? `Came back running ${slotLabel(scope)} — it was switched while away`
+              : `Running on the ${deviceNoun} — travels with it`,
+          'pb-ok pb-transient' + (noteFaded ? ' faded' : ''),
+          'status',
+        )
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 // ── Typology annotation tag + status legend (PerformV5 showcase only) ──
-// The teaching overlay: names what each card/section demonstrates and colour-
+// The teaching overlay: names what each card/section demonstrates and color-
 // codes it RATIFIED (built directly) / DRAFT (G9–G14 proposal) / OPEN (a toggle
 // someone else owns). Tags are hidden until the page's "Annotate" toggle is on
 // (CSS: `.pv5-root.pv5-annotate .pv5-tag`).

@@ -56,7 +56,7 @@
 .pv4-signature-meta {
   font-family: var(--font-display);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 /* ── Form 2: AI as a peer tile inside the mode row ── */
@@ -128,7 +128,7 @@
 }
 .pv4-um-status-meta {
   margin-left: auto;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .pv4-um-warn {
   margin-top: auto;
@@ -149,14 +149,14 @@
   gap: var(--gutter-xxs);
   font-family: var(--font-mono);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   text-align: right;
 }
 .pv4-rig-state i {
   width: 8px;
   height: 8px;
   border-radius: 2px;
-  background: var(--text-subtle);
+  background: var(--text-muted);
   flex-shrink: 0;
 }
 .pv4-rig-state[data-state='leads'] {

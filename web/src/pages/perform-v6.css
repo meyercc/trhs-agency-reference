@@ -19,4 +19,4 @@
 .pv6-level-bar i { display: block; height: 100%; border-radius: 3px; background: rgba(255, 255, 255, 0.32); }
 .pv6-level-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 5px; }
 .pv6-level-v { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: var(--text-section); color: var(--text-primary); }
-.pv6-level-l { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); }
+.pv6-level-l { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }

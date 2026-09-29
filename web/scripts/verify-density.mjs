@@ -5,11 +5,14 @@
 // that token. So the thing worth testing is the indirection — that the setting
 // reaches the token, the token reaches real layout, and comfortable stays the
 // default with no attribute at all. None of that is visible to the type checker.
-// Dev server :5175, headless Chrome :9222, run from web/.
+// Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
 let msgId = 0;
 function makeSend(ws) {
@@ -71,11 +74,11 @@ const SNAP = `(() => {
 
 let loadN = 0;
 async function load(send, hash) {
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#${hash}` });
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#${hash}` });
   await waitFor(send, `document.readyState === 'complete' && document.querySelector('#root')?.firstElementChild`);
 }
 
-/** Click a labelled button in the open Settings modal. */
+/** Click a labeled button in the open Settings modal. */
 const clickLabel = (send, text) =>
   evalJs(send, `[...document.querySelectorAll('.settings-modal button')]
     .find(b => b.textContent.trim() === ${JSON.stringify(text)})?.click()`);

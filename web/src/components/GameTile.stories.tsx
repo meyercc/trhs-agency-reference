@@ -55,7 +55,7 @@ export const NoLabel: Story = {
   decorators: w150,
 };
 
-/** Side-by-side: labelled vs. label-less. */
+/** Side-by-side: labeled vs. label-less. */
 export const LabelOptional: Story = {
   parameters: { controls: { disable: true } },
   render: () => (

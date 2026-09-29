@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { ReorderableSections, type ReorderableSectionData } from '../components';
 import { SectionHeader } from './SectionHeader';
-import { MonitoringBar, PowerThermal, Optimizer, Maintenance, DeviceOverview } from '../widgets';
+import { MonitoringBar, PowerThermal, Optimizer, Maintenance } from '../widgets';
 import { useModules } from '../state/Modules';
 import { useSettings } from '../state/Settings';
 import './pages.css';
@@ -53,14 +53,6 @@ export function Perform() {
       id: 'maintenance',
       header: <SectionHeader label="Maintenance" />,
       children: <Maintenance />,
-    },
-    // Monitor section (Cindy): adaptive Device Overview (Map/Tile). Mounted on
-    // Perform per our IA; the persistent home for the live device view is an
-    // open IA-meeting question (Junchao) — move it when that lands.
-    {
-      id: 'devices',
-      header: <SectionHeader label="Device Overview" />,
-      children: <DeviceOverview />,
     },
   ];
 

@@ -121,18 +121,8 @@
 
    It spans the full width, under a left rail included, because it belongs to
    the frame rather than to either column. */
-.pv7-modals .modal-footer {
-  flex: none;
-  padding: var(--gutter-sm) var(--gutter);
-  border-top: 1px solid var(--border-light);
-}
-/* The band owns the separator and the spacing; the row inside carries none.
-   Same rule as everywhere else here — spacing belongs to the container. */
-.pv7-modals .modal-footer > * {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
-}
+/* The band itself (padding, top border, child reset) is the shared
+   `.modal-footer` rule in shared/components.css — nothing pv7-specific. */
 
 /* A fixed frame alone leaves dead space on a light tab (System Vitals measured
    158px of empty body). The frame stays fixed AND the space gets used — the
@@ -198,7 +188,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .pv7-svm-metric-v {
   font-family: 'JetBrains Mono', monospace;
@@ -245,7 +235,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.05em;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   pointer-events: none;
 }
 .pv7-trend-foot {
@@ -256,7 +246,7 @@
   font-size: var(--text-nano);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   margin-top: 6px;
 }
 /* Range picker — the chart's own control, so it sits on the chart. */
@@ -269,7 +259,7 @@
   padding: 3px 8px;
   font: inherit;
   letter-spacing: inherit;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
@@ -305,7 +295,7 @@
   padding-top: var(--gutter-sm);
   border-top: 1px solid var(--border-light);
   font-size: var(--text-micro);
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 .pv7-svm-foot-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex: none; }
 .pv7-svm-foot-age { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
@@ -400,7 +390,7 @@
 .pv7-bm-count {
   font-family: var(--font-mono);
   font-size: var(--text-caption);
-  color: var(--text-subtle);
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 .pv7-bm-count b { color: var(--text-primary); font-weight: 700; }
@@ -434,7 +424,7 @@
   font-size: var(--text-nano);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   margin-top: var(--gutter);
   margin-bottom: 6px;
 }
@@ -483,6 +473,6 @@
   font-size: var(--text-nano);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-subtle);
+  color: var(--text-muted);
   margin-right: auto;
 }

@@ -1,12 +1,15 @@
 // CDP walkthrough for the SpecCanvas (the generic long-tail device canvas that
 // replaced DeviceModal + renderers.tsx) and the shared deviceTabs source.
-// Dev server :5175, headless Chrome :9222, run from web/.
+// Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 
+const CDP_PORT = process.env.CDP_PORT || 9222;
+const APP_PORT = process.env.APP_PORT || 5175;
+
 const OUT = process.argv[2] || '/tmp';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const httpJson = (p) => fetch('http://localhost:9222' + p).then((r) => r.json());
+const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
 let msgId = 0;
 function makeSend(ws) {
@@ -67,6 +70,7 @@ const SNAP = `(() => {
     dropdowns: c.querySelectorAll('.ds-dropdown').length,
     heroImg: !!c.querySelector('.dc-hero img'),
     heroGlyph: !!c.querySelector('.sc-hero-glyph'),
+    heroAlt: c.querySelector('.dc-hero img')?.getAttribute('alt') ?? null,
     // Nothing may overflow the viewport, and no legacy modal may render.
     fits: r ? r.bottom <= innerHeight + 1 : null,
     legacy: !!document.querySelector('.dm-body, .dm-tabs'),
@@ -91,7 +95,7 @@ const APP_READY = `document.readyState === 'complete' && document.querySelector(
 let loadN = 0;
 async function open(send, sku, tab, expectCanvas = true) {
   // ?r=N busts the SPA cache — hash-only navigations don't reload React.
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#/?sku=${sku}${tab ? '&tab=' + tab : ''}` });
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#/?sku=${sku}${tab ? '&tab=' + tab : ''}` });
   await waitFor(send, APP_READY);
   if (expectCanvas) await waitFor(send, `document.querySelector('.dc-canvas .ds-ng3-body')`);
   else await sleep(400); // let a canvas appear if it (wrongly) would
@@ -171,7 +175,15 @@ async function main() {
   check('gpu: Overview + Lighting tabs', JSON.stringify(s?.tabs) === JSON.stringify(['Overview', 'Lighting']), s?.tabs.join('/'));
   check('gpu: model/VRAM/TDP/length specs', s?.spec['Model'] === 'GeForce RTX 5090' && s?.spec['VRAM'] === '32 GB' && s?.spec['TDP'] === '600 W', JSON.stringify(s?.spec));
   check('gpu: 2 display-output tags', s?.tags.length === 2, s?.tags.join(', '));
-  check('gpu: no photo → type glyph hero', s?.heroGlyph === true && s?.heroImg === false);
+  // A part has no photo of its own, so the hero falls back to the parent
+  // system's — and the alt says whose photo it is and which part this is. The
+  // glyph is the third step, reached only when the parent has no render either;
+  // the 45L has had one since the OMEN MAX rename, so nothing exercises it here.
+  check(
+    "gpu: no photo → the parent system's photo, alt naming both",
+    s?.heroImg === true && s?.heroGlyph === false && s?.heroAlt === 'HyperX OMEN MAX 45L — Graphics Card',
+    String(s?.heroAlt),
+  );
   shot = await send('Page.captureScreenshot', { format: 'png' });
   writeFileSync(`${OUT}/spec-gpu.png`, Buffer.from(shot.data, 'base64'));
 
@@ -217,7 +229,7 @@ async function main() {
   // ── deviceTabs is the single source: a board card's shortcut buttons must
   // be exactly the tabs its modal opens with (they used to come from the dead
   // renderers.tsx list, so a card could offer a tab the canvas never had). ──
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#/` });
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#/` });
   await waitFor(send, APP_READY);
   await waitFor(send, `document.querySelector('.ds-devcard .dev-shortcut')`);
   const card = await evalJs(send, `(() => {
@@ -233,8 +245,12 @@ async function main() {
     await evalJs(send, `[...document.querySelectorAll('.ds-devcard')].find(c => c.querySelector('.dev-shortcut')).querySelector('.dev-shortcut').click()`);
     await waitFor(send, `document.querySelector('.dc-canvas .ds-ng3-body')`);
     s = await evalJs(send, SNAP);
+    // The open tab is the shortcut's — not the strip's first tool: a rich card
+    // (treehouse-32) drops Display inline (Rule A below), so its first shortcut
+    // is Lights while the modal's strip still starts at Display. Asserting
+    // tabs[0] here only ever held while a non-rich card came first on the board.
     check('card shortcut opens the modal on that exact tab',
-      s?.tabs?.[0] === card.shortcuts[0] && s?.title === card.shortcuts[0],
+      s?.title === card.shortcuts[0] && (s?.tabs ?? []).includes(card.shortcuts[0]),
       `card=${card.shortcuts.join('/')} modal=${s?.tabs?.join('/')} open=${s?.title}`);
     // Rich cards (treehouse-32) drop tabs they already control inline (Rule A,
     // Cindy 2026-07-23), so shortcuts are an ordered SUBSET of the modal tabs
@@ -253,7 +269,7 @@ async function main() {
   // ── every connected device has a board card (keyboard + mic were missing) ──
   await evalJs(send, `localStorage.setItem('board-layout', JSON.stringify(
     ['dev-mouse','dev-keyboard','dev-headset','dev-monitor','dev-mic'].map(id => ({ id, span: 3, rows: 2 }))))`);
-  await send('Page.navigate', { url: `http://localhost:5175/?r=${++loadN}#/` });
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#/` });
   await waitFor(send, APP_READY);
   await waitFor(send, `document.querySelectorAll('.ds-devcard').length >= 5`);
   const cards = await evalJs(send, `[...document.querySelectorAll('.ds-devcard')].map(c => ({
@@ -268,7 +284,8 @@ async function main() {
     JSON.stringify(cards?.find((c) => c.sub === 'Keyboard')?.shortcuts) === JSON.stringify(['Lights', 'Keys & Macros', 'Settings']),
     JSON.stringify(cards?.find((c) => c.sub === 'Keyboard')?.shortcuts));
   check('mic card shortcuts match the MicCanvas tabs',
-    JSON.stringify(cards?.find((c) => c.sub === 'Microphone')?.shortcuts) === JSON.stringify(['Audio', 'Effects', 'Lighting', 'Settings']),
+    // The connected mic is the SoloCast 2 Pro (TH-408): no Effects tab, and "Lights".
+    JSON.stringify(cards?.find((c) => c.sub === 'Microphone')?.shortcuts) === JSON.stringify(['Audio', 'Lights', 'Settings']),
     JSON.stringify(cards?.find((c) => c.sub === 'Microphone')?.shortcuts));
   await evalJs(send, `localStorage.removeItem('board-layout')`);
 

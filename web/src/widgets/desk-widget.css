@@ -1,0 +1,406 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   DESK card (Personalize → Display) — the desk schematic, view + switch only.
+
+   Lifted verbatim from the retired Perform `device-overview.css` (git b9665ab~1)
+   when that section was retired 2026-08-18; the Arrange-mode rules are the only
+   thing dropped, because the one editor for this layout is the monitor modal
+   hero (Cindy, 2026-08-18). Everything else is byte-for-byte the approved v3
+   look, so this card and the old map cannot drift apart.
+
+   ⚠ Class prefix stays `dov-` on purpose even though the file is renamed: the
+   markup is reused verbatim, and renaming 30-odd selectors to match a filename
+   is churn that buys nothing. `.dsa-*` remains Chris's (display-arrange.css).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.dov { color: var(--text-primary); }
+
+/* `is-kvm` on the root still drives which computer's name wears the accent
+   (below); the direct/KVM tag pair it used to toggle left on 2026-09-13. */
+
+
+/* ── STAGE — one lit surface, no graph paper (2026-08-19, Cindy) ─────────────
+   The 32px grid that used to be here came in verbatim with the tiles when this
+   card was lifted from the retired Perform map (`device-overview.css:22-30` at
+   b9665ab~1). On that card the grid was earned: it had an Arrange mode, and you
+   dragged displays around on it (`.dov.is-arrange .dov-disp.is-draggable`,
+   `cursor: grab`). THIS card deliberately dropped the dragging — view and
+   switch only, editing stays in the monitor hero — so the graph paper was left
+   promising a gesture that no longer exists, and reading as an unfinished
+   wireframe while it did (Cindy, 2026-08-19: "너무 지금 와이어프레임 같은 거
+   아니야?").
+
+   ⚠️ 2026-08-20 the dragging came back, and 2026-09-01 it went away again for
+   good (Cindy) — placement belongs to the `Arrange` window, which this card
+   links to. So the 2026-08-19 reading above is simply true again: no grid, no
+   grab cursor, nothing on this surface promising a gesture. The grid should not
+   return with some future editing idea either; the `Arrange` window is where
+   editing lives.
+
+   Losing it also settles a contradiction rather than creating one: the header
+   above claimed to follow "DisplayArrange visual language", but the surface
+   this card's `Arrange` action actually opens has NO grid — `.dsa-stage` is the
+   radial pool alone, and its own note records that pool being dimmed once
+   already because a busy desk was rejected (`display-arrange.css:85`). So the
+   two surfaces that draw the same desk now agree on the KIND of ground: a lit
+   pool, no ruling.
+
+   Not the same intensity, though, and that is left open on purpose. Ours pours
+   `--surface-light` at full strength (measured: rgba(255,255,255,0.05)); the
+   hero pours the same token through `color-mix(…, transparent 55%)`, so its
+   pool is a little under half of ours. Whether the small card should match the
+   big editing surface exactly, or stay slightly brighter because it is a third
+   the size and never gets the viewer's full attention, is a craft call for
+   Cindy — not something to settle silently inside a change that was scoped to
+   the grid alone. */
+.dov-stage {
+  /* ── The box these layouts are FRACTIONS OF, and the box they are drawn in ───
+     Those used to be the same thing, and that is what made a stacked desk shrink:
+     a saved `top` was a percentage of the live stage, so the stage could not grow
+     to make room without moving every tile — and the only way left to fit a
+     second row was to draw the whole desk smaller (measured 2026-08-20: zoom
+     0.688, which took the 11px writing down to 8.9px drawn. The monitor hero met
+     the same wall on 2026-08-06 and Cindy's answer there was that shrinking text
+     is an accessibility failure).
+     Now they are two: `--dov-vref`/`--dov-href` are the authored box that every
+     saved fraction is measured against — constants, so a taller stage never moves
+     a tile — and `height` is what the card actually spends, which grows to
+     `--dov-need` (published by DeskWidget) when a stack needs the room. Same
+     mechanism as the hero's `--dsa-vref`; no new idea, just applied one surface
+     later.
+     ⚠️ `--dov-vref` must stay 248px: it is the box the SAVED layouts were
+     authored in, so changing it moves everyone's desk. */
+  --dov-vref: 248px;
+  --dov-href: 672px;
+  position: relative; width: var(--dov-href); max-width: 100%; margin:0 auto;
+  /* Spend what the desk needs, no more (SPEC desk-stage 6, 2026-09-13) — the
+     authored box above is a ruler, not a floor. Mirror publishes no need and
+     falls back to the ruler. */
+  height: var(--dov-need, var(--dov-vref));
+  border-radius: var(--radius);
+  /* Matched to the hero's pool (2026-08-20): the same token poured through the
+     same `color-mix`, so one desk drawn twice is also LIT the same twice. Ours
+     used to pour `--surface-light` at full strength — a little over twice the
+     hero's — which was defensible while the two drawings were different pictures
+     and is not now. The craft question the old note left open ("should the small
+     card stay brighter?") is answered by the drawings being identical. */
+  background: radial-gradient(
+    90% 70% at 50% 40%,
+    color-mix(in srgb, var(--surface-light), transparent 55%) 0%,
+    transparent 70%
+  );
+  overflow: hidden;
+}
+/* The desk, as one zoomable group. `inset: 0` so the tiles inside keep measuring
+   their percentage positions against the same box as before, and
+   `transform-origin: 0 0` so a zoom shrinks toward the stage's top-left — the
+   origin every caller's maths assumes (same note as `.dsa-group` in
+   display-arrange.css). At zoom 1 this wrapper changes nothing. */
+.dov-group { position: absolute; inset: 0; transform-origin: 0 0; }
+/* Placement reads the saved fraction (`--dov-l`/`--dov-t`, set inline) times the
+   authored box above — never the live stage, which is now free to be taller. The
+   multiplication is in CSS rather than in the component for the same reason the
+   hero does it there: reading the reference in JS would paint once at a fallback
+   and once at the real value, and these tiles carry a `top` transition, so that
+   pair animates from the wrong place. */
+.dov-disp {
+  position: absolute;
+  left: calc(var(--dov-l, 0) * var(--dov-href, 100%));
+  top: calc(var(--dov-t, 0) * var(--dov-vref, 100%));
+  display: flex; flex-direction: column; align-items: center; z-index: 2;
+}
+/* ── The hardware, drawn once (2026-08-20, decision of 2026-08-19) ────────────
+   This card and the monitor modal hero now draw the SAME picture with the same
+   ruler. What was here before was the schematic era: an outline rectangle sized
+   144×82 for every monitor and 112×70 for the laptop, plus a separate `.dov-base`
+   stand — so a 27" and a 32" came out identical and the MacBook came out 78% of
+   a monitor, while one click away the hero drew all three to their real widths.
+   Cindy, 2026-08-19: "모달 안에 있는 레이아웃이랑 Personalize에 있는 그 맵 뷰랑
+   지금 매치가 안 되거든?"
+
+   Three things follow from the swap and none of them are style choices:
+     · the box is `photoTile`'s, set inline by `Shot` — physical width, not a
+       constant per kind;
+     · there is no `.dov-base`, because the stand is inside the tight-cropped
+       render (which is also why `BELOW_TILE` shed 10px in DeskWidget.tsx);
+     · no border and no fill. A photograph does not need a rectangle around it,
+       and the border was carrying the accent hierarchy — that job moves to the
+       light below, which is the hero's own vocabulary for "this one is live".
+   `contain` and the explicit box are what keep the exports' pixel dimensions
+   out of the layout; the renders share one tight-crop export spec. */
+.dov-shot {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+/* The render is the BACK of this box, explicitly. It is `position: absolute`, and
+   a positioned box paints above every static sibling however late that sibling
+   comes in the markup — so the KVM label was drawn UNDER the photograph and
+   disappeared completely (measured 2026-08-20: 44.6×19, in the right place,
+   accent-coloured, `display` not none, invisible in the capture). It had never
+   shown up before because a hollow tile had nothing on top to hide it.
+   Fixed by naming the layer rather than by re-positioning what sits on it: an
+   earlier attempt forced every non-render child to `position: relative`, which
+   also overrode `.ds-tag.overlay`'s own absolute corner placement and dropped
+   the label in the middle of the screen art. */
+.dov-render { z-index: 0; }
+.dov-render {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  /* The renders are photographs of dark hardware on transparency — no radius, no
+     shadow of their own. Depth comes from the pool of light the stage pours and,
+     for the active computer, from the glow below. */
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* Clamshell slab — screenless dark slab (video-connected computer, lid closed) */
+/* The closed lid. It is the one thing on this desk with no render of its own —
+   a clamshell has no screen to photograph — so it is DRAWN, and after the tiles
+   became photographs (2026-08-20) the way it was drawn started reading as the
+   one unfinished object on the desk: a 2px light-grey outline around an empty
+   box, i.e. wireframe among photographs.
+   The fix is not a fake render. A closed laptop seen from the front really is a
+   dark slab with a lit top edge, so: filled rather than hollow, hairline rather
+   than 2px, and a soft highlight along the top where the lid catches the room.
+   ⏳ A real clamshell render would still be better and belongs to the render set,
+   not to CSS — asked for separately (HP asset library, rule 30). */
+/* A TOWER since 2026-09-03, not a clamshell slab (Cindy: "gear switch 에
+   데스크탑도 샘플로 디자인하면 좋을거같애"). 30×73 is the OMEN 35L's real
+   proportion against the Treehouse 32 — computed in `towerTile()`, repeated
+   here only because CSS cannot read it; the box the layout reserves comes from
+   that function, so these two must stay in step.
+   Why the shape mattered: a closed laptop head-on is its own thickness, a
+   4.7:1 bar, and the object never read as a computer at any fidelity. A tower
+   stands up and cannot be confused with the open laptop beside it. */
+.dov-slab {
+  /* 30x73 is `towerTile()` (arrangement.ts) — the SAME numbers the placement
+     maths uses, which is why `box-sizing` matters here: with the default the
+     1px border is added OUTSIDE and the tower is drawn 32x75, so it stood 2px
+     lower than every screen (measured 2026-09-04: screens' floor 153.5, tower
+     155.5). Border-box makes the drawn box equal the computed one, and the
+     computer lands on the same floor line as the displays — SPEC: desk-stage
+     rule 1. If these two numbers ever move, move them in `towerTile()` first. */
+  box-sizing: border-box;
+  width: 30px; height: 73px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: linear-gradient(180deg, var(--surface-active) 0%, var(--bg-elevated) 100%);
+  box-shadow: inset 0 1px 0 var(--border-med), var(--shadow-lv-3);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.dov-slab svg { width: 14px; height: 14px; color: var(--text-muted); }
+
+/* Type comes from the library's scale, not from numbers dealt here (Cindy,
+   2026-08-20: "11px 로 가도되 근데 대신에 라이브러리 스타일대로 따라가는걸로" —
+   the approval was 11px THROUGH a token). These two lines carried 10px/9px,
+   values on no live scale step. ⚠️ tokens.css declares the type scale twice
+   and the LATER block wins (`:root, .ds-theme-dark`, tokens.css:316 — measured
+   live 2026-08-20): there --text-caption is 14px and --text-nano is the 11px
+   step. So nano, not caption, is the token that says 11 — verified by computed
+   style, not by reading the first block (which is dead for these vars). */
+/* ── The writing does not shrink with the desk ────────────────────────────────
+   The stage grows first (see `--dov-need` above), so on an ordinary stacked desk
+   the zoom stays 1 and this does nothing. It is the floor for the cases the stage
+   cannot grow out of — a desk too WIDE for 672px, which no extra height fixes.
+   The group publishes its zoom as `--dov-fit` and the writing divides itself back
+   out of it, exactly as `.dsa-name` does in the hero. Origin is the top-centre,
+   the point the caption hangs from, so undoing the zoom cannot slide the writing
+   off its own tile. */
+.dov-name {
+  scale: calc(1 / var(--dov-fit, 1));
+  transform-origin: 50% 0;
+}
+/* A display with hardware directly BELOW it wears its name above instead — same
+   rule and same reason as the hero's `.label-up` (2026-08-20): two displays on an
+   arm sit about 2cm apart, which is less than a caption, so a name hanging under
+   the upper one is printed across the lower one's top edge. Widening the rows to
+   fit the caption would draw spacing the real desk does not have. `order` rather
+   than absolute positioning, because these captions are flow children of a flex
+   column here (the hero's are absolute) — flipping the order moves the reserve
+   with the writing, so nothing has to be recomputed. Origin follows: the caption
+   now hangs from its own BOTTOM edge. */
+.dov-disp.label-up .dov-name {
+  order: -1;
+  transform-origin: 50% 100%;
+  margin-top: 0;
+  margin-bottom: var(--gutter-xs);
+}
+.dov-name { margin-top: var(--gutter-xs); font-size: var(--text-nano); font-weight: 600; color: var(--text-dim); white-space: nowrap; }
+
+/* ── ACCENT HIERARCHY (single hue + neutrals) ──
+   strong = active computer · subtle = its screens · neutral = inactive side.
+   The three states are unchanged; only how they are DRAWN moved. Border-plus-fill
+   needed a rectangle, and the rectangles are gone — so the accent now traces the
+   hardware's own outline with `drop-shadow`, which is how the hero says "this
+   tile is live" (`.dsa-disp.navigable:hover` in display-arrange.css). Reading the
+   PNG's alpha is exactly right here: what we want lit IS the silhouette. (It was
+   the wrong tool for the under-glow, where the light comes from a strip in the
+   middle of the panel and the alpha box cannot know that — different problem,
+   same function, and the note there records why.)
+   Two strengths, one hue: full accent for the computer the keyboard is on, dim
+   accent for the screens it drives. The name keeps its accent as before — with
+   the border gone, the writing is now half of what says "active", so it is doing
+   more work than it used to. */
+.dov-disp .dov-shot { transition: filter var(--dur-fast); }
+/* ⚠️ All of these wait for `.two-pc` (2026-09-21). "Which computer has the
+   keyboard" is only a question with two computers; with one, the accent landed
+   on the same tile on every desk and meant nothing — and accent means "on" in
+   this product, so an idle mark reads as a claim. */
+/* DIRECT: MacBook active; OMEN 27 + Treehouse 32 are its screens */
+.dov.two-pc:not(.is-kvm) .d-mac .dov-shot {
+  filter: drop-shadow(0 0 2px var(--accent-color)) drop-shadow(0 0 7px var(--accent-dim));
+}
+.dov.two-pc:not(.is-kvm) .d-mac .dov-name { color: var(--accent-color); }
+.dov.two-pc:not(.is-kvm) .d-omen .dov-shot,
+.dov.two-pc:not(.is-kvm) .d-tree .dov-shot {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent-color), transparent 72%));
+}
+/* KVM: the second computer active; Treehouse 32 is its screen */
+.dov.two-pc.is-kvm .d-slab .dov-slab { border-color: var(--accent-color); box-shadow: 0 0 0 2px var(--accent-dim), var(--shadow-lv-3); }
+.dov.two-pc.is-kvm .d-slab .dov-slab svg { color: var(--accent-color); }
+.dov.two-pc.is-kvm .d-slab .dov-name { color: var(--accent-color); }
+.dov.two-pc.is-kvm .d-tree .dov-shot {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent-color), transparent 72%));
+}
+
+/* ── kb/mouse pill = physical input location (neutral chrome + anchor stub) ──
+   Sized to the library's mark family, not to a layout gutter (2026-08-19,
+   Cindy: "모니터 포인터도 이상하게 커졌어 — 다른 UI 룰에 맞춰서").
+
+   NOT a selector, despite the name: two glyphs, no text, nothing to pick. The
+   family it belongs to is `.ds-badge` (shared/components.css:141), the library's
+   read-only mark — checked there and in web/src/components/ before touching
+   this, and it is the reference below.
+
+   It was reading as the biggest thing in the card while carrying the least.
+   Measured before: 24px tall — half again the `.dov-tag` beside it (16px) and
+   only 2px under the LIGHTING card's `Wave` control chip (26px), so a read-only
+   indicator sat at pressable size.
+
+   Two causes, both borrowed values rather than the mark family:
+     · `padding: 5px var(--gutter-mobile)` spent a LAYOUT token (10px) as the
+       side padding of a badge. `.ds-badge` uses 6px, `.ds-pill` 3px — this was
+       1.7–3× either.
+     · No `font-size`, so the box inherited the page's 15px. Every mark in the
+       library declares its own small size; nothing here should depend on what
+       the ancestor happens to be.
+   `--radius-full` stays: `.ds-badge` is `99px`, so full-round IS the family rule
+   for a badge — that part was never the outlier. Glyphs come down 12→10px with
+   the padding, landing the pill at 18px: above `.dov-tag` (16), below the dashed
+   `.dov-kvm-slot` (21), and clearly under the 26px control chips. */
+.dov-io-pill {
+  /* Anchored from its BOTTOM, not by a magic top offset. The old `top: -32px`
+     silently encoded "24px tall + 8px of line", so shrinking the pill to the
+     badge family pulled it 6px clear of the tile and left the connector
+     dangling in mid-air (measured: stub ended 6px short). `bottom: calc(100% +
+     …)` puts the pill's underside a fixed 8px above the tile whatever height
+     the pill is, and the stub below spans exactly that gap — one number, shared
+     by both, so the line cannot come unstuck from the hardware again. */
+  position: absolute; bottom: calc(100% + var(--gutter-xs)); left: 50%; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap:var(--gutter-xxs);
+  padding:3px 6px; border-radius:var(--radius-full);
+  font-size: var(--text-micro);
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  color: var(--text-dim); z-index: 3;
+}
+/* 14px, not 10 (2026-09-09, Cindy: "아이콘 사이즈부터 잘못 만든 것 같아").
+   Two things were wrong with 10:
+   ① It is off this page's icon ladder. Measured on the running app: the sizes
+      in use are 11 (×9), 14, 15 (×4), 16 (×4) and 20 (×15) — 10 appeared only
+      here, and the DESK card's own neighbour `.dov-slab svg` is 14.
+   ② The glyphs are drawn on a `viewBox="0 0 20 20"` with `stroke-width: 1.6`,
+      so at 10px the stroke lands at 1.6 × 10/20 = **0.8px** — under one device
+      pixel at 1× DPR, which is why they read thin and muddy rather than small.
+      14px is the first step on the ladder where the stroke clears 1px (1.12).
+   The pill grows with them; its bottom stays pinned by the rule above, so the
+   connector stub below cannot come unstuck. */
+.dov-io-pill svg { width: 14px; height: 14px; }
+.dov-io-pill::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 1.5px; height: var(--gutter-xs); background: var(--border); }
+
+/* ── KVM marks inside the Treehouse 32 screen ── */
+/* Both KVM marks are `.ds-tag.overlay` now (see DeskWidget.tsx). What is left
+   here is the one thing the library cannot know: which of the two states this
+   label is reporting. Idle keeps the class's own muted on-image colour; engaged
+   turns accent, the same hue every other "this is live" mark on this card uses.
+   ⚠️ Do not put the border back. The dashed rectangle and the hollow pill were
+   how a label showed up on an EMPTY tile; the tile is a photograph now and the
+   class brings its own scrim. */
+/* `.ds-tag.overlay` is two classes, so a one-class selector loses to it and the
+   engaged label stayed the idle grey (measured 2026-08-20). Matching the class
+   it is overriding is the whole point of the extra names here. */
+
+/* ── State 0 caption ── */
+
+/* ── STATUS STRIP (direct state only — one action nudge) ── */
+.dov-foot { margin-top: var(--gutter); }
+/* The footer row is a `.wg-foot` (Chris's label/value row) that happens to be a
+   button — reset only what a <button> adds on top of a <div>. Value + chevron
+   sit together on the right, in the card's primary colour like `80%` does. */
+.dov-gear { width: 100%; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.dov-gear-val { display: inline-flex; align-items: center; gap: var(--gutter-xxs); color: var(--text-primary); }
+
+/* ── VIEW ONLY (decision C, 2026-07-28, halved 2026-08-18) ──
+   The schematic carried two verbs — read/activate and drag-to-arrange. Only the
+   first lives here now: one saved layout with two editors is how two surfaces
+   start disagreeing, so dragging belongs to the monitor modal hero alone and
+   this card links to it. Click affordance is an affordance on a tile, not a
+   control — the DS Toggle/segmented components stay the vocabulary for anything
+   the user flips. */
+.dov-stage { touch-action: none; }
+.dov .dov-disp.is-activate { cursor: pointer; }
+/* Displays are furniture you can move; the slab is not (it follows the monitor
+   it feeds). `grab` wins over the `pointer` above by coming later at equal
+   specificity — deliberate: a tile that can be BOTH dragged and clicked should
+   advertise the gesture that is easy to miss, and the click still works. */
+/* No grab cursor: this card shows the desk, the `Arrange` window edits it
+   (2026-09-01). The only pointer affordance left is `.is-activate` above —
+   clicking a tile hands the keyboard to that computer. */
+/* Not a display: the closed laptop can't take part in an OS arrangement, so it
+   steps back while arranging instead of offering a drag that does nothing. */
+/* Mirror stacks the displays on one spot, so the per-tile names would pile up —
+   the badge states it once instead. The clamshell sits outside the stack and
+   keeps its label. */
+.dov-stage.is-mirror .dov-disp:not(.d-slab) .dov-name,
+.dov-hint-aside { color: var(--text-subtle); }
+
+/* ── The desk the pictures stand on (2026-09-23) ───────────────────────────────
+   Cindy picked the no-line version off two captures: "선이 너무 눈에 거슬려" →
+   "훨씬 낫다. 선없는 판으로 가자". Shared by the DESK card and the monitor hero
+   (DisplayArrange imports this file). Two parts, neither a line:
+   · `.dov-floor` — light pooling on the surface, brightest where the devices
+     stand and gone by the ends. Values are the approved capture's
+     (design-assets/desk-floor-2026-09-23/*-B-noline.png).
+   · a contact shadow under each device, so it reads as standing ON something.
+   Supersedes the hero's 2026-08-04 «no floor» (display-arrange.css header):
+   that rejected a lit, busy desk; this one is felt, not seen. */
+.dov-floor {
+  position: absolute;
+  height: 110px;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse 55% 100% at 50% 0%,
+    rgb(150 185 255 / 10%), rgb(150 185 255 / 3.5%) 40%, transparent 68%);
+  /* The pool's top edge must not be a line — that is the one thing Cindy
+     rejected. Fade it in over the first few px and out at both ends, so where
+     the light starts is felt, not drawn (first build showed a hard band). */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18px),
+    linear-gradient(to right, transparent, #000 25%, #000 75%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, transparent, #000 18px),
+    linear-gradient(to right, transparent, #000 25%, #000 75%, transparent);
+  mask-composite: intersect;
+}
+.dov-slab { position: relative; }
+.dov-shot::after,
+.dov-slab::after,
+.dsa-bounds::after {
+  content: "";
+  position: absolute;
+  left: -2%;
+  width: 104%;
+  top: calc(100% - 3px);
+  height: 10px;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(ellipse 50% 50% at 50% 35%, rgb(0 0 0 / 55%), transparent 70%);
+}

@@ -20,6 +20,18 @@ export const Accent: Story = { args: { variant: 'accent' } };
 export const Ghost: Story = { args: { variant: 'ghost' } };
 export const Small: Story = { args: { variant: 'accent', size: 'sm' } };
 export const Disabled: Story = { args: { variant: 'accent', disabled: true } };
+/** `block` fills the container — a stacked action group such as a modal rail's foot. */
+export const Block: Story = {
+  args: { variant: 'accent', block: true, children: 'Export All Profiles' },
+  render: (args) => (
+    // Story scaffolding, not product UI: the wrapper stands in for the container
+    // (a modal rail) that a block button fills.
+    <div style={{ width: 240, display: 'grid', gap: 'var(--gutter-xs)' }}>
+      <Button {...args} />
+      <Button {...args} variant="default">Import Profiles</Button>
+    </div>
+  ),
+};
 
 /**
  * For CTAs sitting on artwork — carousel slides, hero overlays. The art behind

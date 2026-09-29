@@ -1,7 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { Ng3Panel } from './Ng3Panel';
+import { Ng3Tool } from './Ng3Tool';
 import { Icon, type IconName } from './Icon';
+import { Dropdown } from './Dropdown';
+import { Button } from './Button';
 
 const meta: Meta<typeof Ng3Panel> = {
   title: 'Organisms/Ng3Panel',
@@ -25,16 +28,7 @@ function Toolbar({ active = 0 }: { active?: number }) {
   return (
     <>
       {TOOLS.map((name, i) => (
-        <button
-          key={name}
-          type="button"
-          className={['ds-ng3-tool', i === sel ? 'active' : ''].filter(Boolean).join(' ')}
-          aria-label={name}
-          aria-pressed={i === sel}
-          onClick={() => setSel(i)}
-        >
-          <Icon name={name} />
-        </button>
+        <Ng3Tool key={name} icon={name} title={name} active={i === sel} onClick={() => setSel(i)} />
       ))}
     </>
   );
@@ -78,5 +72,53 @@ export const NoTab: Story = {
     <Ng3Panel header="Settings" actions={Actions}>
       <div style={{ minHeight: 160 }} />
     </Ng3Panel>
+  ),
+};
+
+/**
+ * Side slots in the tab strip. `leading` sits on the panel's left edge (the
+ * device canvases' profile selector, opening upward over the hero) and
+ * `trailing` on the right (a slot's status and Save/Undo). The side tracks are
+ * equal, so the tab stays centered whatever they hold.
+ */
+export const WithAsides: Story = {
+  name: 'With asides',
+  render: () => (
+    <div style={{ paddingTop: 200 }}>
+      <Ng3Panel
+        header="Lighting"
+        tools={<Toolbar active={0} />}
+        actions={Actions}
+        leading={
+          <div style={{ width: 200 }}>
+            <Dropdown
+              aria-label="Profile"
+              openUp
+              defaultValue="0"
+              groups={[
+                { label: 'Software', options: [{ value: 'software', label: 'Focus', icon: 'profile' }] },
+                {
+                  label: 'Onboard',
+                  options: [
+                    { value: '0', label: 'Slot 1', icon: 'profile', trailing: 'Running' },
+                    { value: '1', label: 'Slot 2', icon: 'profile' },
+                  ],
+                },
+              ]}
+            />
+          </div>
+        }
+        trailing={
+          <>
+            <Button size="sm">Undo</Button>
+            <Button size="sm" variant="accent">
+              Save to Slot 1
+            </Button>
+          </>
+        }
+      >
+        <div style={{ minHeight: 160 }} />
+      </Ng3Panel>
+    </div>
   ),
 };

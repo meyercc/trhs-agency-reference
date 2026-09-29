@@ -1,5 +1,6 @@
 import React, { type ReactNode } from 'react';
 import { Icon } from './Icon';
+import { Tooltip } from './Tooltip';
 
 /**
  * NG3 panel section primitives — the shared vocabulary of every device-panel
@@ -14,14 +15,23 @@ import { Icon } from './Icon';
  * DockPanel/StackPanel resource templates.
  */
 
-type DivProps = React.HTMLAttributes<HTMLDivElement>;
+type DivProps = React.HTMLAttributes<HTMLDivElement> & {
+  /**
+   * Render as a different element. Styling and behavior are identical — this
+   * is only so a section that is a real landmark (a complementary rail, a
+   * standalone region) can say so, instead of trading semantics for the
+   * system's look. Reach for it when the element carries meaning, not to vary
+   * appearance.
+   */
+  as?: 'div' | 'section' | 'aside' | 'nav' | 'header' | 'footer';
+};
 
 function div(base: string) {
-  return function Ng3Div({ className, children, ...rest }: DivProps) {
+  return function Ng3Div({ as: Tag = 'div', className, children, ...rest }: DivProps) {
     return (
-      <div className={[base, className].filter(Boolean).join(' ')} {...rest}>
+      <Tag className={[base, className].filter(Boolean).join(' ')} {...rest}>
         {children}
-      </div>
+      </Tag>
     );
   };
 }
@@ -68,19 +78,29 @@ export interface Ng3LabelProps extends React.HTMLAttributes<HTMLSpanElement> {
    * so the caps treatment stays reserved for the section header itself.
    */
   plain?: boolean;
-  /** Show the trailing "(?)" info glyph. */
+  /** Show the trailing "(?)" info glyph with nothing behind it. Prefer `tooltip`. */
   info?: boolean;
+  /** The "(?)" glyph as a real trigger: what it shows on hover or focus — the same trigger `Input` uses. */
+  tooltip?: ReactNode;
 }
 
 /** Section label — mono caps by default, `plain` for a control-row label. */
-export function Ng3Label({ children, strong, plain, info, className, ...rest }: Ng3LabelProps) {
+export function Ng3Label({ children, strong, plain, info, tooltip, className, ...rest }: Ng3LabelProps) {
   const classes = ['ds-ng3-label', strong ? 'strong' : '', plain ? 'plain' : '', className]
     .filter(Boolean)
     .join(' ');
   return (
     <span className={classes} {...rest}>
       <span>{children}</span>
-      {info && <Icon name="info" size={13} />}
+      {tooltip != null ? (
+        <Tooltip content={tooltip} placement="top">
+          <button type="button" className="ds-tooltip-trigger" aria-label="More information">
+            <Icon name="info" size={13} />
+          </button>
+        </Tooltip>
+      ) : (
+        info && <Icon name="info" size={13} />
+      )}
     </span>
   );
 }

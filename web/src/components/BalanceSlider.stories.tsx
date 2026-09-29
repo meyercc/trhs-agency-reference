@@ -43,7 +43,7 @@ export const Disabled: Story = {
   render: () => <BalanceSlider defaultValue={30} disabled />,
 };
 
-/** Labelled L / R balance with a live readout. */
+/** Labeled L / R balance with a live readout. */
 export const AudioBalance: Story = {
   parameters: { controls: { disable: true } },
   render: () => {

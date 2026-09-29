@@ -141,6 +141,22 @@ export const MODULES: ModuleDef[] = [
     ],
     isNew: true,
   },
+  {
+    id: 'desk',
+    name: 'Desk',
+    category: 'personalization',
+    icon: 'monitor-pivot',
+    tagline: 'A top-down map of your desk, screens where they actually sit.',
+    description:
+      'The Desk card on Personalize — your displays drawn in their real positions, so brightness, arrangement and which screen the keyboard follows all read off one picture.',
+    features: ['Desk card on Personalize'],
+    removeEffects: ['The Desk card on Personalize is hidden'],
+    // Scope 1.0, drawn now on purpose. At 0.5 the desk map is fixed furniture —
+    // it is the only picture of which computer is active, so nothing offers to
+    // remove it. Registering it here reserves the removal path (and its copy) in
+    // Chris's module grammar rather than inventing one later; the 0.5/1.0 line
+    // itself lives in `Claude HP/design-assets/phase2-backlog.md`.
+  },
   // Play
   {
     id: 'gallery',

@@ -1,9 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { Icon, Ng3Grid, Ng3Section, Ng3Label, Slider, SoftwareOnly } from '../components';
+import './lighting-tab.css';
 import {
-  LIGHT_PRESETS,
+  Button,
+  ColorSlider,
+  Icon,
+  IconButton,
+  ListItem,
+  Ng3Grid,
+  Ng3Section,
+  Ng3Label,
+  Slider,
+  SoftwareOnly,
+  Swatch,
+} from '../components';
+import {
   SWATCHES,
-  HUE_GRADIENT,
   HEX_RE,
   hexToHsl,
   hslToHex,
@@ -11,19 +22,23 @@ import {
   type LightPreset,
   type Hsl,
 } from './lightingData';
+import { useSettings } from '../state/Settings';
 
 /**
  * Lighting tab — preset picker + brightness rail + the preset editor overlay.
  * Ported from the vanilla `.pdm-lights` / `.pdm-editor` (the personalize-
- * peripherals periPreset / periColor / periFx / periAngle handlers). Fully
- * interactive, in-memory:
- * picking a preset paints the hero keys; the editor's colour picker paints the
- * lit-selected keys live. Resets on reload.
+ * peripherals periPreset / periColor / periFx / periAngle handlers).
+ * Picking a preset paints the hero keys; the editor's color picker paints the
+ * lit-selected keys live. The preset library itself (factory + user-made,
+ * duplicated, deleted) is `Settings.lightPresets`, so it survives a reload and
+ * a profile switch; the picked preset travels with the profile.
  */
 
 // ── Editor state ──────────────────────────────────────────────────────────────
 interface EditorState {
   title: string;
+  /** The preset being edited; unset when the editor is making a new one. */
+  editingId?: string;
   active: 0 | 1;
   colors: [Hsl, Hsl];
   angle: number;
@@ -43,7 +58,7 @@ const newEditor = (title: string): EditorState => ({
 export interface LightingTabProps {
   /** Apply a preset's glow ("r,g,b") to every key + hero glow. */
   onApplyAll: (glow: string) => void;
-  /** Paint the lit-selected keys with a colour (editor live preview). */
+  /** Paint the lit-selected keys with a color (editor live preview). */
   onPaintSelected: (color: string) => void;
   /**
    * Brightness is an onboard-capable setting, so the canvas can hand down the
@@ -52,11 +67,22 @@ export interface LightingTabProps {
    */
   brightness?: number;
   onBrightness?: (v: number) => void;
+  /**
+   * The picked preset is a profile setting too — handed down the same way as
+   * brightness so the highlight survives a reload and travels with a profile.
+   * Omitted = the tab keeps its own local state.
+   */
+  preset?: string;
+  onPreset?: (id: string) => void;
 }
 
-export function LightingTab({ onApplyAll, onPaintSelected, brightness: brightnessProp, onBrightness }: LightingTabProps) {
-  const [presets, setPresets] = useState<LightPreset[]>(LIGHT_PRESETS);
-  const [activeId, setActiveId] = useState<string>(LIGHT_PRESETS[0]?.id ?? '');
+export function LightingTab({
+  onApplyAll, onPaintSelected, brightness: brightnessProp, onBrightness, preset: presetProp, onPreset,
+}: LightingTabProps) {
+  const { lightPresets: presets, setLightPresets: setPresets } = useSettings();
+  const [localActive, setLocalActive] = useState<string>(presets[0]?.id ?? '');
+  const activeId = presetProp ?? localActive;
+  const setActiveId = onPreset ?? setLocalActive;
   // Brightness travels with the device, so when a slot is in view it is that
   // slot's stored value rather than local state.
   const [localBrightness, setLocalBrightness] = useState(100);
@@ -83,26 +109,22 @@ export function LightingTab({ onApplyAll, onPaintSelected, brightness: brightnes
   // ── ⋮ menu actions ──
   const editPreset = (p: LightPreset) => {
     setMenuFor(null);
-    setEditor(newEditor(p.name));
+    setEditor({ ...newEditor(p.name), editingId: p.id });
   };
   const duplicatePreset = (p: LightPreset) => {
     setMenuFor(null);
-    setPresets((prev) => {
-      const i = prev.findIndex((x) => x.id === p.id);
-      const clone = { ...p, id: `${p.id}-copy-${Date.now()}`, name: `${p.name} copy` };
-      return [...prev.slice(0, i + 1), clone, ...prev.slice(i + 1)];
-    });
+    const i = presets.findIndex((x) => x.id === p.id);
+    const clone = { ...p, id: `${p.id}-copy-${Date.now()}`, name: `${p.name} copy` };
+    setPresets([...presets.slice(0, i + 1), clone, ...presets.slice(i + 1)]);
   };
   const deletePreset = (p: LightPreset) => {
     setMenuFor(null);
-    setPresets((prev) => {
-      const next = prev.filter((x) => x.id !== p.id);
-      if (activeId === p.id && next[0]) setActiveId(next[0].id);
-      return next;
-    });
+    const next = presets.filter((x) => x.id !== p.id);
+    setPresets(next);
+    if (activeId === p.id && next[0]) setActiveId(next[0].id);
   };
 
-  // ── Editor colour ops ──
+  // ── Editor color ops ──
   const patchActive = (patch: Partial<Hsl>) => {
     setEditor((ed) => {
       if (!ed) return ed;
@@ -112,27 +134,26 @@ export function LightingTab({ onApplyAll, onPaintSelected, brightness: brightnes
       return { ...ed, colors };
     });
   };
-  // Paint after state settles so the hero sees the new colour.
+  // Paint after state settles so the hero sees the new color.
   const queuePaint = (c: Hsl) => onPaintSelected(hslToRgbStr(c));
 
   const saveEditor = () => {
-    setEditor((ed) => {
-      if (ed) {
-        const [c1, c2] = ed.colors;
-        const hex1 = hslToHex(c1.h, c1.s, c1.l);
-        const hex2 = hslToHex(c2.h, c2.s, c2.l);
-        const rgb = hslToRgbStr(c1).replace(/rgb\(|\)|\s/g, '');
-        const preset: LightPreset = {
-          id: `preset-new-${Date.now()}`,
-          name: 'New Preset',
-          swatch: `linear-gradient(135deg, ${hex1}, ${hex2})`,
-          glow: rgb,
-          fx: 'fade',
-        };
-        setPresets((prev) => [preset, ...prev]);
-      }
-      return null;
-    });
+    if (!editor) return;
+    const [c1, c2] = editor.colors;
+    const hex1 = hslToHex(c1.h, c1.s, c1.l);
+    const hex2 = hslToHex(c2.h, c2.s, c2.l);
+    const rgb = hslToRgbStr(c1).replace(/rgb\(|\)|\s/g, '');
+    const preset: LightPreset = {
+      id: editor.editingId ?? `preset-new-${Date.now()}`,
+      name: editor.title,
+      swatch: `linear-gradient(135deg, ${hex1}, ${hex2})`,
+      glow: rgb,
+      fx: 'fade',
+    };
+    // Editing replaces the preset in place (same id, so a profile that picked
+    // it still points at it); a new one goes to the front.
+    setPresets(editor.editingId ? presets.map((x) => (x.id === editor.editingId ? preset : x)) : [preset, ...presets]);
+    setEditor(null);
   };
 
   return (
@@ -232,17 +253,10 @@ function PresetEditor({
   const cur = `hsl(${c.h} ${c.s}% ${c.l}%)`;
   const [hexText, setHexText] = useState(hslToHex(c.h, c.s, c.l).slice(1).toUpperCase());
 
-  // Keep the hex field in sync when the colour changes elsewhere (pills/sliders).
+  // Keep the hex field in sync when the color changes elsewhere (pills/sliders).
   useEffect(() => {
     setHexText(hslToHex(c.h, c.s, c.l).slice(1).toUpperCase());
   }, [c.h, c.s, c.l]);
-
-  const trackBg = (ch: 'hue' | 'light' | 'alpha') =>
-    ch === 'hue'
-      ? HUE_GRADIENT
-      : ch === 'light'
-        ? `linear-gradient(90deg, hsl(${c.h} ${c.s}% 0%), hsl(${c.h} ${c.s}% 50%), hsl(${c.h} ${c.s}% 100%))`
-        : `linear-gradient(90deg, transparent, ${cur})`;
 
   const onHex = (v: string) => {
     setHexText(v);
@@ -269,76 +283,113 @@ function PresetEditor({
 
   return (
     <div className="pdm-editor">
-      <div className="pdm-editor-card">
+      <Ng3Section className="pdm-editor-card">
         <div className="pdm-editor-head">
           <Ng3Label strong>{editor.title}</Ng3Label>
         </div>
 
         <div className="pdm-editor-body">
-          {/* Effects rail */}
-          <div className="pdm-editor-effects">
+          {/* Effects rail. Figma builds both halves from the Section component
+              and the rows from List Item, so they are the real primitives here
+              rather than the .pdm-editor-* copies that had drifted off them. */}
+          <Ng3Section className="pdm-editor-effects">
             <Ng3Label strong>Effects</Ng3Label>
             <div className="pdm-fx-list">
-              <button type="button" className="pdm-assign-item">
-                <Icon name="add" size={16} />
-                <span>Add Effect</span>
-              </button>
-              <button type="button" className="pdm-assign-item active">
-                <Icon name="swipe" size={16} />
-                <span>Swipe</span>
-              </button>
+              <ListItem
+                label="Add Effect"
+                leading={<Icon name="add" size={16} />}
+                onClick={() => {}}
+              />
+              <ListItem
+                label="Swipe"
+                leading={<Icon name="swipe" size={16} />}
+                selected
+              />
             </div>
-          </div>
+          </Ng3Section>
 
           {/* Parameters */}
-          <div className="pdm-editor-params">
-            <Ng3Label strong>Color</Ng3Label>
+          <Ng3Section className="pdm-editor-params">
+            {/* Color and Direction Angle are peer columns, each heading its own
+                — not a Direction Angle nested under Color. Hoisting "Color" out
+                to the section made it look like the parent of both and cost the
+                right-hand column a label's worth of height it needs for the
+                dial, speed and opacity. */}
             <div className="pdm-editor-cols">
-              {/* Colour picker */}
+              {/* Color picker */}
               <div className="pdm-color">
+                <Ng3Label strong>Color</Ng3Label>
                 <div className="pdm-color-pills">
                   {editor.colors.map((cc, i) => (
-                    <button
+                    <Swatch
                       key={i}
-                      type="button"
-                      className={'pdm-color-pill' + (i === editor.active ? ' active' : '')}
-                      style={{ background: `hsl(${cc.h} ${cc.s}% ${cc.l}% / ${cc.a}%)` }}
-                      aria-label={`Edit colour ${i + 1}`}
+                      wide
+                      color={`hsl(${cc.h} ${cc.s}% ${cc.l}% / ${cc.a}%)`}
+                      selected={i === editor.active}
+                      label={`Edit color ${i + 1}`}
                       onClick={() => setEditor((ed) => (ed ? { ...ed, active: i as 0 | 1 } : ed))}
                     />
                   ))}
                   <button type="button" className="pdm-color-rand" onClick={randomize}>
-                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <rect x="2.4" y="2.4" width="11.2" height="11.2" rx="2.6" stroke="currentColor" strokeWidth="1.3" />
-                      <circle cx="5.7" cy="5.7" r="1.05" fill="currentColor" />
-                      <circle cx="10.3" cy="10.3" r="1.05" fill="currentColor" />
-                      <circle cx="10.3" cy="5.7" r="1.05" fill="currentColor" />
-                      <circle cx="5.7" cy="10.3" r="1.05" fill="currentColor" />
-                    </svg>
+                    <Icon name="shuffle" size={16} />
                     Randomize
                   </button>
                 </div>
                 <div className="pdm-color-body">
                   <div className="pdm-color-main">
-                    <div className="pdm-color-sliders" style={{ ['--cslider-thumb' as string]: cur } as React.CSSProperties}>
-                      <input type="range" className="pdm-cslider" min={0} max={360} value={c.h} aria-label="Hue" style={{ background: trackBg('hue') }} onChange={(e) => patchActive({ h: +e.target.value })} />
-                      <input type="range" className="pdm-cslider" min={0} max={100} value={c.l} aria-label="Lightness" style={{ background: trackBg('light') }} onChange={(e) => patchActive({ l: +e.target.value })} />
-                      <input type="range" className="pdm-cslider" min={0} max={100} value={c.a} aria-label="Opacity" style={{ background: trackBg('alpha') }} onChange={(e) => patchActive({ a: +e.target.value })} />
+                    {/* The three tracks are the ColorSlider variants, not
+                        hand-built range inputs — which is also what restores the
+                        checkerboard under the opacity track (the local copy drew
+                        a plain gradient, so a transparent color looked solid). */}
+                    <div className="pdm-color-sliders">
+                      <ColorSlider variant="hue" min={0} max={360} value={c.h} color={cur} aria-label="Hue" onChange={(v) => patchActive({ h: v })} />
+                      <ColorSlider variant="lightness" min={0} max={100} value={c.l} color={cur} aria-label="Lightness" onChange={(v) => patchActive({ l: v })} />
+                      <ColorSlider variant="opacity" min={0} max={100} value={c.a} color={cur} aria-label="Opacity" onChange={(v) => patchActive({ a: v })} />
                     </div>
-                    <div className="pdm-hex">
+                    <div className="pdm-hex-row">
+                      <div className="pdm-hex">
                       <span className="pdm-hex-sign">#</span>
-                      <input type="text" className="pdm-hex-input" value={hexText} maxLength={6} spellCheck={false} aria-label="Hex colour" onChange={(e) => onHex(e.target.value)} />
-                      <button type="button" className="pdm-hex-copy" aria-label="Copy hex" onClick={() => navigator.clipboard?.writeText('#' + hexText)}>
-                        <Icon name="duplicate" size={14} />
-                      </button>
+                      <input type="text" className="pdm-hex-input" value={hexText} maxLength={6} spellCheck={false} aria-label="Hex color" onChange={(e) => onHex(e.target.value)} />
+                        <button type="button" className="pdm-hex-copy" aria-label="Copy hex" onClick={() => navigator.clipboard?.writeText('#' + hexText)}>
+                          <Icon name="duplicate" size={14} />
+                        </button>
+                      </div>
+                    {/* Figma pairs the hex field with an eyedropper. Where the
+                        browser supports EyeDropper it samples the screen; where
+                        it does not the control is not offered at all, rather
+                        than sitting there dead. */}
+                    {'EyeDropper' in window && (
+                      <IconButton
+                        label="Pick a color from the screen"
+                        className="pdm-hex-pick"
+                        onClick={async () => {
+                          try {
+                            const picked = await new (window as unknown as {
+                              EyeDropper: new () => { open: () => Promise<{ sRGBHex: string }> };
+                            }).EyeDropper().open();
+                            patchActive({ ...hexToHsl(picked.sRGBHex) });
+                          } catch {
+                            /* the user dismissed the picker */
+                          }
+                        }}
+                      >
+                        <Icon name="eyedropper" size={16} />
+                      </IconButton>
+                    )}
                     </div>
                   </div>
                   <div className="pdm-color-vrule" />
                   <div className="pdm-swatches">
                     {SWATCHES.map((sw) => (
-                      <button key={sw} type="button" className="pdm-sw" style={{ background: sw }} aria-label={sw} onClick={() => patchActive({ ...hexToHsl(sw) })} />
+                      <Swatch
+                        key={sw}
+                        color={sw}
+                        label={sw}
+                        selected={sw.toLowerCase() === '#' + hexText.toLowerCase()}
+                        onClick={() => patchActive({ ...hexToHsl(sw) })}
+                      />
                     ))}
-                    <button type="button" className="pdm-sw-add" aria-label="Add current colour to swatches">
+                    <button type="button" className="pdm-sw-add" aria-label="Add current color to swatches">
                       <Icon name="add" size={12} />
                     </button>
                   </div>
@@ -369,20 +420,20 @@ function PresetEditor({
                 </div>
               </div>
             </div>
-          </div>
+          </Ng3Section>
         </div>
 
         <div className="pdm-editor-cta">
-          <button type="button" className="ds-btn" onClick={onCancel}>
+          <Button variant="default" onClick={onCancel}>
             <Icon name="close" size={16} />
             Cancel
-          </button>
-          <button type="button" className="ds-btn accent" onClick={onSave}>
+          </Button>
+          <Button variant="accent" onClick={onSave}>
             <Icon name="check" size={16} />
             Save
-          </button>
+          </Button>
         </div>
-      </div>
+      </Ng3Section>
     </div>
   );
 }
@@ -431,14 +482,10 @@ function AngleDial({ angle, onAngle }: { angle: number; onAngle: (a: number) => 
       />
       <div className="pdm-angle-steppers">
         <button type="button" aria-label="Increase angle" onClick={() => onAngle(angle + 15)}>
-          <svg viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M3 7.5 6 4.5l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <Icon name="chevron-up" size={12} />
         </button>
         <button type="button" aria-label="Decrease angle" onClick={() => onAngle(angle - 15)}>
-          <svg viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M3 4.5 6 7.5l3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <Icon name="chevron-down" size={12} />
         </button>
       </div>
     </div>

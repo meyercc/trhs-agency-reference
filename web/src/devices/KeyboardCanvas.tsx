@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import './device-canvas.css';
 import './keyboard-canvas.css';
 import {
   Icon,
   Ng3Panel,
+  Ng3Tool,
   Ng3Grid,
   Ng3Col,
   Ng3Section,
@@ -14,10 +15,16 @@ import {
 } from '../components';
 import { type ResolvedSku, deviceImageUrl, heroImageFile } from './skus';
 import { deviceTabs } from './deviceTabs';
-import { ProfileBar, ProfileScopeBody, useDeviceProfileBar } from './ProfileBar';
+import { ProfileBar, ProfileActions, ProfileScopeBody, useDeviceProfileBar, useProfileValue, type ProfileBarState } from './ProfileBar';
 import { KeyboardHero } from './KeyboardHero';
 import { LightingTab } from './LightingTab';
 import { KeysTab } from './KeysTab';
+import { useSettings } from '../state/Settings';
+
+// Stable fallbacks: `useProfileValue` keys its setter on the fallback, so a
+// fresh `{}` per render would re-create the setter every time.
+const NO_COLORS: Record<string, string> = {};
+const NO_BINDS: Record<string, KeyBinds> = {};
 import { ALL_CODES, KB_QS_GROUPS, type KbLayer, type KeyBinds } from './keyboardLayout';
 
 /**
@@ -42,13 +49,15 @@ function SettingsTab({
   sku,
   pollingRate,
   onPollingRate,
+  profile,
 }: {
   sku: ResolvedSku;
   /** Polling rate travels with the device — the current profile scope's value. */
   pollingRate: string;
   onPollingRate: (v: string) => void;
+  profile: ProfileBarState;
 }) {
-  const [controlMode, setControlMode] = useState('software');
+  const [controlMode, setControlMode] = useProfileValue(profile, 'settings.controlMode', 'software');
   return (
     <Ng3Grid className="pdm-settings">
       <Ng3Col className="pdm-settings-col">
@@ -119,29 +128,41 @@ export function KeyboardCanvas({
   // next to the "Lights" title (Figma Lights 680:176027). Off renders the hero
   // unlit (the device's truth); the Lighting tab itself stays fully operable —
   // preset curation isn't gated on the lights being on.
-  const [lightsOn, setLightsOn] = useState(true);
+  const [lightsOn, setLightsOn] = useProfileValue(profile, 'lighting.power', true);
   const [layer, setLayer] = useState<KbLayer>('base');
   const [selected, setSelected] = useState<string | null>(null);
   const [litSel, setLitSel] = useState<Set<string>>(new Set());
-  const [keyColors, setKeyColors] = useState<Map<string, string>>(new Map());
+  // Per-key paint, the picked preset and the key assignments belong to the
+  // profile (or the onboard slot in view), not to this mount. They are stored
+  // as plain records — the JSON shape a profile file carries — and read back
+  // as the Maps the hero and the tabs were written against. Selection state
+  // (`litSel`, `selected`, `armed`) stays local: it is a gesture, not a setting.
+  const [keyColorsRec, setKeyColorsRec] = useProfileValue<Record<string, string>>(profile, 'lighting.keyColors', NO_COLORS);
+  const keyColors = useMemo(() => new Map(Object.entries(keyColorsRec)), [keyColorsRec]);
+  // The preset library is persisted app-wide (Settings.lightPresets); which
+  // one is picked is this profile's.
+  const { lightPresets } = useSettings();
+  const [presetId, setPresetId] = useProfileValue<string>(profile, 'lighting.preset', lightPresets[0]?.id ?? '');
   const [activeQs, setActiveQs] = useState('all');
-  const [heroGlow, setHeroGlow] = useState<string | null>(null);
+  // The hero glow follows the picked preset, so a preset made in the editor
+  // glows the same after a reload as a factory one. An unpainted board never
+  // glows, whichever preset is highlighted.
+  const heroGlow = keyColors.size ? (lightPresets.find((p) => p.id === presetId)?.glow ?? null) : null;
   // The marquee tool: armed until dismissed, so several boxes can be drawn.
   const [marquee, setMarquee] = useState(false);
-  const [binds, setBinds] = useState<Map<string, KeyBinds>>(new Map());
+  const [bindsRec, setBindsRec] = useProfileValue<Record<string, KeyBinds>>(profile, 'keys.binds', NO_BINDS);
+  const binds = useMemo(() => new Map(Object.entries(bindsRec)), [bindsRec]);
   const [armed, setArmed] = useState<string | null>(null);
 
   const mode: 'lights' | 'keys' = active.id === 'keys' ? 'keys' : 'lights';
 
   // Write a binding to the active layer's slot; consume the selection + armed pick.
   const assign = (code: string, label: string) => {
-    setBinds((prev) => {
-      const next = new Map(prev);
-      const cur = { ...(next.get(code) ?? {}) };
+    setBindsRec((prev) => {
+      const cur: KeyBinds = { ...(prev[code] ?? {}) };
       if (layer === 'fn') cur.fn = label;
       else cur.base = label;
-      next.set(code, cur);
-      return next;
+      return { ...prev, [code]: cur };
     });
     setSelected(null);
     setArmed(null);
@@ -170,24 +191,24 @@ export function KeyboardCanvas({
 
   const clearBinding = () => {
     if (!selected) return;
-    setBinds((prev) => {
-      const next = new Map(prev);
-      const cur = { ...(next.get(selected) ?? {}) };
+    setBindsRec((prev) => {
+      const next = { ...prev };
+      const cur: KeyBinds = { ...(next[selected] ?? {}) };
       if (layer === 'fn') delete cur.fn;
       else delete cur.base;
-      if (cur.base == null && cur.fn == null) next.delete(selected);
-      else next.set(selected, cur);
+      if (cur.base == null && cur.fn == null) delete next[selected];
+      else next[selected] = cur;
       return next;
     });
   };
 
   // Reset the active layer to factory — drop this layer's custom binds.
   const resetLayer = () => {
-    setBinds((prev) => {
-      const next = new Map<string, KeyBinds>();
-      prev.forEach((b, code) => {
+    setBindsRec((prev) => {
+      const next: Record<string, KeyBinds> = {};
+      Object.entries(prev).forEach(([code, b]) => {
         const keep: KeyBinds = layer === 'fn' ? { base: b.base } : { fn: b.fn };
-        if (keep.base != null || keep.fn != null) next.set(code, keep);
+        if (keep.base != null || keep.fn != null) next[code] = keep;
       });
       return next;
     });
@@ -220,17 +241,18 @@ export function KeyboardCanvas({
   // Apply a preset — paint every key + set the hero glow, clear the selection.
   const applyPresetAll = (glow: string) => {
     const color = `rgb(${glow})`;
-    setKeyColors(new Map(ALL_CODES.map((c) => [c, color])));
-    setHeroGlow(glow);
+    setKeyColorsRec(Object.fromEntries(ALL_CODES.map((c) => [c, color])));
     setLitSel(new Set());
     setActiveQs('');
   };
 
   // Editor live preview — paint only the lit-selected keys.
   const paintSelected = (color: string) => {
-    setKeyColors((prev) => {
-      const next = new Map(prev);
-      litSel.forEach((c) => next.set(c, color));
+    setKeyColorsRec((prev) => {
+      const next = { ...prev };
+      litSel.forEach((c) => {
+        next[c] = color;
+      });
       return next;
     });
   };
@@ -248,8 +270,6 @@ export function KeyboardCanvas({
       <button type="button" className="dc-close" aria-label="Close" onClick={onClose}>
         <Icon name="close" />
       </button>
-
-      <ProfileBar state={profile} />
 
       {/* Hero — interactive keyboard (Lighting/Keys) or device photo (Settings) */}
       <div className="dc-hero kbd-hero">
@@ -286,6 +306,9 @@ export function KeyboardCanvas({
       {/* Bottom Ng3 product panel */}
       <div className="dc-panel-wrap kbd-panel-wrap">
         <Ng3Panel
+          leading={<ProfileBar state={profile} />}
+          trailing={<ProfileActions state={profile} />}
+          width={active.width}
           header={active.title}
           headerExtra={
             active.id === 'lighting' ? (
@@ -293,16 +316,13 @@ export function KeyboardCanvas({
             ) : undefined
           }
           tools={TABS.map((t) => (
-            <button
+            <Ng3Tool
               key={t.id}
-              type="button"
-              className={['ds-ng3-tool', t.id === active.id ? 'active' : ''].filter(Boolean).join(' ')}
-              aria-label={t.title}
-              aria-pressed={t.id === active.id}
+              icon={t.icon}
+              title={t.title}
+              active={t.id === active.id}
               onClick={() => setTabId(t.id)}
-            >
-              <Icon name={t.icon} />
-            </button>
+            />
           ))}
           actions={
             <button type="button" className="ds-ng3-action" aria-label="Duplicate profile">
@@ -318,10 +338,13 @@ export function KeyboardCanvas({
               sku={sku}
               pollingRate={profile.value('settings.pollingRate', '1000 Hz')}
               onPollingRate={(v) => profile.setValue('settings.pollingRate', v)}
+              profile={profile}
             />
           ) : active.id === 'lighting' ? (
             <LightingTab
               key={profile.revision}
+              preset={presetId}
+              onPreset={setPresetId}
               onApplyAll={applyPresetAll}
               onPaintSelected={paintSelected}
               brightness={profile.value('lighting.brightness', 100)}

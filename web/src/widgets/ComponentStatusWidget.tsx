@@ -7,8 +7,8 @@ import './component-status.css';
 
 /**
  * Component status card — a reusable dashboard widget template: a title + model,
- * a status pill (coloured dot + label), an arc gauge (top-right, e.g. temp), and
- * a labelled utilization meter along the bottom. Used for the Processor (CPU) and
+ * a status pill (colored dot + label), an arc gauge (top-right, e.g. temp), and
+ * a labeled utilization meter along the bottom. Used for the Processor (CPU) and
  * Graphics (GPU) widgets; drop in more components (RAM, SSD, …) the same way.
  */
 
@@ -18,10 +18,10 @@ export interface ComponentStatusCardProps {
   title: string;
   model: string;
   status: { label: string; tone?: StatusTone };
-  /** Arc gauge — `value` (0–100) drives the fill + colour; `display` overrides the
-   *  shown number; unit/label render in the centre. */
+  /** Arc gauge — `value` (0–100) drives the fill + color; `display` overrides the
+   *  shown number; unit/label render in the center. */
   gauge: { value: number; display?: number; unit?: string; label?: string };
-  /** Bottom meter — a labelled percentage bar. */
+  /** Bottom meter — a labeled percentage bar. */
   meter: { label: string; value: number };
   onClick?: () => void;
 }
