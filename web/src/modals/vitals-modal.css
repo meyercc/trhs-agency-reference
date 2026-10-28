@@ -121,25 +121,6 @@
   align-items: center;
   gap: var(--gutter);
 }
-/* Shared Gauge sized down for the modal (base .gauge-wrap is 100px). */
-.vm-gauge {
-  width: 72px;
-  height: 72px;
-  flex-shrink: 0;
-  margin-bottom: 0;
-}
-.vm-gauge .gauge-n {
-  font-size: 15px;
-}
-.vm-gauge-lg {
-  width: 96px;
-  height: 96px;
-  flex-shrink: 0;
-  margin-bottom: 0;
-}
-.vm-gauge-lg .gauge-n {
-  font-size: 19px;
-}
 
 .vm-card-spark {
   flex: 1;

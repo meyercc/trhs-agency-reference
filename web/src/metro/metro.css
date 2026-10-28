@@ -175,7 +175,7 @@
 .metro-spotlight {
   position: relative;
   height: 100%;
-  width: 34vw;
+  width: calc(34 * var(--vw));
   max-width: 520px;
   min-width: 360px;
   border-radius: var(--radius-lg);
@@ -693,7 +693,7 @@
   backdrop-filter: blur(8px);
 }
 .metro-gallery {
-  width: min(560px, 90vw);
+  width: min(560px, calc(90 * var(--vw)));
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);

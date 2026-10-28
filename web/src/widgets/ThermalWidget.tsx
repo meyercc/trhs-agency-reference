@@ -9,7 +9,7 @@ const UNIT_NAME = { C: 'Celsius', F: 'Fahrenheit' } as const;
 /** 4-cell fan/temp grid + thermal profile. Ported from vanilla `w-thermal`. */
 export function ThermalWidget() {
   const navigate = useNavigate();
-  const { tempUnit } = useSettings();
+  const { tempUnit, mvpScope } = useSettings();
   const cells = [
     { label: 'CPU Fan', val: '2,840', sub: 'RPM', color: 'var(--cyan)', pct: 72 },
     { label: 'GPU Fan', val: '3,120', sub: 'RPM', color: 'var(--purple)', pct: 80 },
@@ -17,7 +17,8 @@ export function ThermalWidget() {
     { label: 'GPU Temp', val: `${toUnit(61, tempUnit)}°`, sub: UNIT_NAME[tempUnit], color: 'var(--green)', pct: 48 },
   ];
   return (
-    <WidgetShell title="Thermal" action={{ label: 'Fan Control', onClick: () => navigate('/perform') }}>
+    // June 2027 has no fan control to go to: the readings stay, the button goes.
+    <WidgetShell title="Thermal" action={mvpScope === 'full' ? { label: 'Fan Control', onClick: () => navigate('/perform') } : undefined}>
       <div className="wg-grid4" style={{ marginTop: 'var(--gutter-sm)' }}>
         {cells.map((c) => (
           <div className="wg-cell" key={c.label}>

@@ -10,9 +10,29 @@ export type PresetPatch = { color: string; effect: Effect; preset: string };
 /** A desk preset: NGENUITY's, or one of the desk's own with its effect named. */
 export type DeskPreset = LightPreset & { effect?: Effect };
 
-/** What the desk offers: NGENUITY's list, then plain white light and lights off. */
+/** The desk's effect for an OMEN Gaming Hub preset (lightingData's `origin:
+ *  'omen'`), by name — Light Studio has most of them as animations of its own;
+ *  the rest take the nearest. */
+const OMEN_EFFECT: Record<string, Effect> = {
+  'OMEN': 'wave',
+  'Color Cycle': 'rainbow',
+  'Breathing': 'breathe',
+  'Blinking': 'breathe',
+  'Starlight': 'starlight',
+  'Raindrop': 'raindrop',
+  'Ripple': 'ripple',
+  'Spiral': 'swipe',
+  'Rave': 'rave',
+  'Ghosting': 'ghosting',
+  'Music': 'audio-eq',
+  'Audio Equalizer': 'audio-eq',
+  'Sun': 'sun',
+  'System Vitals': 'solid',
+};
+
+/** What the desk offers: NGENUITY's list, OMEN Gaming Hub's effects, then plain white light and lights off. */
 export const DESK_PRESETS: DeskPreset[] = [
-  ...LIGHT_PRESETS,
+  ...LIGHT_PRESETS.map((p) => (p.origin === 'omen' && OMEN_EFFECT[p.name] ? { ...p, effect: OMEN_EFFECT[p.name] } : p)),
   { id: 'preset-white', name: 'White', swatch: '#ffffff', glow: '255,255,255', fx: 'solid' },
   // Off keeps a white glow, so turning the lights back on lands on White.
   { id: 'preset-off', name: 'Off', swatch: 'transparent', glow: '255,255,255', fx: 'none', effect: 'off' },
@@ -34,7 +54,10 @@ export function presetNamed(name: string): PresetPatch {
   return presetPatch(p);
 }
 
-export const presetName = (id: string | undefined) => DESK_PRESETS.find((p) => p.id === id)?.name;
+/** A device lit with its own painted mix rather than one preset (see `onPreset`). */
+export const CUSTOM_PRESET = 'custom';
+
+export const presetName = (id: string | undefined) => (id === CUSTOM_PRESET ? 'Custom' : DESK_PRESETS.find((p) => p.id === id)?.name);
 
 /** Does this device light the way the preset does? A multicolor effect rolls
  *  its own colors and off shows none, so only the effect has to match. */
@@ -66,6 +89,10 @@ const distance = (a: string, b: string) => {
  *  presets (a free color) lands on the preset closest to it — same kind of
  *  effect, nearest color — keeping its brightness and speed. */
 export function onPreset(d: DeviceState): DeviceState {
+  // Keys or ring lights painted by hand in a device panel (2026-10-01): the
+  // desk wears their average as `custom`. Snapping that to the nearest preset
+  // would show a different color from the device's own panel.
+  if (d.preset === CUSTOM_PRESET) return d;
   // Already lit like a preset: take its exact color too (a multicolor effect
   // ignores it), so the same lighting always compares equal.
   const worn = DESK_PRESETS.find((p) => p.id === wornPresetId([d]));

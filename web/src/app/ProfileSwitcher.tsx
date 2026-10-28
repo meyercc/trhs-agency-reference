@@ -11,8 +11,8 @@ const SOURCE_NOTE: Record<string, string> = {
 };
 
 /**
- * The software-profile switcher in the top-right of the nav, immediately left
- * of the account avatar.
+ * The software-profile switcher at the top-left of the nav, in the brand slot
+ * (it replaced the HyperX mark there).
  *
  * Distinct from `AccountMenu`, which is the signed-in ACCOUNT. This is the
  * app's current mode — Gaming, Work, Music — and it is a switch, not a menu of

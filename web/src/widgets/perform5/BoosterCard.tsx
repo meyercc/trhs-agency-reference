@@ -13,6 +13,15 @@ export interface BoosterCardProps {
   armed: boolean; // trigger toggle, set in the Manage modal
   triggered: boolean; // the condition fired (a game session is running)
   onManage: () => void;
+  /**
+   * The pack as it stands, from the page's record of changes: how many items
+   * are applied, for which game. Null when nothing is applied — the player
+   * reverted it mid-game, or the game closed and Booster put it back. Left out,
+   * the card reads the trigger alone, as it did before the record.
+   */
+  applied?: { game: string; items: number } | null;
+  /** The receipt of the last boost once it is over: "Cyberpunk 2077 · 2 min ago". */
+  lastBoost?: string | null;
 }
 
 // Three states (resting-state principle): Optimizing = the pack is applied
@@ -23,8 +32,8 @@ export interface BoosterCardProps {
 //   inactive:   "Off — arm it in Manage to boost your games automatically."
 //               INVITE CANDIDATE: light re-engage nudge on the inactive card
 //               (flow deferred — see decision log).
-export function BoosterCard({ armed, triggered, onManage }: BoosterCardProps) {
-  const optimizing = armed && triggered;
+export function BoosterCard({ armed, triggered, onManage, applied, lastBoost }: BoosterCardProps) {
+  const optimizing = armed && triggered && applied !== null;
 
   return (
     <div className="ds-feature-card pv5-booster-card">
@@ -41,12 +50,13 @@ export function BoosterCard({ armed, triggered, onManage }: BoosterCardProps) {
         items={
           optimizing
             ? [
-                { label: 'Optimizations', value: '3 applied' },
-                { label: 'Session', value: 'Cyberpunk 2077 · 2h' },
+                { label: 'Optimizations', value: `${applied?.items ?? 3} applied` },
+                { label: 'Session', value: `${applied?.game ?? 'Cyberpunk 2077'} · 2h` },
               ]
             : [
                 { label: 'Starts', value: armed ? 'When a game launches' : '—' },
-                { label: 'Optimizations', value: '3 selected' },
+                // The receipt takes the second row once there is one to show.
+                lastBoost ? { label: 'Last boost', value: lastBoost } : { label: 'Optimizations', value: '3 selected' },
               ]
         }
       />

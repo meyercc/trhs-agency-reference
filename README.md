@@ -1,7 +1,7 @@
 # Treehouse — design system & prototype (reference snapshot)
 
 A frozen snapshot of the Treehouse living prototype, provided as a reference to
-build from. It is a point-in-time copy (`v0.2.28-1-gf516310`, `f516310`) and does not
+build from. It is a point-in-time copy (`v0.2.47-1-g383b9cef`, `383b9ce`) and does not
 track ongoing development — see [TERMS.md](TERMS.md) for how it may be used.
 
 ## What this is

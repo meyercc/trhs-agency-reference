@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Menu, ModalShell } from '../../components';
 import { TrendGraph, TREND_RANGES, type TrendRange } from './TrendGraph';
+import { fanRpm, PSU_MAX_RPM, usePsuHistory, usePsuLab, usePsuReadings, usePsuSettings } from '../../devices/pcParts';
 
 // ── System Vitals detail modal (PerformV7) ──
 // Four changes over V5, each fixing something the old version could not say:
@@ -44,11 +45,28 @@ interface Metric {
   /** Static spec (total RAM) — shown, but nothing to trend. */
   flat?: string;
 }
+/** A door off a tab: to another feature's window, or to a device's page. */
+type Door =
+  | { label: string; feature: 'system-clean' | 'fan-clean' }
+  | { label: string; device: PsuDoor };
 interface Tab {
   id: string;
   label: string;
   metrics: Metric[];
-  door?: { label: string; feature: 'system-clean' | 'fan-clean' };
+  doors?: Door[];
+}
+
+/** Where a door from the Power supply tab lands: the PC's page at the power
+ *  supply tab, on its Status view or straight on its Fan view. */
+export interface PsuDoor {
+  tab: 'psu';
+  view: 'status' | 'fan';
+}
+
+/** The desktop's OMEN power supply, when it has one (system-vitals.2). */
+export interface VitalsPsu {
+  /** Its rated power, W — the top of the Total power scale. */
+  capacityW: number;
 }
 
 const seed = (base: number, spread: number, n = 30) =>
@@ -103,7 +121,7 @@ const TABS: Tab[] = [
     ],
     // A second entry point, not a second implementation — it lands on the
     // cleaner's canonical modal, which is what dual-entry allows.
-    door: { label: 'System Cleaner', feature: 'system-clean' },
+    doors: [{ label: 'System Cleaner', feature: 'system-clean' }],
   },
 ];
 
@@ -130,9 +148,65 @@ export interface SystemVitalsModalProps {
   onClose?: () => void;
   /** Cross-feature doors resolve to that feature's own modal, opened by the page. */
   onOpenFeature?: (feature: 'system-clean' | 'fan-clean') => void;
+  /** The desktop's OMEN power supply. Given only when this machine has one and
+   *  the scope allows it; without it the Power supply tab is not there
+   *  (system-vitals.2, perform.11). */
+  psu?: VitalsPsu;
+  /** A door to the PC's page. The page closes this window and opens it. */
+  onOpenDevice?: (door: PsuDoor) => void;
 }
 
-export function SystemVitalsModal({ initialTab = 'cpu', onClose, onOpenFeature }: SystemVitalsModalProps) {
+/** The Power supply tab, from the same stores the supply's own window reads,
+ *  so a number here is the number there (JY, 2026-10-22). Four readings; the
+ *  rails' current and voltage stay in that window (designer's call, same day).
+ *  The temperature's warning line is the player's own level, read-only here. */
+function usePsuTab(psu: VitalsPsu): Tab {
+  const r = usePsuReadings();
+  const hist = usePsuHistory();
+  const [s] = usePsuSettings();
+  // The store's history can be a tick behind a change of level or of the lab;
+  // the newest sample is the current reading, as the window shows it.
+  const all = [...hist.slice(0, -1), r];
+  return {
+    id: 'psu',
+    label: 'Power supply',
+    metrics: [
+      { id: 'watts', label: 'Total power', unit: 'W', max: psu.capacityW, series: all.map((x) => x.watts) },
+      // °C like the CPU and GPU tabs, which do not follow the unit setting.
+      { id: 'temp', label: 'Temperature', unit: '°C', max: 100, series: all.map((x) => x.tempC), thresholds: { warn: s.warn.temp } },
+      { id: 'fan', label: 'Fan speed', unit: ' RPM', max: PSU_MAX_RPM, series: all.map((x) => fanRpm(s, x, psu.capacityW)) },
+      { id: 'efficiency', label: 'Efficiency', unit: '%', max: 100, series: all.map((x) => x.efficiency) },
+    ],
+    doors: [
+      { label: 'Power supply settings', device: { tab: 'psu', view: 'status' } },
+      { label: 'Fan', device: { tab: 'psu', view: 'fan' } },
+    ],
+  };
+}
+
+/** The window. The power supply's readings are hooks, so a machine without
+ *  one never subscribes to them. */
+export function SystemVitalsModal(props: SystemVitalsModalProps) {
+  return props.psu ? <WithPsu {...props} psu={props.psu} /> : <VitalsWindow {...props} />;
+}
+
+function WithPsu({ psu, ...rest }: SystemVitalsModalProps & { psu: VitalsPsu }) {
+  const tab = usePsuTab(psu);
+  // A supply with no link to read has no readings to trend (lcd-diy.38).
+  const linked = usePsuLab().usb;
+  return <VitalsWindow {...rest} psuTab={linked ? tab : undefined} />;
+}
+
+function VitalsWindow({
+  initialTab = 'cpu',
+  onClose,
+  onOpenFeature,
+  onOpenDevice,
+  psuTab,
+}: SystemVitalsModalProps & { psuTab?: Tab }) {
+  // The Power supply tab sits after the parts the PC is built from (CPU, GPU,
+  // RAM) and before Network and Storage (JY, 2026-10-22).
+  const tabs = psuTab ? [...TABS.slice(0, 3), psuTab, ...TABS.slice(3)] : TABS;
   const [tab, setTab] = useState(initialTab);
   const [metricId, setMetricId] = useState('load');
   const [range, setRange] = useState<TrendRange>('60s');
@@ -163,12 +237,12 @@ export function SystemVitalsModal({ initialTab = 'cpu', onClose, onOpenFeature }
     };
   }, []);
 
-  const active = TABS.find((t) => t.id === tab) ?? TABS[0];
+  const active = tabs.find((t) => t.id === tab) ?? tabs[0];
   const metric = active.metrics.find((m) => m.id === metricId) ?? active.metrics[0];
 
   const pickTab = (id: string) => {
     setTab(id);
-    const t = TABS.find((x) => x.id === id);
+    const t = tabs.find((x) => x.id === id);
     if (t && !t.metrics.some((m) => m.id === metricId)) setMetricId(t.metrics[0].id);
   };
 
@@ -179,7 +253,7 @@ export function SystemVitalsModal({ initialTab = 'cpu', onClose, onOpenFeature }
       <Menu
         orientation="vertical"
         aria-label="Readings"
-        items={TABS.map((t) => ({ id: t.id, label: t.label, active: t.id === tab, onClick: () => pickTab(t.id) }))}
+        items={tabs.map((t) => ({ id: t.id, label: t.label, active: t.id === active.id, onClick: () => pickTab(t.id) }))}
       />
     </div>
   );
@@ -225,11 +299,23 @@ export function SystemVitalsModal({ initialTab = 'cpu', onClose, onOpenFeature }
         onRange={setRange}
       />
 
-      {active.door && onOpenFeature && (
+      {active.doors && (
         <div className="pv7-svm-door">
-          <button type="button" className="pv5-card-door" onClick={() => onOpenFeature(active.door!.feature)}>
-            {active.door.label} <span aria-hidden="true">→</span>
-          </button>
+          {active.doors.map((d) =>
+            'feature' in d ? (
+              onOpenFeature && (
+                <button key={d.label} type="button" className="pv5-card-door" onClick={() => onOpenFeature(d.feature)}>
+                  {d.label} <span aria-hidden="true">→</span>
+                </button>
+              )
+            ) : (
+              onOpenDevice && (
+                <button key={d.label} type="button" className="pv5-card-door" data-door={d.device.view} onClick={() => onOpenDevice(d.device)}>
+                  {d.label} <span aria-hidden="true">→</span>
+                </button>
+              )
+            ),
+          )}
         </div>
       )}
 

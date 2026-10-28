@@ -1,14 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type React from 'react';
-import { Icon, IconButton, ReorderableSections, type ReorderableSectionData, Tile, TileGrid, TileLink } from '../components';
+import { Icon, ReorderableSections, type ReorderableSectionData, Tile, TileGrid } from '../components';
 import { useModules } from '../state/Modules';
+import { useSettings } from '../state/Settings';
 import type { DeviceId } from '../lightstudio/scene';
+import type { ChassisZoneId } from '../lightstudio/towerZones';
 import { SectionHeader } from './SectionHeader';
-import { ALL_TILES, DEMO_NOW, SCENARIOS, formatClock, isEvening, type ScenarioId } from './personalize/model';
+import {
+  DEMO_NOW,
+  SCENARIOS,
+  isEvening,
+  scenarioById,
+  type ScenarioId,
+} from './personalize/model';
 import { useActiveContext, usePersonalize } from './personalize/state';
-import { LightingTile, SuggestionRow, renderTile } from './personalize/tiles';
-import { AllDisplaysWidget, DeskWidget, DisplaySummaryWidget, ProfilesManager, SmartActionsWidget, useHasMultipleDisplays, useMonitorCount } from '../widgets';
+import { SuggestionRow } from './personalize/tiles';
+import { LightOverviewTile, type OpenLights } from './personalize/LightsSection';
+import { ProfileBand } from './personalize/ProfileBand';
+import {
+  AllDisplaysWidget,
+  DeskWidget,
+  DisplaySummaryWidget,
+  SmartActionsWidget,
+  useHasMultipleDisplays,
+  useMonitorCount,
+} from '../widgets';
 import { DESK_SKU, DeskDevices } from './personalize/DeskSection';
 import './pages.css';
 import './personalize/personalize.css';
@@ -37,6 +53,8 @@ function QuickControl() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { has, installedCount } = useModules();
+  // The suggestion row is an Admin demo tool now (2026-10-01), off by default.
+  const { pzSuggestions } = useSettings();
   // Subscribes this page to the desk's screen count. Without it the gate below
   // was computed once and never again, so an Admin change to `Displays` moved
   // the DESK card and left this section on the old answer (2026-09-01).
@@ -58,23 +76,12 @@ function QuickControl() {
       {multipleDisplays && <SmartActionsWidget />}
     </>
   );
-  // Quick Control shows the few you reach for; the rest are one click away.
-  const [showAll, setShowAll] = useState(false);
-  // Clicking a device on the desk opens that device. The desk sits two
-  // sections above its cards, so a pick whose only answer was a highlight down
-  // there was a click with nothing to show for it.
-  const openDevice = (id: DeviceId) => {
-    const sku = DESK_SKU[id];
-    if (sku) openParam('sku', sku);
-  };
-  // The strip, ranking and suggestions follow the active mode.
+  // The ranking and suggestions follow the active profile.
   const scenario = useActiveContext();
-  // One clock for every context (the prototype's 6:30 PM) — switching modes
-  // changes what's detected, never what time it is.
-  const now = DEMO_NOW;
+  // One clock (the prototype's 6:30 PM) — except a context that happens at its
+  // own hour: quiet hours open at 11:00 PM, and saying so at 6:30 would be a lie.
+  const now = scenarioById(p.scenario).at ?? DEMO_NOW;
   const evening = isEvening(now);
-  const signals = scenario.signals.filter((s) => !s.evening || evening);
-  const autoSwitched = !!p.autoSwitch && p.autoSwitch.to === p.mode;
 
   // Demo-only context switching, invisible in the UI so the page looks exactly
   // like the product. A shipping app reads real signals (running game, calendar,
@@ -85,7 +92,7 @@ function QuickControl() {
   const contextParam = params.get('context');
   useEffect(() => {
     if (!contextParam) return;
-    if (SCENARIOS.some((s) => s.id === contextParam)) setScenario(contextParam as ScenarioId);
+    if (SCENARIOS.some(s => s.id === contextParam)) setScenario(contextParam as ScenarioId);
     const next = new URLSearchParams(params);
     next.delete('context');
     setParams(next, { replace: true });
@@ -109,27 +116,10 @@ function QuickControl() {
     update({ buttons: scenario.id === 'valorant' ? 'valorant' : 'default' });
   }, [scenario.id, update]);
 
-  // One list, not two: the controls you pinned, then the ones context ranked,
-  // then whatever is left. "Your usual" and "Right now" were the same kind of
-  // thing in two places, split by a rule the page never explained.
-  const controls = [...p.pins, ...scenario.ranked, ...ALL_TILES].filter(
-    (id, i, all) => id !== 'mode' && all.indexOf(id) === i,
-  );
-  const VISIBLE = 4;
-  // Pin four things and the context strip's promise ("that's why these are up
-  // front") would be a lie — every seat taken by your own pins. So the highest
-  // ranked control keeps its seat: it rides along as a fifth.
-  const first = controls.slice(0, VISIBLE);
-  // The seat is for a control CONTEXT ranked, not merely the next one in the
-  // list — if everything context picked is already on screen, nothing is owed.
-  const topRanked = scenario.ranked.find((id) => id !== 'mode' && !p.pins.includes(id));
-  const shown = showAll
-    ? controls
-    : topRanked && !first.includes(topRanked)
-      ? [...first, topRanked]
-      : first;
   // Night lighting only makes sense at night.
-  const suggestions = scenario.suggestions.filter((id) => !p.dismissed.includes(id) && (id !== 'night-lighting' || evening));
+  const suggestions = scenario.suggestions.filter(
+    id => !p.dismissed.includes(id) && (id !== 'night-lighting' || evening),
+  );
 
   const openParam = (key: string, value: string, extra?: Record<string, string>) => {
     const next = new URLSearchParams(params);
@@ -137,21 +127,26 @@ function QuickControl() {
     Object.entries(extra ?? {}).forEach(([k, v]) => next.set(k, v));
     setParams(next);
   };
+  // A device's lights, in its own window (lighting.19), on its lighting. The
+  // tower has no window of its own: the PC page opens at its lighting tab, as
+  // the "Devices with lights" list does (LightingModal `openRow`), and can land
+  // on one part (`zone=`). JY, 2026-10-21; the lights-alone mode went with
+  // option A, 2026-10-22.
+  const openLights: OpenLights = (id: DeviceId, zone?: ChassisZoneId) => {
+    const sku = DESK_SKU[id];
+    if (!sku) return;
+    if (id === 'tower') openParam('sku', sku, { tab: 'lighting', ...(zone ? { zone } : {}) });
+    else openParam('sku', sku, { tab: 'lighting' });
+  };
 
   // Everything below the context strip is a reorderable section, exactly as on
   // Perform: the grip in the gutter drags a whole section, and the order is
   // yours (kept in localStorage). This is the app-wide way to arrange a page —
   // which is why this one has no Auto/Manual switch of its own.
+  // The Profiles card grid is gone (Sept 30 2026): the band above the sections
+  // names the active profile and switches to the others, and everything below
+  // it IS that profile's contents.
   const sections: ReorderableSectionData[] = [
-    {
-      // Profiles come before the desk they set: a profile is the thing that
-      // owns the lighting, the app look and the device settings below. The
-      // switcher in the nav does the switching; this is where you see them all
-      // and open the one you want to edit.
-      id: 'profiles',
-      header: <SectionHeader label="Profiles" />,
-      children: <ProfilesManager />,
-    },
     {
       // The desk — the picture of the room, and the picker for it: clicking a
       // device here marks its card down in Devices.
@@ -159,44 +154,15 @@ function QuickControl() {
       header: <SectionHeader label="Lighting" />,
       children: (
         <TileGrid className="qc-ranked">
-          <LightingTile onPick={openDevice} />
+          <LightOverviewTile onOpen={openLights} />
         </TileGrid>
       ),
     },
     {
-      // One grid: pinned first, then what context ranked, four at a time. A
-      // tile says why it's here (its reason icon) and can be pinned on the spot
-      // — no Edit mode, because arranging shouldn't be a place you go.
-      id: 'controls',
-      header: (
-        <SectionHeader
-          label="Quick controls"
-          action={
-            controls.length > VISIBLE ? (
-              // Icon only: the chevron points at what happens, and the count
-              // lives in its name instead of a second label on the rule.
-              <IconButton
-                variant="ghost"
-                aria-expanded={showAll}
-                label={showAll ? 'Show fewer controls' : `Show ${controls.length - VISIBLE} more controls`}
-                title={showAll ? 'Show fewer controls' : `Show ${controls.length - VISIBLE} more controls`}
-                onClick={() => setShowAll((v) => !v)}
-              >
-                <Icon name={showAll ? 'chevron-up' : 'chevron-down'} size={16} />
-              </IconButton>
-            ) : undefined
-          }
-        />
-      ),
-      children: (
-        <TileGrid className="qc-ranked">
-          {shown.map((id) => renderTile(id, { placement: p.pins.includes(id) ? 'pinned' : 'ranked' }))}
-        </TileGrid>
-      ),
-    },
-    {
-      // The things on the desk, in words: what each is doing, and the way into
-      // its own settings.
+      // The things on the desk, and the settings you reach for on each (Kristy,
+      // 2026-10-12, Option A): Quick Controls used to be a separate grid of
+      // tiles that left you to work out which device each belonged to. Each
+      // card now carries its own, and its ⋮ picks which.
       id: 'devices',
       header: <SectionHeader label="Devices" />,
       children: <DeskDevices />,
@@ -213,11 +179,11 @@ function QuickControl() {
     // was three cards of "with a second …" and replaced it with one summary row.
     // The layout by desk state is described at the section's children below.
     ...[
-          {
-            id: 'display',
-            header: <SectionHeader label="Display" />,
-            children: (
-              /* The desk picture beside the two controls that act on the whole
+      {
+        id: 'display',
+        header: <SectionHeader label="Display" />,
+        children:
+          /* The desk picture beside the two controls that act on the whole
                  desk, rather than three cards stacked down the page.
 
                  Measured on the running app 2026-09-08, at a 1050px card: the
@@ -244,7 +210,7 @@ function QuickControl() {
                  138px card beside a 389px picture, so 251px of the rail was
                  empty. A rail that short is worse than no rail, so that desk
                  goes back to full-width cards. */
-              /* ONE skeleton on every desk (2026-09-21, second pass): the DESK
+          /* ONE skeleton on every desk (2026-09-21, second pass): the DESK
                  picture on the left, the controls on the right — only what sits
                  on the right changes. The first pass that morning gave a
                  one-screen desk a summary row instead of the picture, and Cindy
@@ -257,17 +223,16 @@ function QuickControl() {
                  Gear Switch rides inside the picture card, two computers only.
                  Without the `desk` module there is no picture, so the controls
                  stand alone — the only desk-independent branch. */
-              has('desk') ? (
-                <div className="pg-rail pg-rail-fill">
-                  <DeskWidget />
-                  <div className="pg-stack">{deskControls}</div>
-                </div>
-              ) : (
-                <div className="pg-stack">{deskControls}</div>
-              )
-            ),
-          },
-        ],
+          has('desk') ? (
+            <div className="pg-rail pg-rail-fill">
+              <DeskWidget />
+              <div className="pg-stack">{deskControls}</div>
+            </div>
+          ) : (
+            <div className="pg-stack">{deskControls}</div>
+          ),
+      },
+    ],
     {
       // What is left once the devices have their own section: the two things
       // on this page that aren't one.
@@ -304,50 +269,16 @@ function QuickControl() {
     <div>
       <h1 className="ds-text-title-1 page-title qc-title">Personalize</h1>
 
-      {/* Context strip — what Treehouse detected and the signals behind it, plus
-          the Undo for a switch it just made. One line; the explanation lives in
-          the ⓘ tooltip. It is the one thing on the page you cannot move. */}
+      {/* The profile band — which profile the desk is wearing, why, and the
+          way back. The one thing on the page you cannot move. */}
       <TileGrid compact>
-        <Tile
-          row
-          size="full"
-          className={'qc-strip' + (scenario.art ? ' has-art' : '')}
-          style={scenario.art ? ({ '--qc-art': `url("${scenario.art}")` } as React.CSSProperties) : undefined}
-          state="context"
-          media={
-            scenario.art ? (
-              <img src={scenario.art} alt="" />
-            ) : (
-              <span className="qc-strip-icon">
-                <Icon name={scenario.icon} size="lg" />
-              </span>
-            )
-          }
-          title={scenario.label}
-          value={`${scenario.when} · ${formatClock(now)}`}
-          reasonIcon="info"
-          reason={
-            signals.length
-              ? `Based on ${signals.map((s) => s.label).join('; ')}. That’s why these settings are up front, and why your profile can switch by itself — you can always undo that.`
-              : 'Nothing to go on right now, so everything stays in its usual order. Your profile can switch by itself when Treehouse spots a game, a call or a stream.'
-          }
-          children={
-            autoSwitched ? (
-              <span className="qc-strip-effect" role="status">
-                <Icon name="check" size="sm" />
-                Switched to {p.modeName(p.mode)}
-                <TileLink icon="undo" onClick={p.undoAutoSwitch}>
-                  Undo
-                </TileLink>
-              </span>
-            ) : undefined
-          }
-        />
+        <ProfileBand />
       </TileGrid>
 
       {/* One suggestion at a time, right under the context that raised it; the
-          next one appears once it's answered. */}
-      {suggestions.length > 0 && (
+          next one appears once it's answered. While the band itself is asking
+          about a profile, that is the one question on the page. */}
+      {pzSuggestions && !p.ask && suggestions.length > 0 && (
         <div className="qc-suggestions" aria-label="Suggestion">
           <SuggestionRow key={suggestions[0]} id={suggestions[0]} />
         </div>

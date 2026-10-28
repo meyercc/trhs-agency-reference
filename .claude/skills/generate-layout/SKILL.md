@@ -31,8 +31,8 @@ layer (no ad-hoc CSS, no hardcoded values). Consume the system; don't fork it.
 > component (via Code Connect + Storybook), and produces the build plan this skill's
 > Step 1 consumes. Come back here once you have that plan.
 
-> The vanilla `prototype.html` / `design-system.html` are **retired** — do not read or
-> generate them. **Generate React** in `web/`; the living catalog is Storybook.
+> **Generate React** in `web/`; the living catalog is Storybook. (The vanilla
+> `prototype.html` / `design-system.html` were deleted on 2026-10-16.)
 
 ---
 
@@ -103,6 +103,9 @@ export function Name() {
 - For a **draggable dashboard**, reuse `<WidgetBoard />` (it owns the move/resize/reorder
   interaction) rather than laying widgets out by hand.
 - Group sub-sections with an `<h2>` (already styled in `shell.css`).
+- **Cards in a row share one height** (CLAUDE.md rule): the grid or flex row keeps
+  `align-items: stretch`; a stacked column beside a tall card gives its last card
+  `flex: 1`. Never `align-items: start` on a row of cards.
 
 Copy the closest existing page from `web/src/pages/` and adapt it. (`Shop.tsx` = card
 grid; `Home.tsx` = widget board; `Perform.tsx` = widget + buttons that open modals.)
@@ -213,6 +216,7 @@ Deploy (when asked) is `npm run deploy` from the repo root — see `docs/web-hos
 - [ ] Every element is an existing component or widget, variant driven by **props**
       (no hand-written `.ds-` class strings, no hand-rolled duplicates)
 - [ ] Zero hardcoded colors/sizes/spacing — all tokens (`var(--…)`), verified vs `tokens.css`
+- [ ] Cards side by side end on one line — bottoms measured equal in the browser
 - [ ] Routed in `main.tsx`; nav tab added in `AppShell.tsx` if applicable
 - [ ] Deep-linkable modals via URL param + host/registry; generic modals via `<ModalShell>`
 - [ ] Shared state via `useSettings()`; assets via `import`

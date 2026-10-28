@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Icon, Slider, Badge, Toggle, ModalShell, type IconName } from '../components';
+import { useState, type ReactNode } from 'react';
+import { Icon, Slider, Badge, Toggle, type IconName } from '../components';
 import { getResolvedSku, deviceImageUrl, heroImageFile, connectionStatus } from '../devices/skus';
 import { useSettings } from '../state/Settings';
 import {
@@ -12,6 +11,8 @@ import {
 } from '../devices/monitor/monitorMode';
 import { deviceTabs } from '../devices/deviceTabs';
 import './device-card.css';
+import { CardMenu, type CardMenuItem } from './CardMenu';
+import { useCellActions } from './cellActions';
 
 // ── Shared device card ──────────────────────────────────────────────────────
 // The React port of the vanilla `.w-devcard` home widget: battery + name +
@@ -136,15 +137,129 @@ function loadFace(): FaceKey[] {
   try {
     const saved = JSON.parse(localStorage.getItem(FACE_KEY) || 'null');
     if (Array.isArray(saved)) {
-      const keep = saved.filter((k): k is FaceKey => FACE_ALL.includes(k as FaceKey));
-      // Never persist an empty face: a card with no rows reads as broken, and
-      // the chooser is reachable only from inside the rows it would have hidden.
-      if (keep.length) return keep;
+      // An empty face is a real answer, kept as one. It used to be refused
+      // because the chooser was reached from inside the rows it would hide —
+      // it is the card's own ⋮ now (CardMenu), which is always there, so
+      // turning everything off can no longer strand anybody (Chris, 2026-10-13).
+      return saved.filter((k): k is FaceKey => FACE_ALL.includes(k as FaceKey));
     }
   } catch {
     /* corrupt value → fall through to the default face */
   }
   return FACE_ALL;
+}
+
+/**
+ * Where a card's control choices are kept. Per device AND per surface: the
+ * Home widget's choices are carried over from Personalize when the card is
+ * added (`copyControlChoices`) and go their own way after that — Personalize
+ * is the workbench, Home the glance, and they are allowed to differ
+ * (Chris, 2026-10-13).
+ */
+export type CardScope = 'personalize' | 'home';
+export const controlsKey = (skuId: string, scope: CardScope) =>
+  scope === 'home' ? `trhs-devcard-controls:home:${skuId}` : `trhs-devcard-controls:${skuId}`;
+
+/** Take a snapshot of one surface's choices onto another — the add-time carry-over. */
+export function copyControlChoices(skuId: string, from: CardScope, to: CardScope) {
+  try {
+    const v = localStorage.getItem(controlsKey(skuId, from));
+    if (v) localStorage.setItem(controlsKey(skuId, to), v);
+  } catch {
+    /* storage blocked: the Home card opens on its defaults */
+  }
+}
+
+/** Which controls a card with `controls` shows, kept per device and surface. */
+function loadShown(skuId: string, scope: CardScope, all: string[], defaults: string[], fallback = all.slice(0, 1)): string[] {
+  try {
+    const saved = JSON.parse(localStorage.getItem(controlsKey(skuId, scope)) || 'null');
+    // An empty list is kept as the choice it is — see loadFace.
+    if (Array.isArray(saved)) return all.filter((k) => saved.includes(k));
+  } catch {
+    /* corrupt value → the defaults */
+  }
+  const d = all.filter((k) => defaults.includes(k));
+  return d.length ? d : fallback;
+}
+
+/**
+ * What the Customize row opens: a switch per control the card can show, and —
+ * off the board, where there is no «Remove from Home» — the Show on Home
+ * switch. One control always stays on; a card with nothing on it reads as
+ * broken.
+ *
+ * The ⋮ itself, its open/close, the press-outside and Escape are `CardMenu`'s
+ * (Cindy 2026-10-06, one ⋮ for every card). This is only the panel it swaps in,
+ * so the rows and their store are unchanged — the switches still write
+ * `trhs-devcard-controls:<sku>` and `trhs-devcard-face`.
+ */
+function ChooserPanel({
+  name,
+  rows,
+  isOn,
+  onToggle,
+  home,
+}: {
+  name: string;
+  rows: { key: string; label: string }[];
+  isOn: (key: string) => boolean;
+  onToggle: (key: string) => void;
+  home?: { on: boolean; onChange: (on: boolean) => void };
+}) {
+  return (
+    <div className="devw-face-menu" role="group" aria-label={`What the ${name} card shows`}>
+      {home && (
+        <>
+          <div className="devw-face-row devw-face-home">
+            <span>Show on Home</span>
+            <Toggle checked={home.on} onChange={home.onChange} aria-label="Show on Home" />
+          </div>
+          <div className="devw-face-rule" role="separator" />
+        </>
+      )}
+      {rows.map((r) => (
+        <div className="devw-face-row" key={r.key}>
+          <span>{r.label}</span>
+          <Toggle checked={isOn(r.key)} onChange={() => onToggle(r.key)} aria-label={r.label} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** The card's own ⋮ — Customize, plus whatever the board adds below it. */
+function CardCustomizeMenu({ skuId, ...props }: React.ComponentProps<typeof ChooserPanel> & { skuId: string }) {
+  // In a board cell the menu already ends in «Remove from Home», so neither the
+  // Show on Home switch nor an Add row belongs there — they would be the same
+  // decision twice, one of them inverted.
+  const inCell = !!useCellActions();
+  const home = props.home;
+  const items: CardMenuItem[] = [
+    { id: 'customize', icon: 'edit', label: 'Customize', panel: <ChooserPanel {...props} home={undefined} /> },
+  ];
+  // Off the board — Personalize — the card can put itself ON the board. The
+  // controls it is showing go with it, ONCE: the Home widget opens on the same
+  // rows and then keeps its own (Chris, 2026-10-13), so a lean glance and a
+  // full workbench can be the same device.
+  if (!inCell && home) {
+    items.push(
+      home.on
+        ? { id: 'home-off', icon: 'minus', label: 'Remove from Home Dashboard', onSelect: () => home.onChange(false) }
+        : {
+            id: 'home-on',
+            // `add`, the board's own + for putting a card on it — not a device
+            // icon: the row is about the dashboard, not about the device.
+            icon: 'add',
+            label: 'Add to Home Dashboard',
+            onSelect: () => {
+              copyControlChoices(skuId, 'personalize', 'home');
+              home.onChange(true);
+            },
+          },
+    );
+  }
+  return <CardMenu name={props.name} items={items} />;
 }
 
 // Rich content for the concept monitor. Gated by SKU, not device type, while
@@ -218,6 +333,17 @@ export function deviceCardModel(skuId: string): DeviceCardModel | null {
   };
 }
 
+/**
+ * One piece of a card's status line. `repeats` names the control(s) whose
+ * value the piece restates: while any of them is on the card's face the piece
+ * is left out, because the control already says it (Chris, 2026-10-14 — the
+ * DPI buttons and «1600 DPI» under the name were the same fact twice).
+ */
+export interface DeviceStatusPart {
+  text: string;
+  repeats?: string[];
+}
+
 export interface DeviceCardProps {
   model: DeviceCardModel;
   /** click the card body to open the device modal */
@@ -228,11 +354,68 @@ export interface DeviceCardProps {
    *  card reads "handed off" instead of its normal connected subtitle. */
   routedAway?: string;
   /** What this device is doing right now, under its type — the line people came
-   *  to check (Personalize › Your desk). Without it the card is only a door. */
-  status?: string;
+   *  to check (Personalize › Your desk). Without it the card is only a door.
+   *  As parts, a piece drops out while the control it repeats is shown, and
+   *  the line goes when nothing is left; an `attention` status never does. */
+  status?: string | DeviceStatusPart[];
   /** `attention` when the status is something to fix (muted, disconnected). */
   statusTone?: 'attention';
+  /**
+   * Controls the card carries on its face (Personalize, 2026-10-12: the device
+   * IS where you change it). The ⋮ on the card picks which of them show — the
+   * card chooser Cindy drew for the monitor, now on every card that has
+   * controls. A monitor's own rich rows give way to these.
+   */
+  controls?: DeviceCardControl[];
+  /**
+   * Which surface is drawing this card. It decides two things, and they are
+   * separate on purpose (Chris, 2026-10-12/13):
+   *  · WHERE the control choices are kept — Personalize's and Home's diverge
+   *    after the card is added to the board.
+   *  · HOW the card sizes. In Personalize a card with controls grows to its
+   *    content; on Home it fills its board cell as every other widget does, so
+   *    the photo keeps scaling with the card. Personalize's sizing on a board
+   *    cell is what left the keyboard a thumbnail in a narrow cell (TH-440's
+   *    slot, then).
+   */
+  scope?: CardScope;
+  /** Which `controls` show in Personalize until the person picks their own.
+   *  Defaults to the first. On Home a card starts with none. */
+  defaultControls?: string[];
+  /**
+   * "Show on Home" at the top of the ⋮ (Kristy, 2026-10-12): Personalize is
+   * where devices live, and this puts one on the Home board too. Omitted for a
+   * device the board has no card for.
+   */
+  homeSwitch?: { on: boolean; onChange: (on: boolean) => void };
+  /**
+   * The device's parts with a window of their own, one line each under the
+   * controls, always shown: they are ways in, not settings, so the ⋮ does not
+   * choose them (JY, 2026-10-22: the desktop's cooler cap belongs to the PC,
+   * so it shows on the PC's card rather than as a card of its own).
+   */
+  parts?: DeviceCardPart[];
   className?: string;
+}
+
+/** One control on a device card's face. */
+export interface DeviceCardControl {
+  key: string;
+  /** Its name — above the control, and on its switch in the ⋮ chooser. */
+  label: string;
+  node: ReactNode;
+}
+
+/** A part of the device with a window of its own (the desktop's cooler cap):
+ *  one line on the card, a way into that window. */
+export interface DeviceCardPart {
+  key: string;
+  label: string;
+  /** What is true of it now, in a word or two. */
+  reading: string;
+  /** A small picture of it, at the start of the line. */
+  visual?: ReactNode;
+  onOpen: () => void;
 }
 
 function SliderCell({
@@ -392,16 +575,66 @@ function RichPanel({ skuId, rich, shows }: { skuId: string; rich: MonitorRich; s
 }
 
 /** Presentational device card — see module note. Renders the DS `.w` surface. */
-export function DeviceCard({ model, onOpen, onShortcut, routedAway, status, statusTone, className }: DeviceCardProps) {
+export function DeviceCard({
+  model,
+  onOpen,
+  onShortcut,
+  routedAway,
+  status,
+  statusTone,
+  controls,
+  defaultControls,
+  scope = 'personalize',
+  homeSwitch,
+  parts,
+  className,
+}: DeviceCardProps) {
   const low = model.batteryPct != null && model.batteryPct <= 20;
   // Rule A applied at the face that owns it: drop the tabs this card already
   // controls inline. Only the rich monitor face has such controls.
-  const shortcuts = model.rich
-    ? model.shortcuts.filter((s) => !RICH_INLINE_TABS.includes(s.tab))
-    : model.shortcuts;
+  // A Personalize card carries no tab shortcuts: its controls sit on the card
+  // and the card itself opens the device (Kristy, 2026-10-13).
+  const shortcuts =
+    controls && scope === 'personalize'
+      ? []
+      : model.rich && !controls
+        ? model.shortcuts.filter((s) => !RICH_INLINE_TABS.includes(s.tab))
+        : model.shortcuts;
   // Which rich rows this card draws, and the chooser that edits it (scope 1.0).
   const [face, setFace] = useState<FaceKey[]>(loadFace);
-  const [choosing, setChoosing] = useState(false);
+  // A card with its own controls: which of them it shows, kept per device.
+  const ctlKeys = (controls ?? []).map((c) => c.key);
+  // On Home a card starts with no controls, only its tab shortcuts (Chris,
+  // 2026-10-26): the default board reads as a clean grid of devices, and ⋮ ›
+  // Customize adds what someone wants there. Personalize keeps its defaults.
+  const [shownCtl, setShownCtl] = useState<string[]>(() =>
+    scope === 'home'
+      ? loadShown(model.skuId, scope, ctlKeys, [], [])
+      : loadShown(model.skuId, scope, ctlKeys, defaultControls ?? ctlKeys.slice(0, 1)),
+  );
+  const toggleCtl = (k: string) =>
+    setShownCtl((prev) => {
+      const next = prev.includes(k) ? prev.filter((x) => x !== k) : ctlKeys.filter((x) => prev.includes(x) || x === k);
+      try {
+        localStorage.setItem(controlsKey(model.skuId, scope), JSON.stringify(next));
+      } catch {
+        /* storage blocked: the choice lasts this visit */
+      }
+      return next;
+    });
+  // The status line says only what the face does not: a part whose control is
+  // shown is the same fact twice. An attention status (muted) is the warning
+  // the line exists for, so it stays whatever is shown.
+  const repeated = (part: DeviceStatusPart) =>
+    statusTone !== 'attention' && !!controls && !!part.repeats?.some((k) => shownCtl.includes(k));
+  const statusText = Array.isArray(status)
+    ? status
+        .filter((part) => !repeated(part))
+        .map((part) => part.text)
+        .join(' · ')
+    : status;
+  // Controls replace a monitor's own rich rows (and their chooser).
+  const rich = controls ? undefined : model.rich;
   const stopHere = (e: React.SyntheticEvent) => e.stopPropagation();
   // The mode badge, resolved live (2026-08-31). It used to read `Game` as a
   // literal, so the card asserted an activity on a display whose own window
@@ -421,10 +654,7 @@ export function DeviceCard({ model, onOpen, onShortcut, routedAway, status, stat
   const shows = (k: FaceKey) => face.includes(k) && fits(k);
   const toggleRow = (k: FaceKey) =>
     setFace((prev) => {
-      // One row always stays on. The chooser is reached from the card, so an
-      // empty face would hide its own way back.
       const next = prev.includes(k) ? prev.filter((x) => x !== k) : FACE_ALL.filter((x) => prev.includes(x) || x === k);
-      if (!next.length) return prev;
       localStorage.setItem(FACE_KEY, JSON.stringify(next));
       return next;
     });
@@ -434,7 +664,11 @@ export function DeviceCard({ model, onOpen, onShortcut, routedAway, status, stat
       className={[
         'w',
         'ds-devcard',
-        model.rich ? 'rich' : '',
+        rich ? 'rich' : '',
+        controls && shownCtl.length ? 'has-controls' : '',
+        // Personalize keeps its card shape with every control off too: the name
+        // and photo stay on the same top line as their neighbours (Kristy, 2026-10-13).
+        controls && scope === 'personalize' ? 'fit-content' : '',
         model.underGlow ? 'has-underglow' : '',
         routedAway ? 'routed-away' : '',
         className,
@@ -464,18 +698,25 @@ export function DeviceCard({ model, onOpen, onShortcut, routedAway, status, stat
           is what it looked like on the first pass. Absolute for the same reason
           the device card has no `.w-label` at all — its identity block is the
           big title, and adding a header row would say the name twice. */}
-      {model.rich && (
-        <button
-          type="button"
-          className="ds-text-overline w-link devw-face-link"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            setChoosing(true);
-          }}
-        >
-          Customize →
-        </button>
+      {rich && (
+        <CardCustomizeMenu
+          skuId={model.skuId}
+          name={model.name}
+          rows={FACE_ROWS.filter((r) => fits(r.key))}
+          isOn={(k) => shows(k as FaceKey)}
+          onToggle={(k) => toggleRow(k as FaceKey)}
+          home={homeSwitch}
+        />
+      )}
+      {controls && (controls.length > 1 || homeSwitch) && (
+        <CardCustomizeMenu
+          skuId={model.skuId}
+          name={model.name}
+          rows={controls}
+          isOn={(k) => shownCtl.includes(k)}
+          onToggle={toggleCtl}
+          home={homeSwitch}
+        />
       )}
       <div className="devw-body">
         <div className="devw-main">
@@ -492,7 +733,7 @@ export function DeviceCard({ model, onOpen, onShortcut, routedAway, status, stat
                   occupy the slot beside the name and read as a value; nothing
                   is the honest drawing, and it matches the mode bar in the
                   window, which simply has nothing selected. */}
-              {model.rich && mode && (
+              {rich && mode && (
                 <Badge variant="status" className="devw-mode">
                   {mode}
                 </Badge>
@@ -505,10 +746,10 @@ export function DeviceCard({ model, onOpen, onShortcut, routedAway, status, stat
             ) : (
               <div className="devw-sub">{model.subtitle}</div>
             )}
-            {status && (
+            {statusText && (
               <div className={'devw-status' + (statusTone === 'attention' ? ' attention' : '')}>
                 {statusTone === 'attention' && <Icon name="alert" size={12} aria-hidden />}
-                {status}
+                {statusText}
               </div>
             )}
             {shortcuts.length > 0 && (
@@ -534,44 +775,34 @@ export function DeviceCard({ model, onOpen, onShortcut, routedAway, status, stat
           </div>
         </div>
         {model.image && <div className="devw-photo" style={{ backgroundImage: `url(${model.image})` }} />}
-        {model.rich && <RichPanel skuId={model.skuId} rich={model.rich} shows={shows} />}
+        {rich && <RichPanel skuId={model.skuId} rich={rich} shows={shows} />}
       </div>
-      {/* Portal to <body>, and only while open — the board cell is a
-          framer-motion element whose transform makes a containing block, so a
-          nested modal would be trapped inside the card. Same reason and same
-          fix as the monitor's X-ray overlay (`monitor/XrayCard.tsx`).
-          A portal moves the DOM, not the React tree: a press inside still
-          bubbles to this card's `onClick={onOpen}` and to the board cell's
-          drag. So every toggle here also opened the device window behind the
-          chooser (2026-09-23, Cindy). The wrapper stops the press at the
-          chooser's edge, the way `.devr` does for the rows on the card. */}
-      {choosing &&
-        createPortal(
-          <div onClick={stopHere} onPointerDown={stopHere} onKeyDown={stopHere}>
-          <ModalShell title="Customize card" width="narrow" onClose={() => setChoosing(false)}>
-            {/* The second sentence is load-bearing, not filler: the size tier
-                decides how many rows are drawn (device-card.css hides Input,
-                Speaker, Contrast and Volume at Standard), so a chooser that
-                listed six rows without saying so would promise a row the
-                current card cannot show. Stated rather than solved — making
-                the choice set a drawing ORDER instead is the sharper design,
-                and it is logged in phase2-backlog.md rather than built here. */}
-            <p className="devr-face-note">
-              Choose what this card shows. Some rows only fit on a larger card; hidden rows stay
-              available in the device window.
-            </p>
-            <div className="devr-face-list">
-              {FACE_ROWS.filter((r) => fits(r.key)).map((r) => (
-                <div className="devr-face-row" key={r.key}>
-                  <span>{r.label}</span>
-                  <Toggle checked={shows(r.key)} onChange={() => toggleRow(r.key)} aria-label={r.label} />
-                </div>
-              ))}
-            </div>
-          </ModalShell>
-          </div>,
-          document.body,
-        )}
+      {controls && shownCtl.length > 0 && (
+        // Changing a control never opens the device: the press stops here.
+        <div className="devw-controls" onClick={stopHere} onPointerDown={stopHere} onKeyDown={stopHere}>
+          {controls
+            .filter((c) => shownCtl.includes(c.key))
+            .map((c) => (
+              <div className="devw-ctl" key={c.key}>
+                <span className="devw-ctl-label">{c.label}</span>
+                {c.node}
+              </div>
+            ))}
+        </div>
+      )}
+      {parts && parts.length > 0 && (
+        // A part opens its own window, not the device's: the press stops here.
+        <div className="devw-parts" onClick={stopHere} onPointerDown={stopHere} onKeyDown={stopHere}>
+          {parts.map((pt) => (
+            <button key={pt.key} type="button" className="devw-part" data-part={pt.key} onClick={pt.onOpen} aria-label={`${pt.label}: ${pt.reading}. Open`}>
+              {pt.visual && <span className="devw-part-visual" aria-hidden>{pt.visual}</span>}
+              <span className="devw-part-label">{pt.label}</span>
+              <span className="devw-part-reading">{pt.reading}</span>
+              <Icon name="chevron-right" size={12} aria-hidden />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

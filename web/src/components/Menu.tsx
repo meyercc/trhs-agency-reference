@@ -6,6 +6,11 @@ export type MenuOrientation = 'horizontal' | 'vertical';
 export interface MenuItem {
   id: string;
   label: string;
+  /**
+   * What a tab bar (`variant="bar"`) prints instead of `label`, where a slot is
+   * a fifth of a phone. The accessible name stays `label`.
+   */
+  shortLabel?: string;
   /** Optional leading icon node (e.g. an <svg>). */
   icon?: React.ReactNode;
   /** Route path → renders a <NavLink> with automatic active state. */
@@ -17,10 +22,18 @@ export interface MenuItem {
   onClick?: () => void;
 }
 
+export type MenuVariant = 'pill' | 'bar';
+
 export interface MenuProps {
   items: MenuItem[];
   /** `horizontal` = floating centered pill (top nav); `vertical` = side list. */
   orientation?: MenuOrientation;
+  /**
+   * `bar` stretches the horizontal pill into a tab bar — items share the width,
+   * icon over label, touch-target tall (`.ds-menu.bar`). The shell's bottom
+   * nav on a compact window. Horizontal only.
+   */
+  variant?: MenuVariant;
   /** Hide the text label on each item → icon-only navigation. The label is kept
    *  as the item's accessible name (`aria-label`) + native tooltip (`title`). */
   hideLabels?: boolean;
@@ -47,6 +60,7 @@ export interface MenuProps {
 export function Menu({
   items,
   orientation = 'horizontal',
+  variant = 'pill',
   hideLabels = false,
   hideIcons = false,
   tooltips = false,
@@ -56,9 +70,11 @@ export function Menu({
   // Tooltips carry the item's label, so they only earn their place when the
   // label itself is hidden — otherwise they'd repeat what's already on screen.
   const showTips = tooltips && hideLabels;
+  const bar = variant === 'bar' && orientation === 'horizontal';
   const classes = [
     'ds-menu',
     orientation,
+    bar ? 'bar' : '',
     hideLabels ? 'hide-labels' : '',
     hideIcons ? 'hide-icons' : '',
     showTips ? 'has-tips' : '',
@@ -72,7 +88,7 @@ export function Menu({
         const inner = (
           <>
             {item.icon && <span className="ds-menu-icon">{item.icon}</span>}
-            <span className="ds-menu-label">{item.label}</span>
+            <span className="ds-menu-label">{bar && item.shortLabel ? item.shortLabel : item.label}</span>
             {/* Bottom tooltip — the design system's Figma-aligned .ds-tooltip-popup.
                 aria-hidden: the item's name already comes from the visible label (or
                 aria-label when hidden), so it isn't double-read. */}
@@ -86,9 +102,12 @@ export function Menu({
         // When the label is hidden it leaves the accessibility tree, so keep the
         // item's name via aria-label. Only fall back to a native `title` when the
         // DS tooltip isn't rendering one (avoids a double tooltip in icon-only nav).
+        // A short label is for the eye; the name stays the full one.
         const nameProps = hideLabels
           ? { 'aria-label': item.label, ...(showTips ? {} : { title: item.label }) }
-          : {};
+          : bar && item.shortLabel
+            ? { 'aria-label': item.label }
+            : {};
         return item.to ? (
           <NavLink
             key={item.id}

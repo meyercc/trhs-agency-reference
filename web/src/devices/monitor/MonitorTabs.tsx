@@ -43,6 +43,7 @@
 //   B8   auto-switch defaults OFF (input hand-off stays Zone 2/3).
 //   B10  the Under-Glow master toggle actually gates color + brightness.
 // ══════════════════════════════════════════════════════════════════════════
+import { AUTO_BRIGHTNESS, BLACK_STRETCH } from '../../state/bindings';
 import {
   Children,
   useEffect,
@@ -1314,7 +1315,6 @@ const RGB_GAIN: { ch: string; className: string; val: number }[] = [
  * changes, crushed shadow detail (verifier-log 2026-08-04) — and the default
  * here is `Ambient`, so nobody meets those by accident.
  */
-const AUTO_BRIGHTNESS = ['Off', 'Ambient', 'Content'];
 
 /*
  * (`AUTO_BRIGHTNESS_SOURCE` lived here — a surface line naming whichever source
@@ -1480,7 +1480,7 @@ function BrightnessSection({ comfort }: { comfort?: Record<string, unknown> | fa
       />
       <SegField
         label="Auto-Brightness"
-        values={AUTO_BRIGHTNESS}
+        values={[...AUTO_BRIGHTNESS]}
         value={autoSource}
         onChange={setAutoSource}
       />
@@ -1583,8 +1583,6 @@ function BrightnessSection({ comfort }: { comfort?: Record<string, unknown> | fa
 }
 
 /** The burn-in protections, and how many of them are on. */
-/** Black Stretch's four steps, in order — the slider's scale, not a menu. */
-const BLACK_STRETCH = ['Off', 'Low', 'Medium', 'High'];
 
 const OLED_PROTECTIONS = [
   'Static Content Detection',

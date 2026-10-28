@@ -143,6 +143,51 @@
   white-space: nowrap;
 }
 
+/* ── Photo stage (`MouseStage`, for a SKU in `mouseRenders.ts`) ──
+   Figma Keys-Buttons 4631:41576: the region holding the top-down render and
+   its overlay callouts, laid out at the frame's px and scaled as one. The
+   wrapper fills the hero so the stage can measure the room it has. */
+.dc-hero-stage {
+  position: relative;
+  align-self: stretch;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dc-mouse-fit {
+  position: relative;
+  flex: none;
+}
+.dc-mouse-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: top left;
+}
+/* `.dc-hero img` sizes the product photo; the stage places its render itself. */
+.dc-hero .dc-mouse-photo {
+  position: absolute;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+}
+.dc-co-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.dc-co-slot {
+  position: absolute;
+}
+.dc-co-slot .ds-tooltip-wrap {
+  display: block;
+}
+
 /* Chip drag ghost — the picked-up key under the cursor */
 .dc-drag-ghost {
   position: fixed;
@@ -152,50 +197,24 @@
   box-shadow: var(--shadow-lv-3);
 }
 
-/* Callout context menu (Reset / Disable) */
+/* Callout context menu (Reset / Disable) — a DS ContextMenu; this only
+   places it at the pointer. */
 .dc-cmenu {
   position: fixed;
   z-index: 80;
-  display: flex;
-  flex-direction: column;
-  min-width: 180px;
-  padding: var(--gutter-xxs);
-  background: var(--bg-mid);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-lv-3);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-}
-.dc-cmenu-item {
-  display: flex;
-  align-items: center;
-  gap: var(--gutter-xs);
-  padding: var(--gutter-xs) var(--gutter-mobile);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--text-primary);
-  font-family: var(--font-display);
-  font-size: var(--text-body);
-  cursor: pointer;
-  text-align: left;
-}
-.dc-cmenu-item:hover {
-  background: var(--surface-hover);
-}
-.dc-cmenu-item:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: -2px;
-}
-.dc-cmenu-item .ds-icon {
-  color: var(--text-dim);
 }
 
 /* ── Bottom Ng3 product panel ────────────────────────── */
 .dc-panel-wrap {
+  --dc-panel-max-w: 960px;
   width: 100%;
-  max-width: 960px;
+  max-width: var(--dc-panel-max-w);
+  /* A wide window gets a wider panel rather than the same 960px island; the
+     canvas is fixed to the viewport, outside the page container, so this
+     answers to the window (2026-10-20). */
+  @media (--bp-wide-up) {
+    --dc-panel-max-w: 1200px;
+  }
   margin: 0 auto;
   padding: 0 var(--gutter) var(--gutter);
   /* The canvas is a fixed, overflow-hidden viewport, so a panel that grows
@@ -535,4 +554,51 @@
   font-family: var(--font-mono);
   font-size: var(--text-micro);
   color: var(--text-muted);
+}
+
+/* ── Settings tab (Figma Device Settings 10461:45224) ──
+   The device rail at its designed width beside Windows' pointer properties,
+   which take the rest. Same shape as the headset's Settings tab. The column's
+   last section already absorbs the slack (.ds-ng3-col > :last-child grows), so
+   the rail and the pointer panel bottom out on one line with no help here. */
+.dc-settings {
+  /* The designed rail width — component geometry, like .hc-settings' 266. */
+  --dc-rail-w: 266px;
+}
+.dc-set-rail {
+  flex: 0 0 var(--dc-rail-w);
+}
+.dc-set-pointer {
+  flex: 1;
+  min-width: 0;
+}
+/* The hand-off sits on the card floor whatever the controls above it measure. */
+.dc-set-handoff {
+  margin-top: auto;
+  width: 100%;
+  justify-content: center;
+}
+/* Phone: the panel is viewport-wide here (.dc-panel-wrap is width:100%), and
+   two columns would each be unreadable, so they stack. `flex-direction` and a
+   released rail, NOT `grid-template-columns` — .ds-ng3-grid is flex, where that
+   property does nothing (which is why the headset's own 600px rule is inert). */
+@media (max-width: 600px) {
+  .dc-settings {
+    flex-direction: column;
+  }
+  .dc-set-rail {
+    flex: 0 0 auto;
+  }
+}
+/* The Settings tab sits at the Figma frame's measure, not the canvas's full
+   960: three short panels stretched across the wide measure left the two
+   pointer sliders absurdly long for what they set. 640 is that frame (628)
+   plus the chamfer's edge — canvas geometry, like --dc-rail-w above.
+   It re-points the existing `narrow` step rather than setting a width, so the
+   panel still eases between measures when you change tab, and `min()` keeps it
+   from overflowing a viewport narrower than the number. Scoped to this panel
+   because .dc-panel-wrap is shared by every canvas — a bare override here
+   would silently re-measure the headset, mic and monitor Settings tabs too. */
+.dc-panel-settings.ds-ng3-panel.narrow {
+  --ng3-w-narrow: min(640px, 100%);
 }

@@ -1,9 +1,28 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  Button, Checkbox, Chip, GameTile, Icon, Input, ListItem, ModalShell, Ng3Label, Ng3Section, Separator, Slider, Swatch, Toggle,
+  Badge,
+  Button,
+  Checkbox,
+  Chip,
+  ContextMenu,
+  ContextMenuLabel,
+  Icon,
+  IconButton,
+  Input,
+  ListItem,
+  ModalShell,
+  Ng3Field,
+  Ng3Label,
+  Ng3Section,
+  Separator,
+  Slider,
+  Swatch,
+  Toggle,
+  Tooltip,
 } from '../components';
 import { useProfiles, type Profile } from '../state/Profiles';
 import { useSettings } from '../state/Settings';
+import { ACCENTS } from '../state/bindings';
 import { WALLPAPERS } from '../app/wallpapers';
 import { ProfileAvatar } from '../widgets/ProfileAvatar';
 import { WALLPAPER_IMAGE_PREFIX, fileToProfilePhoto, profileImageSrc, profileWallpaperId } from '../app/profileImage';
@@ -20,12 +39,16 @@ import './settings-modal.css'; // the shared .stx-modal sectioned-settings chrom
 import './profiles-modal.css';
 
 /** Accent ids offered as an accent override. */
-const ACCENTS = ['cyan', 'indigo', 'purple', 'orange', 'green', 'red', 'yellow'];
 
 /** 0 = Sunday, matching Date.getDay() and the Schedule model. */
 const DAYS = [
-  { i: 1, label: 'Mon' }, { i: 2, label: 'Tue' }, { i: 3, label: 'Wed' }, { i: 4, label: 'Thu' },
-  { i: 5, label: 'Fri' }, { i: 6, label: 'Sat' }, { i: 0, label: 'Sun' },
+  { i: 1, label: 'Mon' },
+  { i: 2, label: 'Tue' },
+  { i: 3, label: 'Wed' },
+  { i: 4, label: 'Thu' },
+  { i: 5, label: 'Fri' },
+  { i: 6, label: 'Sat' },
+  { i: 0, label: 'Sun' },
 ];
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -39,7 +62,10 @@ const fromTimeValue = (v: string) => {
 /** `lighting.brightness` → `Brightness`. The key's last segment is its name. */
 const humanize = (key: string) => {
   const last = key.includes('.') ? key.slice(key.lastIndexOf('.') + 1) : key;
-  return last.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+  return last
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^./, c => c.toUpperCase())
+    .replace(/\b(Eq|Dpi)\b/g, w => w.toUpperCase());
 };
 
 /**
@@ -57,7 +83,8 @@ const renderValue = (v: unknown, unit = 'key'): string => {
     const n = Object.keys(v as object).length;
     return `${n} ${unit}${n === 1 ? '' : 's'}`;
   }
-  return String(v);
+  // A stored id ('bassboost', 'hardware') reads as a name.
+  return String(v).replace(/^[a-z]/, c => c.toUpperCase());
 };
 
 /** Labels where the key's last segment reads badly on its own. */
@@ -68,26 +95,14 @@ const LABELS: Record<string, string> = {
 };
 /** Values that are ids of something with a name, and records counted in the device's own unit. */
 const renderNamed = (key: string, v: unknown, lightPresets: LightPreset[]): string => {
-  if (key === 'lighting.preset') return lightPresets.find((p) => p.id === v)?.name ?? renderValue(v);
+  if (key === 'lighting.preset') return lightPresets.find(p => p.id === v)?.name ?? renderValue(v);
   return renderValue(v, key.startsWith('buttons.') ? 'button' : 'key');
 };
 
 /** A captured value that IS a color gets shown as one, not just named. */
 const isColor = (v: unknown): v is string =>
-  typeof v === 'string' && (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) || /^(rgb|hsl)a?\(/.test(v) || v.startsWith('var(--'));
-
-/** One label/sublabel + control row. Mirrors SettingsModal's row. */
-function Row({ label, sublabel, control }: { label: string; sublabel: string; control: React.ReactNode }) {
-  return (
-    <div className="ds-settings-row">
-      <div className="ds-settings-row-labels">
-        <div className="ds-settings-row-label">{label}</div>
-        <div className="ds-settings-row-sublabel">{sublabel}</div>
-      </div>
-      {control}
-    </div>
-  );
-}
+  typeof v === 'string' &&
+  (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) || /^(rgb|hsl)a?\(/.test(v) || v.startsWith('var(--'));
 
 function GroupTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
@@ -128,6 +143,175 @@ function ClearOverride({ on, onClear }: { on: boolean; onClear: () => void }) {
  * in the device panel, with the profile active — so this view stays a record
  * of what was captured rather than a second place to change it.
  */
+/**
+ * Copy one group (a device tab's captured settings) into another profile —
+ * NGENUITY's copy button on each Profile Details card. The values merge into
+ * the target's bag for the same device, so anything else that profile has
+ * captured for it stays. A short "Copied to …" confirms it in place.
+ */
+function CopyGroup({
+  from,
+  deviceId,
+  groupName,
+  values,
+}: {
+  from: Profile;
+  deviceId: string;
+  groupName: string;
+  values: Record<string, unknown>;
+}) {
+  const { profiles, mergeDeviceSettings } = useProfiles();
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const others = profiles.filter(p => p.id !== from.id);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    // Escape closes the menu only, never the modal under it.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setOpen(false);
+      ref.current?.querySelector<HTMLElement>('.ds-btn-icon')?.focus();
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey, true);
+    // Focus the first target, so the keyboard lands in the menu.
+    ref.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const t = window.setTimeout(() => setCopied(null), 2500);
+    return () => window.clearTimeout(t);
+  }, [copied]);
+
+  if (others.length === 0) return null;
+  const copyTo = (target: Profile) => {
+    mergeDeviceSettings(target.id, deviceId, values);
+    setOpen(false);
+    setCopied(target.name);
+  };
+
+  return (
+    <div className="pfm-copy" ref={ref}>
+      {copied && (
+        <span role="status">
+          <Badge variant="status" tone="positive">
+            Copied to {copied}
+          </Badge>
+        </span>
+      )}
+      <IconButton
+        variant="ghost"
+        label={`Copy ${groupName} to another profile`}
+        title={`Copy ${groupName} to another profile`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+      >
+        <Icon name="duplicate" size={16} />
+      </IconButton>
+      {open && (
+        <ContextMenu className="pfm-copy-menu" aria-label={`Copy ${groupName} to`}>
+          <ContextMenuLabel>Copy {groupName} to</ContextMenuLabel>
+          {others.map(p => (
+            <ListItem
+              key={p.id}
+              role="menuitem"
+              label={p.name}
+              leading={<ProfileAvatar profile={p} size={20} />}
+              onClick={() => copyTo(p)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  copyTo(p);
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
+                  const i = items.indexOf(e.currentTarget);
+                  items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length]?.focus();
+                }
+              }}
+            />
+          ))}
+        </ContextMenu>
+      )}
+    </div>
+  );
+}
+
+/** Key and button assignments, captured per key: `{ code: { base?, fn? } }` for a
+ *  keyboard, `{ button: { label } | 'disabled' }` for a mouse. */
+const BIND_KEYS = new Set(['keys.binds', 'buttons.binds']);
+/** Never a row: the ordered preset list a profile kept from 2026-10-06 to 10-21
+ *  (read off NGENUITY's Profile Details, an error in the Figma files — Chris).
+ *  A profile keeps one preset, `lighting.preset`, which renders as a swatch row. */
+const PRESET_KEYS = new Set(['lighting.presets']);
+/** Rows with a swatch sort first: the lighting preset, then plain colors. */
+const colorRank = (key: string, v: unknown) => (key === 'lighting.preset' ? 0 : isColor(v) ? 1 : 2);
+/** Letters in a label's longest word: past six, a 64px cap steps its type down. */
+const longestWord = (text: string) => Math.max(...text.split(/[\s/]/).map(w => w.length));
+type BindTile = { id: string; text: string; from: string; fn?: boolean; off?: boolean };
+const bindTiles = (key: string, v: unknown): BindTile[] => {
+  if (!v || typeof v !== 'object') return [];
+  return Object.entries(v as Record<string, unknown>).flatMap(([id, b]): BindTile[] => {
+    const from = humanize(id);
+    if (b === 'disabled') return [{ id, text: from, from, off: true }];
+    if (!b || typeof b !== 'object') return [];
+    if (key === 'buttons.binds') {
+      const label = (b as { label?: string }).label;
+      return label ? [{ id, text: label, from }] : [];
+    }
+    const { base, fn } = b as { base?: string; fn?: string };
+    return [
+      ...(base != null ? [{ id, text: base, from }] : []),
+      ...(fn != null ? [{ id: id + ':fn', text: fn, from, fn: true }] : []),
+    ];
+  });
+};
+
+/**
+ * What each remapped key or button does now, as a grid of keycaps
+ * (NGENUITY's Profile Details "Keys" card). A disabled one is red. The key it
+ * replaced names the cap for assistive tech and on hover.
+ */
+function BindGrid({ tiles }: { tiles: BindTile[] }) {
+  return (
+    <ul className="pfm-binds" aria-label="Assignments">
+      {tiles.map(t => {
+        const name = t.off ? `${t.from} disabled` : `${t.from}${t.fn ? ' (Fn)' : ''} → ${t.text}`;
+        return (
+          <li
+            key={t.id}
+            className={'pfm-bind' + (t.off ? ' off' : '') + (longestWord(t.text) > 6 ? ' long' : '')}
+            title={name}
+            aria-label={name}
+          >
+            <span className="pfm-bind-text">
+              {/* "Play/Pause" may break after its slash, never inside a word. */}
+              {t.text.split('/').flatMap((part, i) => (i ? ['/', <wbr key={i} />, part] : [part]))}
+            </span>
+            {t.fn && (
+              <span className="pfm-bind-fn" aria-hidden>
+                Fn
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function ProfileDetails({ profile }: { profile: Profile }) {
   const devices = Object.entries(profile.devices).filter(([, bag]) => Object.keys(bag ?? {}).length > 0);
   // The lighting preset library is a Settings list now, so a user-made preset
@@ -137,8 +321,8 @@ function ProfileDetails({ profile }: { profile: Profile }) {
   if (devices.length === 0) {
     return (
       <p className="pfm-empty">
-        Nothing captured yet. Open a device from the Devices panel while <strong>{profile.name}</strong> is
-        active — what you change there is saved to this profile.
+        Nothing captured yet. Open a device from the Devices panel while <strong>{profile.name}</strong> is active —
+        what you change there is saved to this profile.
       </p>
     );
   }
@@ -155,37 +339,71 @@ function ProfileDetails({ profile }: { profile: Profile }) {
           groups.set(tabId, [...(groups.get(tabId) ?? []), [key, value]]);
         });
         const ordered = [...groups.entries()].sort(
-          (a, b) => tabs.findIndex((t) => t.id === a[0]) - tabs.findIndex((t) => t.id === b[0]),
+          (a, b) => tabs.findIndex(t => t.id === a[0]) - tabs.findIndex(t => t.id === b[0]),
         );
         // The device card is the Ng3 section surface — the same card a device
         // panel is built from, so a device's settings look the same here as
         // where they were set. One sunken sub-card per tab inside it.
         return (
-          <Ng3Section as="section" key={skuId} className="pfm-device" aria-label={sku?.name ?? skuId}>
+          // A device with one group takes half the row, so two of them sit side
+          // by side; a device with several takes the whole row and lays its
+          // groups side by side (NGENUITY's Profile Details, Kristy 2026-10-01).
+          <Ng3Section
+            as="section"
+            key={skuId}
+            className="pfm-device"
+            // How many group-widths it asks for in the row (see .pfm-device).
+            style={{ '--groups': ordered.length } as React.CSSProperties}
+            aria-label={sku?.name ?? skuId}
+          >
             <h4 className="pfm-device-head">
               <Icon name={(sku && TYPE_ICON[sku.type]) ?? 'devices'} size={20} aria-hidden />
               <Ng3Label strong>{sku?.name ?? skuId}</Ng3Label>
             </h4>
             <div className="pfm-device-groups">
               {ordered.map(([tabId, rows]) => {
-                const tab = tabs.find((t) => t.id === tabId);
+                const tab = tabs.find(t => t.id === tabId);
                 return (
                   <div key={tabId} className="pfm-group">
                     <div className="pfm-group-head">
-                      <span className="pfm-group-title">
-                        {tab && <Icon name={tab.icon} size={14} aria-hidden />}
-                        <Ng3Label strong>{tab?.title ?? humanize(tabId)}</Ng3Label>
-                      </span>
+                      <Ng3Label strong>{tab?.title ?? humanize(tabId)}</Ng3Label>
+                      <CopyGroup
+                        from={profile}
+                        deviceId={skuId}
+                        groupName={tab?.title ?? humanize(tabId)}
+                        values={Object.fromEntries(rows)}
+                      />
                     </div>
                     <Separator />
+                    {rows
+                      .filter(([key]) => BIND_KEYS.has(key))
+                      .map(([key, value]) => {
+                        const tiles = bindTiles(key, value);
+                        return tiles.length ? <BindGrid key={key} tiles={tiles} /> : null;
+                      })}
                     <dl className="pfm-rows">
-                      {rows.map(([key, value]) => (
-                        <div key={key} className="pfm-row">
-                          {isColor(value) && <span className="ps-dot" style={{ background: value }} aria-hidden />}
-                          <dt>{LABELS[key] ?? humanize(key)}</dt>
-                          <dd>{renderNamed(key, value, lightPresets)}</dd>
-                        </div>
-                      ))}
+                      {rows
+                        .filter(([key]) => !BIND_KEYS.has(key) && !PRESET_KEYS.has(key))
+                        // The color leads (Kristy 2026-10-06): the preset, then any
+                        // captured color, then the rest in captured order.
+                        .sort(([ak, av], [bk, bv]) => colorRank(ak, av) - colorRank(bk, bv))
+                        .map(([key, value]) => (
+                          <div key={key} className="pfm-row">
+                            {(() => {
+                              const swatch =
+                                key === 'lighting.preset'
+                                  ? lightPresets.find(p => p.id === value)?.swatch
+                                  : isColor(value)
+                                  ? value
+                                  : undefined;
+                              return swatch ? (
+                                <span className="pfm-dot" style={{ background: swatch }} aria-hidden />
+                              ) : null;
+                            })()}
+                            <dt>{LABELS[key] ?? humanize(key)}</dt>
+                            <dd>{renderNamed(key, value, lightPresets)}</dd>
+                          </div>
+                        ))}
                     </dl>
                   </div>
                 );
@@ -208,17 +426,56 @@ function ProfileDetails({ profile }: { profile: Profile }) {
  * and switching are different acts, and conflating them means you can't touch
  * the Work profile at 9pm without the desk changing color.
  */
-export function ProfilesModal({ onClose }: { onClose: () => void }) {
+export function ProfilesModal({ onClose, initialProfileId }: { onClose: () => void; initialProfileId?: string }) {
   const {
-    profiles, activeId, createProfile, updateProfile, deleteProfile, selectProfile, setOverride,
-    exportProfiles, importProfiles,
+    profiles,
+    activeId,
+    createProfile,
+    updateProfile,
+    deleteProfile,
+    selectProfile,
+    setOverride,
+    exportProfiles,
+    importProfiles,
   } = useProfiles();
   const { getBaseline, isLight } = useSettings();
 
-  const [editingId, setEditingId] = useState(activeId);
+  // Opened from the page's New profile slot, it lands on the one just made.
+  const [editingId, setEditingId] = useState(initialProfileId ?? activeId);
   const [showDetails, setShowDetails] = useState(false);
+  // Opening Profile Details scrolls its heading to the top of the modal, so
+  // what just opened is in view (Kristy 2026-10-06). In an effect, after the
+  // details render, so there is room to scroll.
+  const detailsHeadingRef = useRef<HTMLButtonElement>(null);
+  const scrollToDetails = useRef(false);
+  useEffect(() => {
+    if (!showDetails || !scrollToDetails.current) return;
+    scrollToDetails.current = false;
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    detailsHeadingRef.current?.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+  }, [showDetails]);
   const [pickingGames, setPickingGames] = useState(false);
-  const profile = profiles.find((p) => p.id === editingId) ?? profiles[0];
+  const gamePickRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!pickingGames) return;
+    const onDown = (e: PointerEvent) => {
+      if (!gamePickRef.current?.contains(e.target as Node)) setPickingGames(false);
+    };
+    // Escape closes the picker only, never the modal under it.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setPickingGames(false);
+      gamePickRef.current?.querySelector<HTMLElement>('.pfm-disclosure')?.focus();
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey, true);
+    };
+  }, [pickingGames]);
+  const profile = profiles.find(p => p.id === editingId) ?? profiles[0];
   const isActive = profile.id === activeId;
 
   // Overrides resolve against the baseline for display: an unset key shows what
@@ -282,13 +539,13 @@ export function ProfilesModal({ onClose }: { onClose: () => void }) {
 
   const toggleDay = (i: number) => {
     const days = profile.schedule.days.includes(i)
-      ? profile.schedule.days.filter((d) => d !== i)
+      ? profile.schedule.days.filter(d => d !== i)
       : [...profile.schedule.days, i].sort();
     patchSchedule({ days });
   };
   const toggleGame = (id: string) => {
     const gameIds = profile.gameLink.gameIds.includes(id)
-      ? profile.gameLink.gameIds.filter((g) => g !== id)
+      ? profile.gameLink.gameIds.filter(g => g !== id)
       : [...profile.gameLink.gameIds, id];
     patchGameLink({ gameIds });
   };
@@ -301,7 +558,7 @@ export function ProfilesModal({ onClose }: { onClose: () => void }) {
         <Icon name="add" size={14} aria-hidden /> New Profile
       </Button>
       <nav className="ds-modal-nav" aria-label="Profiles">
-        {profiles.map((p) => (
+        {profiles.map(p => (
           <button
             key={p.id}
             type="button"
@@ -333,7 +590,7 @@ export function ProfilesModal({ onClose }: { onClose: () => void }) {
           accept=".json,application/json"
           hidden
           aria-label="Choose a profiles file"
-          onChange={(e) => {
+          onChange={e => {
             void importFile(e.target.files?.[0]);
             e.target.value = '';
           }}
@@ -349,7 +606,7 @@ export function ProfilesModal({ onClose }: { onClose: () => void }) {
         className="pfm-delete"
         disabled={profiles.length <= 1}
         onClick={() => {
-          const next = profiles.find((p) => p.id !== profile.id);
+          const next = profiles.find(p => p.id !== profile.id);
           deleteProfile(profile.id);
           if (next) setEditingId(next.id);
         }}
@@ -372,112 +629,92 @@ export function ProfilesModal({ onClose }: { onClose: () => void }) {
     <ModalShell title="Profiles" className="stx-modal profiles-modal" onClose={onClose} left={nav} footer={footer}>
       <p className="pfm-lede">Settings a profile takes over are applied whenever it becomes active.</p>
 
-      {/* ── Identity ───────────────────────────────────────────────────── */}
-      <div className="ds-settings-group expanded">
-        <GroupTitle>Profile</GroupTitle>
-        <div className="ds-settings-group-items">
-          <Row
-            label="Name"
-            sublabel="What this profile is called everywhere in the app"
-            control={
-              <Input
-                value={profile.name}
-                aria-label="Profile name"
-                onChange={(e) => updateProfile(profile.id, { name: e.target.value })}
-              />
-            }
-          />
-          <Row
-            label="Photo"
-            sublabel="Identifies this profile beside its name — a wallpaper, or a picture of your own"
-            control={
-              <div className="pfm-photo">
-                <ProfileAvatar profile={profile} size={40} />
-                <div className="wg-swatch-row" role="group" aria-label="Profile photo">
-                  {WALLPAPERS.map((wp) => (
-                    <Swatch
-                      key={wp.id}
-                      image={profileImageSrc(WALLPAPER_IMAGE_PREFIX + wp.id, isLight)}
-                      label={wp.name}
-                      size={22}
-                      selected={profileWallpaperId(profile.image) === wp.id}
-                      onClick={() => updateProfile(profile.id, { image: WALLPAPER_IMAGE_PREFIX + wp.id })}
-                    />
-                  ))}
-                </div>
-                <Button size="sm" onClick={() => photoInput.current?.click()}>
-                  <Icon name="image-upload" size={14} aria-hidden /> Upload photo
-                </Button>
-                <input
-                  ref={photoInput}
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  aria-label="Choose a profile photo"
-                  onChange={(e) => {
-                    void uploadPhoto(e.target.files?.[0]);
-                    e.target.value = '';
-                  }}
-                />
-              </div>
-            }
-          />
-        </div>
-      </div>
+      {/* NGENUITY's layout (Beta Profiles, Kristy 2026-10-01: "太鬆散了"): who the
+          profile is and how it looks on the left, what turns it on stacked on
+          the right, the details underneath. One card per concern, no sublabels:
+          each control's label says what it is, and the band on Personalize
+          explains the switching. */}
+      <div className="pfm-grid">
+        {/* ── Identity + appearance ────────────────────────────────────── */}
+        <div className="ds-settings-group expanded pfm-card">
+          <div className="pfm-name">
+            <ProfileAvatar profile={profile} size={32} />
+            <Input
+              value={profile.name}
+              aria-label="Profile name"
+              onChange={e => updateProfile(profile.id, { name: e.target.value })}
+            />
+          </div>
 
-      {/* ── Appearance overrides ───────────────────────────────────────── */}
-      <div className="ds-settings-group expanded">
-        <GroupTitle>Appearance</GroupTitle>
-        <div className="ds-settings-group-items">
-          <Row
-            label="Accent Color"
-            sublabel={
-              'accent' in ov ? 'This profile sets the app accent' : 'Following the app setting'
-            }
-            control={
-              <div className="pfm-override">
-                <div className="wg-swatch-row" role="group" aria-label="Accent override">
-                  {ACCENTS.map((id) => (
-                    <Swatch
-                      key={id}
-                      color={`var(--accent-${id})`}
-                      label={id}
-                      size={22}
-                      selected={shown<string>('accent') === id}
-                      onClick={() => setOverride(profile.id, 'accent', id)}
-                    />
-                  ))}
-                </div>
-                <ClearOverride on={'accent' in ov} onClear={() => setOverride(profile.id, 'accent', undefined)} />
-              </div>
-            }
-          />
-          <div className="stx-wallpaper">
-            <div className="stx-preview-label">
-              Wallpaper
-              <ClearOverride
-                on={'wallpaper' in ov}
-                onClear={() => setOverride(profile.id, 'wallpaper', undefined)}
+          <div className="pfm-field">
+            <div className="pfm-field-head">
+              <Ng3Label>Photo</Ng3Label>
+              <Button size="sm" variant="ghost" onClick={() => photoInput.current?.click()}>
+                <Icon name="image-upload" size={14} aria-hidden /> Upload
+              </Button>
+              <input
+                ref={photoInput}
+                type="file"
+                accept="image/*"
+                hidden
+                aria-label="Choose a profile photo"
+                onChange={e => {
+                  void uploadPhoto(e.target.files?.[0]);
+                  e.target.value = '';
+                }}
               />
             </div>
-            <div className="wp-thumbs">
-              {WALLPAPERS.map((wp) => {
-                const img = (isLight ? wp.light : wp.dark).img;
-                const active = shown<string>('wallpaper') === wp.id;
-                return (
-                  <button
-                    key={wp.id}
-                    type="button"
-                    className={active ? 'wp-thumb is-active' : 'wp-thumb'}
-                    aria-label={wp.name}
-                    aria-pressed={active}
-                    onClick={() => setOverride(profile.id, 'wallpaper', wp.id)}
-                    style={{ backgroundImage: `url("${img}")` }}
-                  >
-                    <span className="wp-thumb-name">{wp.name}</span>
-                  </button>
-                );
-              })}
+            <div className="wg-swatch-row pfm-swatches" role="group" aria-label="Profile photo">
+              {WALLPAPERS.map(wp => (
+                <Swatch
+                  key={wp.id}
+                  image={profileImageSrc(WALLPAPER_IMAGE_PREFIX + wp.id, isLight)}
+                  label={wp.name}
+                  size={24}
+                  selected={profileWallpaperId(profile.image) === wp.id}
+                  onClick={() => updateProfile(profile.id, { image: WALLPAPER_IMAGE_PREFIX + wp.id })}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="pfm-field">
+            <div className="pfm-field-head">
+              <Ng3Label>Accent</Ng3Label>
+              <ClearOverride on={'accent' in ov} onClear={() => setOverride(profile.id, 'accent', undefined)} />
+            </div>
+            <div className="wg-swatch-row pfm-swatches" role="group" aria-label="Accent override">
+              {ACCENTS.map(id => (
+                <Swatch
+                  key={id}
+                  color={`var(--accent-${id})`}
+                  label={id}
+                  size={24}
+                  selected={shown<string>('accent') === id}
+                  onClick={() => setOverride(profile.id, 'accent', id)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="pfm-field">
+            <div className="pfm-field-head">
+              <Ng3Label>Wallpaper</Ng3Label>
+              <ClearOverride on={'wallpaper' in ov} onClear={() => setOverride(profile.id, 'wallpaper', undefined)} />
+            </div>
+            {/* NGENUITY's square grid rather than Settings' wide thumbnails:
+                the picture is the choice, and its name is the tooltip. */}
+            <div className="pfm-wallpapers" role="group" aria-label="Wallpaper">
+              {WALLPAPERS.map(wp => (
+                <Swatch
+                  key={wp.id}
+                  image={(isLight ? wp.light : wp.dark).img}
+                  label={wp.name}
+                  size={40}
+                  selected={shown<string>('wallpaper') === wp.id}
+                  onClick={() => setOverride(profile.id, 'wallpaper', wp.id)}
+                />
+              ))}
             </div>
             <div className="wp-effect-row">
               <span className="wp-effect-label">Blur</span>
@@ -486,7 +723,7 @@ export function ProfilesModal({ onClose }: { onClose: () => void }) {
                 max={60}
                 step={2}
                 value={shown<number>('wpBlur')}
-                onChange={(v) => setOverride(profile.id, 'wpBlur', v)}
+                onChange={v => setOverride(profile.id, 'wpBlur', v)}
                 aria-label="Wallpaper blur"
               />
               <span className="wp-effect-val">{shown<number>('wpBlur')}px</span>
@@ -498,136 +735,162 @@ export function ProfilesModal({ onClose }: { onClose: () => void }) {
                 max={100}
                 step={5}
                 value={shown<number>('wpOpacity')}
-                onChange={(v) => setOverride(profile.id, 'wpOpacity', v)}
+                onChange={v => setOverride(profile.id, 'wpOpacity', v)}
                 aria-label="Wallpaper opacity"
               />
               <span className="wp-effect-val">{shown<number>('wpOpacity')}%</span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── Game Link ──────────────────────────────────────────────────── */}
-      <div className="ds-settings-group expanded">
-        <GroupTitle
-          action={
-            <Toggle
-              checked={profile.gameLink.enabled}
-              onChange={(on) => patchGameLink({ enabled: on })}
-              aria-label="Game Link"
-            />
-          }
-        >
-          Game Link
-        </GroupTitle>
-        <div className="ds-settings-group-items">
-          <p className="pfm-hint">
-            Launching one of these games switches to {profile.name}. A game beats an open schedule — and
-            quitting hands you back, unless you picked something else in the meantime.
-          </p>
-          {linked.length > 0 && (
-            <div className="pfm-tiles">
-              {linked.map((g: AiGame) => (
-                <GameTile key={g.id} cover={gameArt(g.art)} name={g.title} size="sm" />
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            className="pfm-disclosure"
-            aria-expanded={pickingGames}
-            aria-controls="pfm-gamelist"
-            onClick={() => setPickingGames((o) => !o)}
-          >
-            <Icon name={pickingGames ? 'chevron-up' : 'chevron-down'} size={14} aria-hidden />
-            {linked.length ? `${linked.length} linked` : 'Choose games'}
-          </button>
-          {pickingGames && (
-            <div id="pfm-gamelist" className="pfm-gamelist" role="group" aria-label="Linked games">
-              {INITIAL_GAMES.map((g: AiGame) => (
-                <ListItem
-                  key={g.id}
-                  label={g.title}
-                  leading={
-                    <Checkbox
-                      checked={profile.gameLink.gameIds.includes(g.id)}
-                      onChange={() => toggleGame(g.id)}
-                      aria-label={g.title}
-                    />
-                  }
-                  trailing={<span className="pfm-game-platform">{g.platform}</span>}
-                  onClick={() => toggleGame(g.id)}
+        {/* ── What turns it on ─────────────────────────────────────────── */}
+        <div className="pfm-col">
+          <div className={'ds-settings-group expanded pfm-card' + (profile.gameLink.enabled ? '' : ' is-off')}>
+            <GroupTitle
+              action={
+                <Toggle
+                  checked={profile.gameLink.enabled}
+                  onChange={on => {
+                    patchGameLink({ enabled: on });
+                    // Turning it on with nothing linked goes straight to the
+                    // games: an empty "on" is a click that seems to do nothing.
+                    if (on && linked.length === 0) setPickingGames(true);
+                  }}
+                  aria-label="Game Link"
                 />
+              }
+            >
+              Game Link
+            </GroupTitle>
+            {linked.length > 0 ? (
+              // Square covers in one row, as NGENUITY shows linked games. Not
+              // GameTiles: those are play buttons, and nothing plays from here.
+              <ul className="pfm-games" aria-label="Linked games">
+                {linked.map((g: AiGame) => (
+                  <li key={g.id}>
+                    <Tooltip content={g.title}>
+                      <img className="pfm-game" src={gameArt(g.art)} alt={g.title} tabIndex={0} />
+                    </Tooltip>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="pfm-games-empty">No games linked</p>
+            )}
+            {/* The picker floats over the cards instead of growing the Game
+                Link card (Kristy 2026-10-06: opening it stretched every card
+                in the row). Outside press or Escape closes it. */}
+            <div className="pfm-gamepick" ref={gamePickRef}>
+              <button
+                type="button"
+                className="pfm-disclosure"
+                aria-expanded={pickingGames}
+                aria-controls="pfm-gamelist"
+                onClick={() => setPickingGames(o => !o)}
+              >
+                <Icon name={pickingGames ? 'chevron-up' : 'chevron-down'} size={14} aria-hidden />
+                {linked.length ? `${linked.length} linked` : 'Choose games'}
+              </button>
+              {pickingGames && (
+                <div id="pfm-gamelist" className="pfm-gamelist" role="group" aria-label="Linked games">
+                  {INITIAL_GAMES.map((g: AiGame) => (
+                    <ListItem
+                      key={g.id}
+                      label={g.title}
+                      // The box and the row are both ways to toggle the game, and a
+                      // click on the box used to be BOTH: the label's click and the
+                      // input's follow-up click each bubbled to the row, so one click
+                      // toggled the game three times (three renders, three saves, a
+                      // flicker that read as lag). The box keeps its own click.
+                      leading={
+                        <span onClick={e => e.stopPropagation()}>
+                          <Checkbox
+                            checked={profile.gameLink.gameIds.includes(g.id)}
+                            onChange={() => toggleGame(g.id)}
+                            aria-label={g.title}
+                          />
+                        </span>
+                      }
+                      trailing={<span className="pfm-game-platform">{g.platform}</span>}
+                      onClick={() => toggleGame(g.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={'ds-settings-group expanded pfm-card' + (profile.schedule.enabled ? '' : ' is-off')}>
+            <GroupTitle
+              action={
+                <Toggle
+                  checked={profile.schedule.enabled}
+                  onChange={on => patchSchedule({ enabled: on })}
+                  aria-label="Schedule"
+                />
+              }
+            >
+              Schedule
+            </GroupTitle>
+            {/* Start → End on one line, as NGENUITY draws it. A window may
+                cross midnight; it belongs to the day it started on. */}
+            <div className="pfm-window">
+              <Ng3Field className="pfm-time">
+                <Ng3Label>Start</Ng3Label>
+                <Input
+                  type="time"
+                  aria-label="Start time"
+                  value={toTimeValue(profile.schedule.start)}
+                  onChange={e => patchSchedule({ start: fromTimeValue(e.target.value) })}
+                />
+              </Ng3Field>
+              <span className="pfm-window-arrow" aria-hidden>
+                <Icon name="chevron-right" size={14} />
+              </span>
+              <Ng3Field className="pfm-time">
+                <Ng3Label>End</Ng3Label>
+                <Input
+                  type="time"
+                  aria-label="End time"
+                  value={toTimeValue(profile.schedule.end)}
+                  onChange={e => patchSchedule({ end: fromTimeValue(e.target.value) })}
+                />
+              </Ng3Field>
+            </div>
+            <div className="pfm-days" role="group" aria-label="Days">
+              {DAYS.map(d => (
+                <Chip key={d.i} selected={profile.schedule.days.includes(d.i)} onClick={() => toggleDay(d.i)}>
+                  {d.label}
+                </Chip>
               ))}
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Schedule ───────────────────────────────────────────────────── */}
-      <div className="ds-settings-group expanded">
-        <GroupTitle
-          action={
-            <Toggle
-              checked={profile.schedule.enabled}
-              onChange={(on) => patchSchedule({ enabled: on })}
-              aria-label="Schedule"
-            />
-          }
-        >
-          Schedule
-        </GroupTitle>
-        <div className="ds-settings-group-items">
-          <Row
-            label="Start"
-            sublabel="When this profile takes over"
-            control={
-              <Input
-                type="time"
-                aria-label="Start time"
-                value={toTimeValue(profile.schedule.start)}
-                onChange={(e) => patchSchedule({ start: fromTimeValue(e.target.value) })}
-              />
-            }
-          />
-          <Row
-            label="End"
-            sublabel="A window may cross midnight — it belongs to the day it started on"
-            control={
-              <Input
-                type="time"
-                aria-label="End time"
-                value={toTimeValue(profile.schedule.end)}
-                onChange={(e) => patchSchedule({ end: fromTimeValue(e.target.value) })}
-              />
-            }
-          />
-          <div className="pfm-days" role="group" aria-label="Days">
-            {DAYS.map((d) => (
-              <Chip
-                key={d.i}
-                selected={profile.schedule.days.includes(d.i)}
-                onClick={() => toggleDay(d.i)}
-              >
-                {d.label}
-              </Chip>
-            ))}
           </div>
         </div>
       </div>
 
-      <Separator />
-
-      {/* ── Profile Details (derived, read-only) ───────────────────────── */}
+      {/* ── Profile Details (derived, read-only) ───────────────────────────
+          A section heading you can open, not a bar under a divider (Kristy
+          2026-10-06): the title on the left like every card title, Show/Hide
+          and the chevron on the right where the eye looks for the action. */}
       <button
         type="button"
-        className="pfm-disclosure"
+        className="pfm-details-toggle"
         aria-expanded={showDetails}
         aria-controls="pfm-details"
-        onClick={() => setShowDetails((o) => !o)}
+        ref={detailsHeadingRef}
+        onClick={() => {
+          scrollToDetails.current = !showDetails;
+          setShowDetails(o => !o);
+        }}
       >
-        <Icon name={showDetails ? 'chevron-up' : 'chevron-down'} size={14} aria-hidden />
-        {showDetails ? 'Hide Profile Details' : 'Show Profile Details'}
+        <span className="pfm-details-heading">
+          <span className="stx-group-title">Profile Details</span>
+          <span className="pfm-details-sub">Device presets saved and synced with this profile.</span>
+        </span>
+        <span className="pfm-details-action">
+          {showDetails ? 'Hide' : 'Show'}
+          <Icon name={showDetails ? 'chevron-up' : 'chevron-down'} size={14} aria-hidden />
+        </span>
       </button>
       {showDetails && (
         <div id="pfm-details">

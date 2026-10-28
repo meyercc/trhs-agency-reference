@@ -7,8 +7,11 @@ import { VitalsModal, type VitalsTab } from './VitalsModal';
 import { SettingsModal } from './SettingsModal';
 import { ProfilesModal } from './ProfilesModal';
 import { AdminModal } from './AdminModal';
+import { AboutPcModal } from './AboutPcModal';
 import { LightingModal } from '../pages/personalize/LightingModal';
 import { ModuleBrowserModal, type Section } from '../modules/ModuleBrowserModal';
+import { ForgeModal, type ForgeSection } from '../forge/ForgeModal';
+import { AutocastPlayer } from '../nova/AutocastPlayer';
 import { useModules } from '../state/Modules';
 import { MODAL_MODULE } from '../modules/registry';
 
@@ -28,7 +31,10 @@ export function FeatureModalHost() {
     p.delete('tab');
     p.delete('cat');
     p.delete('module');
+    p.delete('agent');
+    p.delete('listing');
     p.delete('device');
+    p.delete('i');
     setParams(p, { replace: true });
   };
 
@@ -61,18 +67,36 @@ export function FeatureModalHost() {
     ) : modal === 'vitals' ? (
       <VitalsModal onClose={close} initialTab={(params.get('tab') as VitalsTab) || 'overview'} />
     ) : modal === 'settings' ? (
-      <SettingsModal onClose={close} />
+      <SettingsModal onClose={close} initialSection={params.get('tab') || undefined} />
+    ) : modal === 'profile' ? (
+      // Alias: Profile is the Account group of Settings now.
+      <SettingsModal onClose={close} initialSection={params.get('tab') === 'accounts' ? 'accounts' : 'profile'} />
     ) : modal === 'profiles' ? (
-      <ProfilesModal onClose={close} />
+      // Chris's Profiles editor — the profile itself (identity, overrides, Game Link, Schedule).
+      <ProfilesModal onClose={close} initialProfileId={params.get('profile') || undefined} />
     ) : modal === 'lighting' ? (
       <LightingModal onClose={close} device={params.get('device') || undefined} />
     ) : modal === 'admin' ? (
       <AdminModal onClose={close} />
+    ) : modal === 'about-pc' ? (
+      <AboutPcModal onClose={close} />
     ) : modal === 'modules' ? (
       <ModuleBrowserModal
         onClose={close}
         initialSection={(params.get('cat') as Section) || 'whatsnew'}
         initialModuleId={params.get('module') || undefined}
+      />
+    ) : modal === 'autocast-clip' ? (
+      // One of Autocast's clips, played (TH-509): `?i=` is which.
+      <AutocastPlayer onClose={close} index={Number(params.get('i') ?? 0) || 0} />
+    ) : modal === 'agents' ? (
+      // Forge, in the slot (and on the URL) the Agent Catalog held. `?agent=`
+      // still deep-links a listing — every agent is one — and `?listing=`
+      // reaches the rest.
+      <ForgeModal
+        onClose={close}
+        initialSection={(params.get('cat') as ForgeSection) || 'discover'}
+        initialListingId={params.get('listing') || params.get('agent') || undefined}
       />
     ) : null;
   if (!content) return null;

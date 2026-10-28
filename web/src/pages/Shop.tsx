@@ -30,14 +30,14 @@ export function Shop() {
         badge={<Badge variant="sale">−50%</Badge>}
       />
 
-      <SectionHeader label="New Releases" />
+      <SectionHeader id="new-releases" label="New Releases" />
       <div className="pg-grid">
         {releases.map((g) => (
           <Card key={g.id} art={g.art} artAlt={g.title} title={g.title} meta={g.genre} price={priceLabel(g.price)} />
         ))}
       </div>
 
-      <SectionHeader label="Weekly Deals" count={`${onSale.length} on sale`} />
+      <SectionHeader id="weekly-deals" label="Weekly Deals" count={`${onSale.length} on sale`} />
       <div className="pg-grid">
         {onSale.map((g) => (
           <Card
@@ -53,7 +53,7 @@ export function Shop() {
         ))}
       </div>
 
-      <SectionHeader label="Free to Play" />
+      <SectionHeader id="free-to-play" label="Free to Play" />
       <div className="pg-grid">
         {free.map((g) => (
           <Card key={g.id} art={g.art} artAlt={g.title} title={g.title} meta={g.genre} price="Free" />

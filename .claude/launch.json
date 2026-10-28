@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "treehouse-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "web", "run", "dev"],
+      "port": 5175
+    },
+    {
+      "name": "treehouse-storybook",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "web", "run", "storybook"],
+      "port": 6006
+    }
+  ]
+}

@@ -8,7 +8,7 @@ const IMGS = import.meta.glob('../../../Assets/wallpapers/*.webp', {
   import: 'default',
 }) as Record<string, string>;
 
-function img(file: string): string {
+export function img(file: string): string {
   const key = Object.keys(IMGS).find((k) => k.endsWith('/' + file));
   return key ? IMGS[key] : '';
 }
@@ -55,3 +55,41 @@ export const WALLPAPERS: Wallpaper[] = [
 export function wallpaperById(id: string): Wallpaper | undefined {
   return WALLPAPERS.find((w) => w.id === id);
 }
+
+/** The wallpaper id for the user's own uploaded image (stored in IndexedDB). */
+export const CUSTOM_WALLPAPER_ID = 'custom';
+
+/** The image a preset shows in the current theme (a thumbnail, an avatar). */
+export function wallpaperImage(id: string, isLight: boolean): string {
+  const wp = wallpaperById(id);
+  return wp ? (isLight ? wp.light : wp.dark).img : '';
+}
+
+/** Preset avatars — crops of the brand wallpapers until real avatar art exists. */
+export const AVATAR_PRESETS: { id: string; name: string; img: string }[] = [
+  { id: 'purple', name: 'Purple', img: img('purple-dark.webp') },
+  { id: 'red', name: 'Red', img: img('red-dark.webp') },
+  { id: 'blue', name: 'Blue', img: img('blue-dark.webp') },
+  { id: 'abstract', name: 'Abstract', img: img('abstractv2-dark.webp') },
+  { id: 'hp', name: 'HP', img: img('hp-wallpaper.webp') },
+];
+
+/**
+ * Looks — a wallpaper, accent and theme that belong together, applied in one
+ * click. The fast path for people who want it to look good without tuning three
+ * controls; every part stays adjustable afterwards.
+ */
+export interface Look {
+  id: string;
+  name: string;
+  wallpaper: string;
+  accent: string;
+  theme: 'dark' | 'light';
+}
+export const LOOKS: Look[] = [
+  { id: 'omen-red', name: 'HyperX Red', wallpaper: 'red', accent: 'red', theme: 'dark' },
+  { id: 'midnight', name: 'Midnight', wallpaper: 'blue', accent: 'blue', theme: 'dark' },
+  { id: 'neon', name: 'Neon', wallpaper: 'purple', accent: 'purple', theme: 'dark' },
+  { id: 'abstract', name: 'Abstract', wallpaper: 'abstractv2', accent: 'indigo', theme: 'dark' },
+  { id: 'daylight', name: 'Daylight', wallpaper: 'blue', accent: 'blue', theme: 'light' },
+];

@@ -12,12 +12,32 @@
 // the FIRST live press cycles 0 → 1 and lands on "Slot 2".
 // Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { build } from 'esbuild';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+// The connected-device roster, read from the source the app runs. The expected
+// count is never retyped here — see the note at its use below.
+const rosterDir = mkdtempSync(join(tmpdir(), 'trhs-roster-'));
+const rosterOut = join(rosterDir, 'connectedDevices.mjs');
+await build({
+  entryPoints: ['src/devices/connectedDevices.ts'],
+  outfile: rosterOut,
+  format: 'esm',
+  platform: 'node',
+  bundle: true,
+  logLevel: 'silent',
+});
+// A file URL, not a path: on Windows a bare `D:\…` path is not an import specifier.
+const ROSTER_SIZE = (await import(pathToFileURL(rosterOut).href)).CONNECTED_DEVICE_IDS.length;
+rmSync(rosterDir, { recursive: true, force: true });
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
 
-const OUT = process.argv[2] || '/tmp';
+const OUT = process.argv[2] || tmpdir();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
@@ -198,10 +218,19 @@ async function main() {
   // "devices with onboard memory", and a monitor has none. That left both
   // displays out of the only screen that plays hardware, so nobody could see
   // what the app does when a display is unplugged.
+  // The expected count is READ from the roster, never retyped. It was hardcoded
+  // to 6 and went stale the day a seventh device was added (TH-424, the OMEN 16),
+  // failing two checks that were describing the app correctly — the second time
+  // this number has rotted (see the flyout note below). The roster is the source
+  // of truth; the suite should say so rather than keep a copy.
+  // Read with esbuild into node rather than imported through the page: it is a
+  // plain array length with nothing to render, and a `/src/...` import only
+  // resolves against the dev server (verify-profiles.mjs set the pattern).
+  const rosterSize = ROSTER_SIZE;
   check('hud: one row per connected device, displays included',
-    s.hudRows.length === 6 && s.hudRows.some((r) => /Treehouse 32/.test(r.name ?? ''))
+    s.hudRows.length === rosterSize && s.hudRows.some((r) => /Treehouse 32/.test(r.name ?? ''))
       && s.hudRows.some((r) => /OLED/.test(r.name ?? '')),
-    s.hudRows.map((r) => r.name).join(' / '));
+    `${s.hudRows.length} rows vs roster ${rosterSize} — ` + s.hudRows.map((r) => r.name).join(' / '));
   // A row offers only what that device can do. Offering a dead control on the
   // screen we CHECK dead controls from would be the same lie one layer up.
   check('hud: a display gets Unplug only — no profile button, no battery',
@@ -385,12 +414,15 @@ async function main() {
     return { count: tabs.length, offline: tabs.map(t => t.classList.contains('offline')), titles: tabs.map(t => t.title) };
   })()`);
   check('flyout: unplugged headset stays listed — inventory, not hidden',
-    // 6, not 5 — this count was stale before the 2026-09-01 work and failed on
-    // the parent commit too (measured by running this file on both). The panel
-    // lists CONNECTED_DEVICE_IDS, which has six entries.
-    fly.count === 6 && fly.offline.filter(Boolean).length === 1 && /Cloud III \(disconnected\)/.test(fly.titles[2]),
-    JSON.stringify(fly.titles));
-  await evalJs(send, `document.querySelectorAll('.devp-tab')[2].click()`);
+    // The panel lists CONNECTED_DEVICE_IDS, so the count comes from there. It was
+    // written as a literal twice and went stale twice (5 → 6 on 2026-09-01, 6 → 7
+    // when the OMEN 16 landed); reading the roster ends that. This PC now leads
+    // the list in place of the roster's one computer, so the count is still the
+    // roster's — and the headset is found by name, not by position, since the
+    // order is no longer the roster's order.
+    fly.count === rosterSize && fly.offline.filter(Boolean).length === 1 && fly.titles.some((t) => /Cloud III \(disconnected\)/.test(t)),
+    `${fly.count} tabs vs roster ${rosterSize} — ` + JSON.stringify(fly.titles));
+  await evalJs(send, `[...document.querySelectorAll('.devp-tab')].find((t) => t.title.startsWith('Cloud III'))?.click()`);
   await waitFor(send, `[...document.querySelectorAll('.devp-badge')].some(b => b.textContent.trim() === 'Disconnected')`);
   const offBadges = await evalJs(send, `[...document.querySelectorAll('.devp-badge')].map(b => b.textContent.trim())`);
   check('flyout: badge carries the state in words, no battery reading from an absent device',

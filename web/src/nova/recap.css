@@ -1,0 +1,127 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Catch Me Up's recap (TH-478) — inside a Nova reply, on the Nova page and in
+   the pinned panel alike, so it is imported by RecapCard rather than by either
+   page. The parts are the system's (Badge, Separator, the ds-text type ramp);
+   this file only lays them out. Tokens only.
+   ══════════════════════════════════════════════════════════════════════════ */
+.nova-recap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-sunken);
+}
+
+.nova-recap-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-sm);
+}
+/* The card-block cover's proportion, one size up: the recap is the subject. */
+.nova-recap-cover {
+  display: block;
+  flex: none;
+  height: calc(var(--text-section) * 4);
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.nova-recap-id {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gutter-xxs);
+  min-width: 0;
+}
+.nova-recap-title {
+  margin: 0;
+}
+/* The marker can be long ("the start of Act 2"); it wraps rather than clips. */
+.nova-recap-marker {
+  white-space: normal;
+}
+
+.nova-recap-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+}
+.nova-recap-h {
+  margin: 0;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-size: var(--text-caption);
+}
+.nova-recap-p {
+  margin: 0;
+}
+.nova-recap-dim {
+  color: var(--text-dim);
+}
+
+.nova-recap-changes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nova-recap-change-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xxs) var(--gutter-xs);
+}
+
+/* ── Did I Just Waste My Money's card (TH-484) ────────────────────────────
+   RefundCard reuses the recap shell above; the steps are its one new part — a
+   numbered list in the body type, the numbers in the dim mono of a kicker. */
+.nova-refund-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  margin: 0;
+  padding-left: var(--gutter);
+}
+.nova-refund-steps li::marker {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+/* ── Who Made This's cards (2026-10-26) ───────────────────────────────────
+   CreditsCard and PersonCard reuse the recap shell; the rows are ListItems —
+   a monogram or a cover, a name, a part. The card's own padding is the row's
+   inset, so the rows line up with the section headings. */
+.nova-credits-list {
+  display: flex;
+  flex-direction: column;
+}
+.nova-credits-row {
+  padding-inline: 0;
+}
+/* The monogram is the compact cover's height, so a person row and a game row
+   are one unit; the portrait in a person card's header, the recap cover's. */
+.nova-credits-row .ds-avatar {
+  --avatar-size: calc(var(--text-section) * 2);
+}
+.nova-credits-portrait {
+  --avatar-size: calc(var(--text-section) * 3);
+}
+/* A game the library does not carry: the cover's frame, empty. */
+.nova-credits-nocover {
+  background: var(--surface-hover);
+}
+
+/* Frameless, inside a widget or the HUD (RefundWatchCard): the host's shell is
+   the border and its header the title, so the card drops its own. */
+.nova-recap.bare {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+

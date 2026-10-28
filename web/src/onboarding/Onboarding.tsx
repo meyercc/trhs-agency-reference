@@ -74,7 +74,7 @@ function seedBoard(persona: string, mods: Record<string, boolean>, addDevice: Re
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const { setPersona, setOnboarded, deskDevices } = useSettings();
+  const { setPersona, setOnboarded, deskDevices, setBoardLayout } = useSettings();
   const { install, remove } = useModules();
 
   const [idx, setIdx] = useState(0);
@@ -111,10 +111,11 @@ export function Onboarding() {
     const p = persona || 'minimalist';
     MODULES.forEach((m) => (effectiveMods[m.id] ? install(m.id) : remove(m.id)));
     // Seed the real dashboard layout from her choices (persona density + selected
-    // modules + added devices). The board reads `board-layout` on next mount.
-    try {
-      localStorage.setItem('board-layout', JSON.stringify(seedBoard(p, effectiveMods, addDevice)));
-    } catch { /* ignore quota / private-mode */ }
+    // modules + added devices). Through Settings, not storage: `readAll` runs
+    // once at provider mount, so a direct localStorage write is invisible to
+    // Settings and would be overwritten by the live board (TH-442). This used to
+    // get away with it only because `navigate('/')` remounted everything.
+    setBoardLayout(seedBoard(p, effectiveMods, addDevice));
     setPersona(p);
     setOnboarded(true);
     navigate('/');

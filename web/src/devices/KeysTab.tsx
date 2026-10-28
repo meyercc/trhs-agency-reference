@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Icon, Input, Ng3Grid, Ng3Label, Ng3Section } from '../components';
 import { KEYCAP_SETS, KEY_CATEGORIES, ASSIGN_TYPES } from './keysData';
-import { KEY_BY_CODE, type KbLayer, type KeyBinds } from './keyboardLayout';
+import { KEY_BY_CODE, type KbLayer, type KeyBinds, type KeySpec } from './keyboardLayout';
+import { KEYCAP_DRAG_TYPE } from './KeyboardPhoto';
+import type { RenderKey } from './keyboardRenders';
+import { MacroPanel } from './MacroPanel';
 
 /**
  * Keys & Macros tab — the NGENUITY "KEYS" panel. Left: an assignment-type rail
@@ -10,7 +13,8 @@ import { KEY_BY_CODE, type KbLayer, type KeyBinds } from './keyboardLayout';
  *
  * Binding flow (ported from vanilla, armed either order): pick a key on the hero
  * OR arm a palette keycap here — whichever second completes the bind, writing to
- * the active layer's slot. Fully interactive, in-memory.
+ * the active layer's slot. On a photo board (`renderKeys` set) a keycap can
+ * also be dragged onto a key. Fully interactive, in-memory.
  */
 
 export interface KeysTabProps {
@@ -21,9 +25,15 @@ export interface KeysTabProps {
   onArm: (label: string) => void;
   onClearBinding: () => void;
   onResetLayer: () => void;
+  /**
+   * The photo board's keys, when the SKU has one: their factory FN functions
+   * win in the readout, and the palette keycaps become draggable onto them.
+   */
+  renderKeys?: RenderKey[];
 }
 
-export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, onResetLayer }: KeysTabProps) {
+export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, onResetLayer, renderKeys }: KeysTabProps) {
+  const specs = useMemo(() => new Map<string, KeySpec>(renderKeys?.map((k) => [k.code, k])), [renderKeys]);
   const [assignType, setAssignType] = useState('keys');
   const [gameMode, setGameMode] = useState(false);
   const [query, setQuery] = useState('');
@@ -50,7 +60,7 @@ export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, 
       return next;
     });
 
-  const target = buildTarget(selected, armed, layer, binds);
+  const target = buildTarget(selected, armed, layer, binds, specs);
 
   return (
     <Ng3Grid className="pdm-keys">
@@ -93,6 +103,7 @@ export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, 
 
       {/* Right — key browser */}
       <Ng3Section as="section" className="pdm-keys-browse">
+        {assignType !== 'macro' && (
         <div className={'pdm-keys-target'} data-state={target.state}>
           <span className="pdm-keys-target-key" aria-hidden={target.state === 'empty'}>
             {target.key ?? '—'}
@@ -104,7 +115,12 @@ export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, 
             </button>
           )}
         </div>
+        )}
 
+        {assignType === 'macro' ? (
+          <MacroPanel />
+        ) : (
+        <>
         <Input
           variant="search"
           placeholder="Search keys or buttons"
@@ -132,6 +148,12 @@ export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, 
                         type="button"
                         className={'pdm-keycap' + (armed === k ? ' active' : '')}
                         onClick={() => onArm(k)}
+                        draggable={!!renderKeys}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData(KEYCAP_DRAG_TYPE, k);
+                          e.dataTransfer.setData('text/plain', k);
+                          e.dataTransfer.effectAllowed = 'copy';
+                        }}
                       >
                         {k}
                       </button>
@@ -143,6 +165,8 @@ export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, 
           })}
           {q && totalHits === 0 && <div className="pdm-keys-empty">No keys match your search.</div>}
         </div>
+        </>
+        )}
       </Ng3Section>
     </Ng3Grid>
   );
@@ -150,7 +174,7 @@ export function KeysTab({ selected, armed, layer, binds, onArm, onClearBinding, 
 
 // The selected-key readout (state + label + info + whether Clear shows).
 // Ported from vanilla `_periUpdateTarget`.
-function buildTarget(selected: string | null, armed: string | null, layer: KbLayer, binds: Map<string, KeyBinds>) {
+function buildTarget(selected: string | null, armed: string | null, layer: KbLayer, binds: Map<string, KeyBinds>, specs: Map<string, KeySpec>) {
   if (!selected) {
     return {
       state: 'empty' as const,
@@ -159,7 +183,8 @@ function buildTarget(selected: string | null, armed: string | null, layer: KbLay
       showClear: false,
     };
   }
-  const spec = KEY_BY_CODE.get(selected);
+  // A photo board's own keys first — they carry that keyboard's FN functions.
+  const spec = specs.get(selected) ?? KEY_BY_CODE.get(selected);
   const tag = layer === 'fn' ? 'FN layer' : 'Base layer';
   const bound = layer === 'fn' ? binds.get(selected)?.fn : binds.get(selected)?.base;
   const factory = layer === 'fn' ? spec?.fn : null;

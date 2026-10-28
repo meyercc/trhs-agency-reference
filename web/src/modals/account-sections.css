@@ -1,0 +1,116 @@
+/* Settings › Account (Profile, Linked accounts) — identity-specific pieces on
+   the Settings modal layout. Token-only. */
+
+.settings-modal .pf-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-sm) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.pf-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter);
+  padding: var(--gutter-sm) 0 var(--gutter);
+  border-bottom: 1px solid var(--border-light);
+}
+.pf-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  min-width: 0;
+  color: var(--text-primary);
+}
+
+.pf-avatars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-sm);
+}
+.pf-avatar-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  padding: var(--gutter-xs);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--text-micro);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default);
+}
+.pf-avatar-opt:hover {
+  background: var(--surface-hover);
+}
+.pf-avatar-opt[aria-pressed='true'] {
+  border-color: var(--accent-color);
+  background: var(--accent-dimmest);
+  color: var(--text-primary);
+}
+.pf-avatar-opt:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+.pf-avatar-opt:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+.pf-avatar-upload-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--control-height) * 1.5);
+  height: calc(var(--control-height) * 1.5);
+  border-radius: var(--radius-full);
+  border: 1px dashed var(--border-med);
+}
+
+.pf-name {
+  width: calc(var(--control-height) * 7);
+}
+.pf-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.pf-platform {
+  display: flex;
+  color: var(--text-dim);
+}
+.pf-footnote {
+  padding: var(--gutter-sm) 0;
+}
+
+/* Name, edited in place in the hero. */
+.pf-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+}
+.pf-name-display {
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: text;
+}
+.pf-name-display:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--border-med);
+  text-underline-offset: var(--gutter-xxs);
+}
+.pf-name-display:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}

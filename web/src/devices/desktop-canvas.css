@@ -1,0 +1,155 @@
+/* The PC's page (DesktopCanvas). On the Lights tab the hero is
+   the 3D tower instead of the photo: it fills the hero box, no padding. */
+.dk-hero-3d {
+  padding: 48px 0 0;
+  align-items: stretch;
+}
+.dk-hero-3d .ls {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+/* The tower stands on the page itself: the scene draws no room behind a
+   device shown alone (scene.ts focusDevice), and the viewport's own frame
+   and fill go with it, so the hero reads as the product, not a window. */
+.dk-hero-3d .ls-viewport {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+/* ── Full-screen layout (`pc-canvas--full`; the Simulator's PC layout row) ──
+   A trial from the 2026-10-22 design review: with the part being edited as
+   the subject, the lit tower below it competed with it. Here the 3D is the
+   page ("model space") and the panel, and on the cooler cap tab the cap's
+   preview, float over it as cards. Stacked stays the default; nothing above
+   this block changes, and nothing here touches the shared `.dc-*` rules, the
+   panel component or the notebook's page (which never gets the class).
+
+   The camera frames the tower in what the cards leave uncovered
+   (DesktopCanvas, useUncovered → LightStudio's frameInsets), so the geometry
+   below is also what the camera is told: the panel sits where it did when
+   stacked, the preview takes the room between the chips' row and the panel. */
+.pc-canvas.pc-canvas--full {
+  /* Everything in it floats now, so the padding that cleared the nav for the
+     hero and the panel has nothing left to do — and a container's `cqh` is
+     its content box, which the padding would shorten. */
+  padding: 0;
+  /* The canvas is the one size container, so the cards' sizes below can read
+     its height (`cqh`) wherever they are. It is fixed to the window already,
+     so containing its size changes nothing about where it lies. */
+  container-type: size;
+  /* What the cards are made of: the panel's own surface, mostly opaque so the
+     text reads over glowing LEDs, with the blur taking the edge off the glow. */
+  --pc-float-bg: color-mix(in srgb, color-mix(in srgb, var(--bg-mid), var(--bg-base) 85%) 90%, transparent);
+  --pc-float-blur: blur(var(--blur-md));
+  /* The panel's height: its usual, less what a short window cannot spare. The
+     3D keeps the floor the hero keeps when stacked (--dc-hero-min-h), between
+     the chips' row (the nav, a gutter, a chip and a gap: 44px) and the panel
+     (a gutter under it, a gutter in its wrap). */
+  --pc-panel-used: min(var(--pc-panel-h), calc(100cqh - var(--nav-full-h) - var(--gutter) * 3 - 44px - var(--dc-hero-min-h)));
+}
+
+/* The 3D fills the window, behind the translucent nav as the canvas does. */
+.pc-canvas--full .dc-hero.dk-hero-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  min-height: 0;
+  padding: 0;
+}
+
+/* The panel floats at the bottom centre, where it sat when stacked: the same
+   width rules (.dc-panel-wrap), the same height on every tab. The wrap and the
+   panel's tab strip are empty space around the card, so they let the pointer
+   through to the 3D; the card itself and the tab take it back. */
+.pc-canvas--full .dc-panel-wrap {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: var(--gutter);
+  height: var(--pc-panel-used);
+  pointer-events: none;
+}
+.pc-canvas--full .dc-panel-wrap .ds-ng3-panel {
+  --ng3-surface: var(--pc-float-bg);
+  pointer-events: none;
+}
+.pc-canvas--full .dc-panel-wrap .ds-ng3-body,
+.pc-canvas--full .dc-panel-wrap .ds-ng3-tab {
+  pointer-events: auto;
+}
+.pc-canvas--full .dc-panel-wrap .ds-ng3-body {
+  backdrop-filter: var(--pc-float-blur);
+}
+/* The tab is drawn by a clipped ::after, so the blur goes on that, in its shape. */
+.pc-canvas--full .dc-panel-wrap .ds-ng3-tab::after {
+  backdrop-filter: var(--pc-float-blur);
+}
+
+/* The cap's preview, a card of its own on the right, centred between the
+   close button and the panel. Stacked it is a column beside the tower
+   (cooler-cap.css); here the column's size container and width are put back
+   to what a card needs, and the cap is sized to the room the card has. */
+.pc-canvas--full .dk-hero-3d > .cap-hero {
+  position: absolute;
+  z-index: 1;
+  right: var(--gutter);
+  top: calc(var(--nav-full-h) + var(--gutter) * 2 + 36px);
+  bottom: calc(var(--gutter) * 2 + var(--pc-panel-used));
+  /* Top and bottom set, a height of its own and auto margins: centred between them. */
+  height: fit-content;
+  margin-block: auto;
+  width: fit-content;
+  container-type: normal;
+  padding: var(--gutter-tablet);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--pc-float-bg);
+  backdrop-filter: var(--pc-float-blur);
+  box-shadow: var(--shadow-lv-3);
+}
+.pc-canvas--full .cap-hero .pcp-cap {
+  /* The room between the close button and the panel, less the card's padding
+     and its tag; never tiny, never bigger than the cap is stacked. */
+  width: clamp(
+    120px,
+    calc(100cqh - var(--nav-full-h) - var(--gutter) * 4 - 36px - var(--pc-panel-used) - 64px),
+    260px
+  );
+  box-shadow: none;
+}
+
+/* "Dim the rest" — the pill that turns the dimming off (full-screen only). It
+   is a status chip that takes a click, under the chips' row at the left; the
+   dot says whether it is on. */
+.pc-dim {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--nav-full-h) + var(--gutter) + var(--control-height) + var(--gutter-xs));
+  left: var(--gutter);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default);
+}
+.pc-dim:hover {
+  background: var(--ksg-b40, rgba(0, 0, 0, 0.4));
+}
+.pc-dim:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+/* Off: a hollow dot. On: filled, and the pill's outline in the accent. */
+.pc-dim .pc-dim-dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--text-dim);
+}
+.pc-dim[aria-pressed='true'] {
+  border-color: var(--accent-color);
+}
+.pc-dim[aria-pressed='true'] .pc-dim-dot {
+  background: var(--accent-color);
+  box-shadow: none;
+}

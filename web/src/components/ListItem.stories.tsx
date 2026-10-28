@@ -55,13 +55,24 @@ export const Slots: Story = {
   render: () => (
     <Box>
       <ListItem leading={<Avatar />} label="Avatar" trailing={<Kebab />} />
-      <ListItem leading={<Swatch color="var(--accent-cyan)" />} label="Color swatch" />
+      <ListItem leading={<Swatch color="var(--accent-blue)" />} label="Color swatch" />
       <ListItem leading={<Icon name="home" />} label="Icon" />
       <ListItem leading={<Checkbox defaultChecked />} label="Checkbox" />
       <ListItem leading={<Icon name="performance" />} label="With badge" trailing={<Badge variant="new">NEW</Badge>} />
       <ListItem leading={<Icon name="profile" />} label="With toggle" trailing={<Toggle checked={false} aria-label="row toggle" />} />
+      <ListItem leading={<Icon name="library" />} label="With description" description="A second line, in caption type, that clamps at two lines rather than pushing the row taller." />
     </Box>
   ),
+};
+
+/** A second line under the label (`description`), clamped at two lines. */
+export const WithDescription: Story = {
+  args: {
+    leading: <Avatar />,
+    label: 'Cyberpunk 2077',
+    description: '94 days away · 2 new. Netrunner, Act 1 done. The Relic is in your head and Viktor is waiting.',
+    trailing: <Badge variant="new">NEW</Badge>,
+  },
 };
 
 /** Selectable list — single selection, like a forthcoming list box. */
@@ -70,7 +81,7 @@ export const Selectable: Story = {
   render: () => {
     const items = [
       { id: 'gaming', label: 'Gaming', color: 'var(--accent-red)' },
-      { id: 'work', label: 'Work', color: 'var(--accent-cyan)' },
+      { id: 'work', label: 'Work', color: 'var(--accent-blue)' },
       { id: 'silent', label: 'Silent', color: 'var(--accent-green)' },
       { id: 'movie', label: 'Movie', color: 'var(--accent-purple)' },
     ];

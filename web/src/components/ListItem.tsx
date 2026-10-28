@@ -3,6 +3,11 @@ import React, { type ReactNode } from 'react';
 export interface ListItemProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   /** Row text. Omitted in `iconOnly` mode. */
   label?: ReactNode;
+  /**
+   * A second line under the label, in caption type, clamped at two lines —
+   * a game's state under its title, a setting's effect under its name.
+   */
+  description?: ReactNode;
   /** Leading slot — color swatch, icon, checkbox, toggle, avatar, etc. */
   leading?: ReactNode;
   /** Trailing slot — action icon, badge, value, toggle, etc. */
@@ -21,10 +26,11 @@ export interface ListItemProps extends Omit<React.HTMLAttributes<HTMLDivElement>
  * list-box row when grouped (forthcoming).
  *
  * Avalonia: a ListBoxItem ControlTheme — leading/trailing ContentPresenters
- * around a TextBlock; hover/selected via the PointerOver / Selected visual
+ * around a TextBlock (a StackPanel of two, the second with MaxLines=2, when
+ * there is a description); hover/selected via the PointerOver / Selected visual
  * states.
  */
-export function ListItem({ label, leading, trailing, selected, disabled, iconOnly, className, ...rest }: ListItemProps) {
+export function ListItem({ label, description, leading, trailing, selected, disabled, iconOnly, className, ...rest }: ListItemProps) {
   const classes = [
     'ds-list-item',
     selected ? 'selected' : '',
@@ -44,7 +50,15 @@ export function ListItem({ label, leading, trailing, selected, disabled, iconOnl
       {...rest}
     >
       {leading != null && <span className="ds-list-item-leading">{leading}</span>}
-      {!iconOnly && <span className="ds-text-label ds-list-item-label">{label}</span>}
+      {!iconOnly &&
+        (description != null ? (
+          <span className="ds-list-item-text">
+            <span className="ds-text-label ds-list-item-label">{label}</span>
+            <span className="ds-text-caption ds-list-item-description">{description}</span>
+          </span>
+        ) : (
+          <span className="ds-text-label ds-list-item-label">{label}</span>
+        ))}
       {!iconOnly && trailing != null && <span className="ds-list-item-trailing">{trailing}</span>}
     </div>
   );

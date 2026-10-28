@@ -94,7 +94,7 @@
 .pv7-modals { --pv7-modal-h: 640px; }
 .pv7-modals .modal-shell {
   height: var(--pv7-modal-h);
-  max-height: calc(100vh - 216px);
+  max-height: calc(var(--viewport-h) - 216px);
 }
 .pv7-modals .modal-shell:not(.modal-shell-narrow) {
   max-width: 980px; /* 760 narrow + 220 rail */
@@ -198,93 +198,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Trend: a line plus the references that make it readable ──
-   The trace is the only thing inside the stretched SVG. Markers and labels are
-   HTML on top, because non-uniform scaling distorts text and turns circles into
-   ellipses. The plot sits in the same container treatment as the reading tiles
-   above it, so the block reads as one unit rather than a line floating on the
-   modal background. */
-.pv7-trend-plot {
-  position: relative;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-.pv7-trend-svg { display: block; width: 100%; height: 100%; }
-.pv7-trend-line { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
-.pv7-trend-rule { stroke-width: 1; stroke-dasharray: 3 3; }
-.pv7-trend-rule-warn { stroke: color-mix(in srgb, var(--orange), transparent 55%); }
-.pv7-trend-rule-danger { stroke: color-mix(in srgb, var(--red), transparent 45%); }
+/* The trend itself (.pv7-trend*) is TrendGraph's own stylesheet now —
+   widgets/perform7/trend-graph.css, imported by the widget, so every host
+   gets it (TH-432). Only the modal's layout of it stays here. */
 
-.pv7-trend-peak,
-.pv7-trend-now {
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-.pv7-trend-peak { border: 1.5px solid var(--text-dim); background: var(--bg-base); }
-.pv7-trend-now { box-shadow: 0 0 0 3px color-mix(in srgb, var(--bg-base), transparent 40%); }
-.pv7-trend-peak-label {
-  position: absolute;
-  transform: translate(-50%, -175%);
-  white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: var(--text-nano);
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-.pv7-trend-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: var(--text-nano);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
-/* Range picker — the chart's own control, so it sits on the chart. */
-.pv7-trend-ranges { display: inline-flex; gap: 2px; }
-.pv7-trend-range {
-  appearance: none;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  padding: 3px 8px;
-  font: inherit;
-  letter-spacing: inherit;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
-.pv7-trend-range:hover { color: var(--text-dim); border-color: var(--border-light); }
-.pv7-trend-range.active {
-  color: var(--cyan);
-  border-color: color-mix(in srgb, var(--cyan), transparent 60%);
-  background: color-mix(in srgb, var(--cyan), transparent 92%);
-}
-/* The chart's content, for anyone who cannot see it. No such utility exists in
-   the shared DS yet — worth promoting if a second surface needs one. */
-.ds-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-.pv7-svm-door { margin-top: var(--gutter); }
+.pv7-svm-door { margin-top: var(--gutter); display: flex; flex-wrap: wrap; gap: var(--gutter); }
 
 /* Modal-scope metadata belongs to the frame, so it sits at its foot. */
 .pv7-svm-foot {
@@ -476,3 +394,96 @@
   color: var(--text-muted);
   margin-right: auto;
 }
+
+/* Arrival targets (`?spot=`, PerformV7): the Spotlight ring fades in and out
+   rather than switching. The System Vitals card already carries its own
+   box-shadow transition from components.css. */
+.pv7-root .pv5-anchor,
+.pv7-root .pv7-psu-row > .pv5-tagged,
+.pv7-root .pv5-maint-grid > .pv5-tagged {
+  border-radius: var(--radius);
+  transition: box-shadow var(--dur-slow) var(--ease-default);
+}
+
+/* ── The record's door and its list (perform.5) ──
+   The door is a quiet text link at the right end of the title row, in the
+   card-door type: it is found when someone looks, and it does not compete with
+   the page title. The list is one row per automatic change: who, what, when on
+   one line, the Revert (or why there is none) at the right end. */
+.pv7-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+}
+.pv7-changes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pv7-change {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-xs) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.pv7-change:last-child { border-bottom: none; }
+.pv7-change-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  /* A fixed column for who, so what each one changed lines up down the list. */
+  grid-template-columns: 8rem 1fr;
+  column-gap: var(--gutter-xs);
+  row-gap: 2px;
+}
+.pv7-change-by {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent-color);
+  white-space: nowrap;
+}
+.pv7-change-what { font-size: var(--text-caption); color: var(--text-primary); }
+.pv7-change-at {
+  grid-column: 2;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  color: var(--text-muted);
+}
+.pv7-change-act { flex: none; }
+.pv7-change-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.pv7-changes-empty { font-size: var(--text-caption); color: var(--text-muted); padding: var(--gutter-sm) 0; }
+/* A compact page (2026-10-20): the modal's nav column stacks over its body. */
+@container page (--bp-compact) {
+  .pv7-modals .modal-body { grid-template-columns: 1fr; }
+  .pv7-omm .pv5-omm-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── The Power supply card's row (Performance) ──
+   Under the optimizer row, on the same three columns, so the card is exactly as
+   wide as OMEN AI, Booster and Network Booster above it and none of them gives
+   up width to it. It is one card: it sits in the first column and the rest of
+   the row is empty, as the last row of any grid is. Stacks with the row above
+   where that one does. JY, 2026-10-22. */
+.pv7-psu-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gutter); align-items: stretch; }
+.pv7-psu-row > .pv5-tagged { display: flex; flex-direction: column; min-width: 0; }
+.pv7-psu-row > .pv5-tagged > .ds-feature-card { flex: 1; }
+@container page (--bp-medium-down) { .pv7-psu-row { grid-template-columns: 1fr; } }
+
+/* The Fan row is a door: the row's look, a button's behaviour. */
+.pv5-fact--door { appearance: none; background: none; border: none; padding: 0; width: 100%; font: inherit; font-size: var(--text-caption); text-align: left; cursor: pointer; }
+.pv5-fact--door .pv5-fact-v { transition: color var(--dur-fast) ease; }
+.pv5-fact--door:hover .pv5-fact-l,
+.pv5-fact--door:hover .pv5-fact-v { color: var(--accent-color); }

@@ -1,7 +1,8 @@
 /* ══════════════════════════════════════════
    TREEHOUSE — DESIGN TOKENS
-   Source of truth: design-system.html
-   Consumers: prototype.html · widget-simulator.html · index.html
+   This file is the source of truth (Storybook is the catalog).
+   Consumers: the React app (web/) · Storybook · the hub (index.html)
+   · the SKU editor (configurator/)
    ──────────────────────────────────────────
    Edit tokens here. Changes propagate to all
    consuming files automatically.
@@ -45,7 +46,7 @@
   --omen-yellow: #FBB216;
 
   /* ─── Named accent palette (for accent picker) ─── */
-  --accent-cyan: #00c8d7;
+  --accent-blue: var(--ksg-accent);
   --accent-indigo: #6366f1;
   --accent-purple: #a855f7;
   --accent-orange: #ff6b2b;
@@ -101,6 +102,48 @@
   --font-regular: 400;
   --font-light: 300;
 
+  /* ─── Hadouken type ramp (.ds-text-*) ───
+     One size / line-height / weight per Hadouken text style. A separate scale
+     from --text-* on purpose: --text-* is the app's UI scale and the Hadouken
+     theme re-points it (Title 32 → 28, Body 13 → 15), while the ramp is the
+     Figma text styles verbatim and must not move with it. Figma keeps these as
+     text STYLES, not variables, so `npm run sync:tokens` cannot generate them;
+     they are hand-kept here to match the Hadouken file. Caption alone follows
+     --text-micro, and so renders at 12px in the Hadouken theme rather than
+     the file's 10px: 12 is the decision (Chris 2026-10-20, «10px is too small
+     to read»), and the Figma file is the one to correct. */
+  --type-title-1-size: 32px;
+  --type-title-1-lh: 40px;
+  --type-title-1-weight: var(--font-bold);
+  --type-title-2-size: 24px;
+  --type-title-2-lh: 32px;
+  --type-title-2-weight: var(--font-bold);
+  --type-title-3-size: 20px;
+  --type-title-3-lh: 26px;
+  --type-title-3-weight: var(--font-bold);
+  --type-headline-size: 16px;
+  --type-headline-lh: 22px;
+  --type-headline-weight: var(--font-medium);
+  --type-subheadline-size: 12px;
+  --type-subheadline-lh: 16px;
+  --type-subheadline-weight: var(--font-medium);
+  --type-overline-size: 14px;
+  --type-overline-lh: 19px;
+  --type-overline-weight: var(--font-medium);
+  --type-body-size: 14px;
+  --type-body-lh: 20px;
+  --type-body-weight: var(--font-regular);
+  --type-label-size: 14px;
+  --type-label-lh: 19px;
+  --type-label-weight: var(--font-regular);
+  --type-caption-size: var(--text-micro);
+  --type-caption-lh: 14px;
+  --type-caption-weight: var(--font-regular);
+  /* `.strong` on Label / Caption, and the uppercase tracking of `.caps` and
+     Overline. */
+  --type-strong-weight: var(--font-semibold);
+  --type-tracking-caps: 0.4px;
+
   /* ─── Spacing ─── */
   /* `--gutter` is the page/section gutter and the one density re-points; see
      the `[data-density='compact']` block below. Everything downstream reads
@@ -113,9 +156,36 @@
   --gutter-xxs: 4px;
   --gutter-xxxs: 2px;
 
+  /* ─── Breakpoints (2026-10-20) ───
+     Five size classes, named for the SPACE a layout has, not for a device —
+     a laptop page beside an open sidebar is `medium`, the same as a tablet.
+     The numbers live in shared/breakpoints.json; a stylesheet names a step
+     and web/postcss.config.js expands it, in `@media` and `@container` alike:
+
+       compact   <  600    phone; a page beside a sidebar on a small laptop
+       medium     600–1023 tablet, phone landscape, a squeezed laptop page
+       expanded  1024–1599 laptop / desktop — the size every screen was drawn at
+       wide      1600–2559 1080p / 1440p desktop
+       ultra     ≥ 2560    4K and ultrawide at 100%
+
+       @media (--bp-compact)             the window is compact        (app chrome: the nav)
+       @container page (--bp-wide-up)    the PAGE is wide or more     (everything a page draws)
+       @container page (--bp-medium-down)  the page is medium or less
+
+     The page container is `.shell-scroll` (shell.css): the window less any
+     rail reserving room beside the page. Page CSS queries that, never the
+     window, so a 1440 window with Nova open lays its page out as `medium`
+     rather than squeezing a 1440 layout. JS reads the same scale from
+     web/src/app/breakpoints.ts (`usePageStep`, `useViewportStep`). */
+
   /* ─── Spacing ─── */
   --control-height: 32px;
   --control-height-sm: 28px;
+  /* The floating action button (.ds-fab, TH-507) — and every host that clears it. */
+  --control-height-fab: calc(var(--control-height) * 1.75);
+  /* The smallest box a finger can hit reliably (WCAG 2.5.8 wants 24, the
+     platform guidelines 44). Read by the bottom nav's items on compact. */
+  --touch-target: 44px;
 
   /* One row of the dashboard grid. A widget's height is always a whole number
      of these plus the gutters between them, which is what makes two widgets of
@@ -136,7 +206,7 @@
   --focus-ring: 2px solid var(--accent-color);
 
   /* ─── Accent system (overridden at runtime by setAccent / setAccentColor) ─── */
-  --accent-color: #00c8d7;
+  --accent-color: var(--ksg-accent);
   --accent-dim: color-mix(in srgb, var(--accent-color), transparent 70%);
   --accent-dimmer: color-mix(in srgb, var(--accent-color), transparent 90%);
   --accent-dimmest: color-mix(in srgb, var(--accent-color), transparent 94%);
@@ -168,6 +238,13 @@
   --titlebar-h: 32px;
   --nav-h: 40px;
   --nav-full-h: 64px;
+  /* The bottom tab bar on a compact window (shell.css `.shell-bottom-nav`):
+     what the page reserves under its content so its last row clears the bar.
+     The bar's height is a touch-target item (border-box) inside the pill's
+     padding and 1px border; it floats one small gutter off the edge. Measured
+     54 + 16 (2026-10-20) — the first cut forgot the border and padding and the
+     Nova sheet ended 12px under the bar. */
+  --nav-bottom-h: calc(var(--touch-target) + var(--gutter-xxs) * 2 + 2px + var(--gutter-sm));
   --nav-bg: rgba(29, 30, 31, 0.8);
   --icon-sz-nav: 20px;
   /* Icon size scale (used by the Icon component) */
@@ -175,10 +252,31 @@
   --icon-sz-md: 20px;
   --icon-sz-lg: 24px;
   --panel-w: 300px;
+  /* The game detail panel's header — the blurred cover behind the tile and
+     title (TH-504; the Figma frame's 140). */
+  --game-panel-hero-h: 140px;
 
   /* ─── Design system shell dimensions ─── */
   --header-h: 52px;
   --sidebar-w: 240px;
+
+  /* ─── Device overlays (Figma Keys-Buttons "Key Overlay" / "Button Overlay") ───
+     The controls drawn over a device render. Both use Hadouken Radius/XXS (6px),
+     the step between --radius-sm and --radius; the washes are the Active/Assigned
+     and Active/Disabled fills, laid over the resting surface. */
+  --radius-key: var(--radius-xxs);
+  --key-assigned-wash: color-mix(in srgb, var(--accent-color) 20%, transparent);
+  --key-disabled-wash: color-mix(in srgb, var(--red) 20%, transparent);
+  --callout-overlay-w: 120px;
+  --callout-overlay-h: 40px;
+  /* A leader line's dark halo, under its 1px stroke. */
+  --leader-halo: 3px;
+  /* A keyboard render's backlight: the blur between caps, and how far a key's
+     light reaches past its cap. */
+  --kb-backlight-blur: 6px;
+  --kb-backlight-bleed: 4px;
+  /* A small stepper's field — holds a three-digit value (Figma Degree Input). */
+  --stepper-field-sm: 54px;
 }
 
 /* ══════════════════════════════════════════
@@ -196,11 +294,65 @@ html[data-density='compact'] {
   --gutter: var(--gutter-tablet);
 }
 
+/* Narrow windows tighten the page gutter the same way, to the small step: 24px
+   either side of a 390px phone is an eighth of the screen spent on margin.
+   Declared BEFORE density's rule in specificity terms (`:root` is a
+   pseudo-class, `html[attr]` out-ranks it), so a compact density still wins
+   at any width. */
+@media (--bp-medium-down) {
+  :root {
+    --gutter: var(--gutter-sm);
+  }
+}
+
+/* ══════════════════════════════════════════
+   INTERFACE SIZE (2026-10-20)
+   Every length in the system is a px, drawn for a ~1440 window. On a 4K
+   screen at 100% OS scaling, 15px body text is physically half the size it
+   was designed at, and more columns do not fix reading distance. So the root
+   zooms: web/src/app.css applies `zoom: var(--ui-zoom)` to <html>, and
+   Settings › Appearance › Interface size sets `data-ui-scale` to override
+   the automatic step. Container queries see the zoomed width (a 3840 window
+   at 1.5 lays out as 2560), which is exactly the point.
+
+   Auto fires only for a 4K-class screen at native scale — width AND height,
+   because a 3440×1440 ultrawide is wide too and is a normal-density desktop
+   that wants columns, not magnification.
+
+   `100vw`/`100vh` inside a zoomed root are zoom× too large and overflow the
+   window (measured in Chrome 155). Read `--viewport-w/h` instead of a raw
+   viewport unit anywhere a box must fit the window.
+══════════════════════════════════════════ */
+:root {
+  --ui-zoom: 1;
+  --viewport-w: calc(100vw / var(--ui-zoom));
+  --viewport-h: calc(100vh / var(--ui-zoom));
+  --viewport-dh: calc(100dvh / var(--ui-zoom));
+  /* One hundredth of each, for a fraction of the window: `calc(60 * var(--vh))`
+     where `60vh` would have been. */
+  --vw: calc(1vw / var(--ui-zoom));
+  --vh: calc(1vh / var(--ui-zoom));
+}
+@media (min-width: 3200px) and (min-height: 1700px) {
+  :root {
+    --ui-zoom: 1.5;
+  }
+}
+html[data-ui-scale='100'] {
+  --ui-zoom: 1;
+}
+html[data-ui-scale='125'] {
+  --ui-zoom: 1.25;
+}
+html[data-ui-scale='150'] {
+  --ui-zoom: 1.5;
+}
+
 /* ══════════════════════════════════════════
    LIGHT THEME
-   Activated by: html[data-theme="light"]  (design system)
-                 html.light                (prototype)
-                 .ds-theme-light           (any subtree)
+   Activated by: html.light                (the React app — Settings.tsx)
+                 .ds-theme-light           (any subtree — Storybook)
+                 html[data-theme="light"]  (legacy; nothing sets it now)
 ══════════════════════════════════════════ */
 html[data-theme='light'],
 html.light,
@@ -236,8 +388,8 @@ html.light,
   --widget-tint-bg: linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.01) 60%);
   --widget-tint-border: rgba(0, 0, 0, 0.1);
 
-  /* Accent palette — darker/more-saturated for light backgrounds */
-  --accent-cyan: #0097a7;
+  /* Accent palette — darker/more-saturated for light backgrounds.
+     --accent-blue has no light variant: it is the default accent in both themes. */
   --accent-indigo: #4f46e5;
   --accent-purple: #7c3aed;
   --accent-orange: #d4500f;
@@ -277,7 +429,9 @@ html.light,
    ==================================================================== */
 :root {
   /* Brand */
-  --ksg-accent: #0078d7;
+  /* The default accent is the Hadouken blue, read from Figma
+     (shared/tokens.hadouken.css, regenerated by `npm run sync:tokens`). */
+  --ksg-accent: var(--color-accent-solid);
   --ksg-hyperx: #c8102e;
 
   /* Neutral solid scale */
@@ -344,6 +498,11 @@ html.light,
    ==================================================================== */
 :root,
 .ds-theme-dark {
+  /* Native parts — scrollbars, date/time glyphs, form controls — follow the
+     theme. Undeclared, Chrome drew light scrollbars on the dark pages
+     (Nova's full page, 2026-10-22). */
+  color-scheme: dark;
+
   /* ─── Backgrounds ─── */
   --bg-base:     var(--ksg-n950);
   --bg-mid:      var(--ksg-n900);
@@ -385,7 +544,8 @@ html.light,
   --accent-dimmest: color-mix(in srgb, var(--accent-color), transparent 94%);
 
   /* ─── Accent palette ─── */
-  --accent-cyan:   #0091ff;
+  /* Blue is the default accent itself, so its swatch shows what it applies. */
+  --accent-blue:   var(--ksg-accent);
   --accent-indigo: #6236ff;
   --accent-purple: #b620e0;
   --accent-orange: #fa6400;
@@ -409,6 +569,11 @@ html.light,
   --text-subtle:     var(--ksg-w25);
   --text-on-accent:  var(--ksg-n950);
   --text-on-fill:    #ffffff;
+  /* Hadouken "Gradients/Title/Dark" — the brand-title fill, n100 at the cap
+     line fading to n400 at the baseline (the NGENUITY logotype carries the same
+     ramp). A Figma *style*, not a variable, so sync:tokens cannot emit it; the
+     stops are the synced neutrals. Applied by `.ds-text-*.gradient`. */
+  --gradient-title:  linear-gradient(180deg, var(--ksg-n100) 0%, var(--ksg-n400) 100%);
 
   /* ─── Type scale ─── */
   --text-title:      28px;
@@ -433,6 +598,7 @@ html.light,
   --radius-xl:   24px;
   --radius-lg:   16px;
   --radius:      8px;
+  /* Deliberately 4px, not Figma's Radius/SM (10px) — keep it when syncing. */
   --radius-sm:   4px;
 
   /* ─── Shadows — THE elevation scale, one definition per theme ───
@@ -533,6 +699,8 @@ html.light,
 html.light,
 html[data-theme-mode='light'],
 .ds-theme-light {
+  color-scheme: light;
+
   /* Backgrounds */
   --bg-base:     var(--ksg-n300);
   --bg-mid:      #eeecec;
@@ -604,6 +772,10 @@ html[data-theme-mode='light'],
 
   /* Nav */
   --nav-bg: rgba(220, 218, 218, 0.88);
+
+  /* Title gradient, mirrored for light: ink at the cap line fading up to n700.
+     Derived (Figma names only a Dark variant); both ends clear 3:1 on --bg-base. */
+  --gradient-title: linear-gradient(180deg, var(--ksg-n950) 0%, var(--ksg-n700) 100%);
 
   /* Carousel aura — multiplied, so it tints rather than washes out.
      See .ds-carousel-aura-layer for why the two themes differ. */

@@ -1,0 +1,29 @@
+/* The 3D heroes of This PC's pages (stage/). The canvas fills the hero behind
+   whatever the tab draws on top of it. */
+.lst {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.lst-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+/* The notebook: the drawn board takes over once the camera has landed on the
+   3D one, and steps aside while the camera is away or on its way. */
+.lc-hero[data-stage='on'] {
+  position: relative;
+}
+.lc-hero[data-stage='on'] .kbd-stage {
+  transition: opacity 240ms var(--ease-default);
+}
+.lc-hero[data-stage='on'][data-board='away'] .kbd-stage {
+  opacity: 0;
+  pointer-events: none;
+}
+.lc-hero[data-stage='on'] .kbd-hero-glow {
+  display: none;
+}

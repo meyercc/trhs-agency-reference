@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Treehouse React + TypeScript workspace — component library (Storybook) consuming shared/tokens.css + components.css. Phase 0/1 of the incremental React port (see docs/react-port-plan.md).",
+  "description": "Treehouse React + TypeScript workspace \u2014 component library (Storybook) consuming shared/tokens.css + components.css. Phase 0/1 of the incremental React port (see docs/react-port-plan.md).",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -11,7 +11,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "figma:parse": "figma connect parse",
-    "figma:publish": "figma connect publish"
+    "figma:publish": "figma connect publish",
+    "verify": "node scripts/run-verify.mjs"
   },
   "dependencies": {
     "@xyflow/react": "^12.11.2",

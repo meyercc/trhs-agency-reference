@@ -1,0 +1,395 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   The cooler cap's faces and editors. The cap itself (.pcp-cap) is in
+   pc-parts.css; this file holds the System Vitals themes, the theme tiles,
+   the reading slots and the Apply bar. Cap art keeps on-image colours in both
+   themes: it is a screen of its own. --cap-a / --cap-b are the player's tone.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.pcp-hero {
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.pcp-hero-tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+.pcp-cap.pannable {
+  cursor: grab;
+  touch-action: none;
+}
+.pcp-cap.pannable:active {
+  cursor: grabbing;
+}
+
+/* An app event over the content (lcd-diy.6). */
+.pcp-cap-event {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 18%;
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  background: var(--ksg-b55);
+  color: var(--text-on-image);
+  font-size: var(--text-caption);
+  text-align: center;
+}
+
+/* ── The themes ─────────────────────────────────────────────────────────── */
+.pcp-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pcp-face > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.pcp-tick {
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.pcp-classic-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10%;
+  width: 70%;
+}
+.pcp-classic-stack > .pcp-cap-text + .pcp-cap-text {
+  border-top: 1px solid var(--text-on-image-dim);
+  padding-top: 8%;
+}
+.pcp-face .pcp-cap-small {
+  color: var(--cap-a);
+}
+.pcp-ring-track {
+  fill: none;
+  stroke: var(--ksg-w10);
+  stroke-width: 6;
+}
+.pcp-ring-arc {
+  fill: none;
+  stroke: var(--cap-a);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.pcp-face-list {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 18%;
+}
+.pcp-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--ksg-w10);
+  padding-bottom: 4px;
+}
+.pcp-list-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  color: var(--cap-a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcp-list-val {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--cap-b);
+}
+.pcp-face-list .pcp-cap-big.pcp-list-val {
+  font-size: var(--text-body, 16px);
+}
+.pcp-drives {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 55%;
+}
+.pcp-drive {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-on-image-dim);
+}
+.pcp-drive-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--ksg-w10);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.pcp-drive-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--cap-b);
+}
+
+/* ── Theme tiles: small caps, each drawing its theme ───────────────────── */
+.pcp-themes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gutter-xs);
+}
+.pcp-theme {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  padding: var(--gutter-xs);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.pcp-theme.selected {
+  border-color: var(--text-primary);
+}
+.pcp-mini {
+  position: relative;
+  width: 100%;
+  max-width: 96px;
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+  background: var(--ksg-b90);
+  color: var(--text-on-image);
+  overflow: hidden;
+  /* The tile draws the same face at a fraction of the size. */
+  font-size: 7px;
+  --text-title: 14px;
+  --text-caption: 6px;
+  --text-micro: 6px;
+  --text-body: 10px;
+}
+.pcp-mini .pcp-drive {
+  font-size: 5px;
+}
+.pcp-theme-name {
+  font-size: var(--text-caption);
+}
+.pcp-tones {
+  display: flex;
+  gap: var(--gutter-xs);
+}
+
+/* ── Apply bar (in the panel's tab strip) ──────────────────────────────── */
+.pcp-apply {
+  display: flex;
+  gap: var(--gutter-xs);
+}
+
+/* A long tab scrolls inside its section; the panel itself never scrolls
+   (the canvas's rule, MonitorCanvas). The fan kit's tabs. */
+.fk-canvas .dc-panel-wrap .ds-ng3-section {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ── The window on the mic's canvas ─────────────────────────────────────── */
+.cap-canvas {
+  /* The Display tab's height (the Lights tab's --lights-h), so the cap holds
+     still across the three tabs. */
+  --lights-h: 340px;
+}
+.cap-grid > .ds-ng3-section,
+.cap-grid > .ds-ng3-col {
+  flex: 1;
+  min-width: 0;
+}
+.cap-rotate {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  width: auto;
+}
+.cap-live {
+  padding: 0 var(--gutter-xs);
+}
+
+/* ── The configuration page in the list's place (OGH's config page) ───────
+   The macro editor's head (macro-panel.css .mp-head / .mp-back): the way
+   back names where it goes, the state sits right. */
+.cap-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  height: 100%;
+  min-height: 0;
+}
+.cap-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+.cap-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0;
+}
+.cap-back:hover {
+  color: var(--text-primary);
+}
+.cap-editor-state {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+.cap-editor-body {
+  flex: 1;
+  display: flex;
+  gap: var(--gutter-xs);
+  min-height: 0;
+  overflow-y: auto;
+}
+.cap-editor-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gutter-xs);
+}
+.cap-editor-side {
+  flex: 0 0 180px;
+}
+/* The page scrolls as one; its sections keep their whole height. */
+.cap-editor .ds-ng3-section {
+  flex: none;
+}
+.cap-editor .ds-ng3-col {
+  align-self: flex-start;
+}
+.cap-editor-main,
+.cap-editor-slots {
+  flex: 1;
+  min-width: 0;
+}
+.cap-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xxs);
+}
+.pcp-slot {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+}
+.pcp-slot-name {
+  flex: 0 0 56px;
+  padding-top: 6px;
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.cap-chips .ds-dropdown {
+  flex: 1 1 140px;
+}
+.cap-editor-slots {
+  flex: 1.4;
+}
+/* Every tab as tall as Display's, so the cap above holds still across them. */
+.cap-canvas .cap-grid {
+  min-height: var(--lights-h);
+}
+
+/* ── The cap as one tab of the desktop's page (CoolerCapTab) ──────────────
+   The Display body above takes the room and scrolls inside; the DIY fan
+   kit's line keeps its height below it. */
+.cap-tab {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.cap-tab > .cap-display {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.cap-tab-more {
+  flex: none;
+}
+.cap-tab-val {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+
+/* ── The cap's screen, tiny (CapMiniScreen; JY, 2026-10-22) ───────────────
+   What the screen shows now, as an icon: a round LCD in a dark bezel. */
+.cap-mini {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #070b0f;
+  box-shadow: inset 0 0 0 1.5px #2b3b45;
+}
+.cap-mini.media {
+  background-position: center;
+  background-size: cover;
+}
+.cap-mini.media::after {
+  /* the bezel over the picture */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px #2b3b45;
+}
+.cap-mini svg {
+  position: relative;
+  z-index: 1;
+}
+.cap-mini.off {
+  background: #030507;
+}
+
+/* ── The cap's preview on the PC's page (CapHero; JY, 2026-10-22) ─────────
+   On the LCD cooler cap tab the hero is the tower and, beside it on the
+   right, the cap as it is or the edit not yet sent. A column of its own, so
+   the tower's canvas narrows and reframes rather than sitting under it. The
+   cap is sized to the column's room, round whatever the hero's shape. */
+.dk-hero-3d > .cap-hero {
+  flex: none;
+  width: min(36%, 320px);
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xs);
+  padding: 0 var(--gutter) var(--gutter) 0;
+}
+.cap-hero .pcp-cap {
+  height: auto;
+  min-height: 0;
+  width: min(100cqw, 100cqh - 32px, 260px);
+}
+/* The title row's right end on the cap tab: the quarter turn, then the views. */
+.cap-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}

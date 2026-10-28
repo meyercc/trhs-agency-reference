@@ -8,7 +8,7 @@
   right: var(--gutter);
   bottom: var(--gutter);
   z-index: 40;
-  width: min(480px, calc(100vw - 2 * var(--gutter)));
+  width: min(480px, calc(var(--viewport-w) - 2 * var(--gutter)));
   background: var(--bg-elevated);
   border: 1px dashed var(--border-light);
   border-radius: var(--radius-card);

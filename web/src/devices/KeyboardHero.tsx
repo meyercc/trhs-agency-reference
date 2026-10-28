@@ -29,7 +29,13 @@ import {
 /** Movement (px, Manhattan) that turns a press into a drag rather than a click. */
 const DRAG_THRESHOLD = 4;
 
-const QUICK_SELECT: { id: string; label: string }[] = [
+export interface QuickSelectItem {
+  id: string;
+  label: string;
+}
+
+/** The standalone keyboard's rail: the key groups a per-key board is painted by. */
+const QUICK_SELECT: QuickSelectItem[] = [
   { id: 'all', label: 'All' },
   { id: 'wasd', label: 'WASD' },
   { id: 'qwer', label: 'QWER' },
@@ -56,6 +62,19 @@ export interface KeyboardHeroProps {
   onMarqueeSelect: (codes: string[], additive: boolean) => void;
   onKey: (code: string) => void;
   onQuickSelect: (id: string) => void;
+  /**
+   * The lighting rail's groups. Defaults to the per-key board's key groups; a
+   * zone-lit device (the OMEN 16's four-zone board) passes its zones instead,
+   * so the rail offers only selections its hardware can actually light.
+   */
+  quickSelect?: QuickSelectItem[];
+  /**
+   * Offer the marquee tool. False on zone-lit hardware, where dragging a box
+   * around three caps would promise a selection the backlight cannot honor.
+   */
+  marqueeTool?: boolean;
+  /** Draw the volume wheel above the numpad. A notebook has no such wheel. */
+  knob?: boolean;
 }
 
 interface KeyCapProps {
@@ -122,6 +141,9 @@ export function KeyboardHero({
   onMarqueeSelect,
   onKey,
   onQuickSelect,
+  quickSelect = QUICK_SELECT,
+  marqueeTool = true,
+  knob = true,
 }: KeyboardHeroProps) {
   const boardRef = useRef<HTMLDivElement>(null);
   // The box being dragged, in board-local px. null when no drag is in progress.
@@ -129,7 +151,7 @@ export function KeyboardHero({
   // A drag ends over a key and would otherwise fire that key's click, toggling
   // it straight back out of the selection it just joined.
   const draggedRef = useRef(false);
-  const armed = mode === 'lights' && marquee;
+  const armed = mode === 'lights' && marqueeTool && marquee;
 
   // Escape disarms the tool rather than closing the device modal — the host
   // listens on the document, so this has to claim the key on the way down.
@@ -240,20 +262,22 @@ export function KeyboardHero({
               it is how you build a selection the presets don't cover. Armed
               state is a filled chip as well as a brighter glyph — pressed is
               never carried by color alone. */}
-          <button
-            type="button"
-            className={'kbd-qs-btn kbd-qs-icon' + (marquee ? ' active' : '')}
-            aria-pressed={marquee}
-            aria-label="Custom select — drag a box across the board"
-            onClick={onMarquee}
-          >
-            <Icon name="select" size={16} />
-          </button>
+          {marqueeTool && (
+            <button
+              type="button"
+              className={'kbd-qs-btn kbd-qs-icon' + (marquee ? ' active' : '')}
+              aria-pressed={marquee}
+              aria-label="Custom select — drag a box across the board"
+              onClick={onMarquee}
+            >
+              <Icon name="select" size={16} />
+            </button>
+          )}
           <button type="button" className="kbd-qs-btn" onClick={() => onQuickSelect('reset')}>
             Reset
           </button>
           <span className="kbd-qs-divider" />
-          {QUICK_SELECT.map((q) => (
+          {quickSelect.map((q) => (
             <button
               key={q.id}
               type="button"
@@ -302,7 +326,7 @@ export function KeyboardHero({
         <div className="kbd-right">
           <div className="kbd-media">
             {KB_MEDIA.map(renderKey)}
-            <div className="kbd-knob" aria-hidden="true" />
+            {knob && <div className="kbd-knob" aria-hidden="true" />}
           </div>
           <div className="kbd-numpad">{KB_NUMPAD.map(renderKey)}</div>
         </div>

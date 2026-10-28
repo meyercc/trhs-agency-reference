@@ -12,6 +12,7 @@ import {
   SEED_PROFILES,
   serializeProfiles,
   type OverridableName,
+  type Overrides,
   type Profile,
   type ProfileStore,
   type TriggerSource,
@@ -96,6 +97,14 @@ interface ProfilesValue {
   activeId: string;
   /** How the active profile came to be active. */
   source: TriggerSource;
+  /**
+   * The whole store as it is now. With `apply`, this lets a caller run several
+   * trigger events through the pure rules in `profileModel.ts`, see where they
+   * land, and commit the result in one step (Personalize's simulated context).
+   */
+  store: ProfileStore;
+  /** Commit a store computed from `store` with the rules in `profileModel.ts`. */
+  apply: (next: ProfileStore) => void;
 
   // Switching — the rules live in profileModel.ts.
   /** The user picked a profile. Beats everything until the next trigger. */
@@ -140,6 +149,19 @@ interface ProfilesValue {
 
 const ProfilesContext = createContext<ProfilesValue | null>(null);
 
+/**
+ * Just the active profile's overrides — what SettingsProvider resolves through.
+ *
+ * Settings used to read the whole profiles value, so ANY profile edit (a Game
+ * Link toggle, a schedule day, a rename) re-rendered SettingsProvider, and its
+ * value object is new on every render, so every `useSettings()` consumer in
+ * the app re-rendered with it: 50–100 ms long tasks per click in the Profiles
+ * modal (measured 2026-10-01). Edits that are not overrides keep this object's
+ * identity (`updateProfile` spreads the profile, not its overrides), so Settings
+ * now re-renders only when what it resolves actually changes.
+ */
+const ActiveOverridesContext = createContext<Overrides | null>(null);
+
 export function ProfilesProvider({ children }: { children: ReactNode }) {
   const [store, setStore] = useState<ProfileStore>(load);
 
@@ -169,6 +191,8 @@ export function ProfilesProvider({ children }: { children: ReactNode }) {
       activeProfile,
       activeId: activeProfile.id,
       source: store.source,
+      store,
+      apply: (next) => update(() => next),
 
       selectProfile: (id) => update((s) => applySelect(s, id)),
       gameLaunched: (gameId) => update((s) => applyGameLaunch(s, gameId)),
@@ -238,7 +262,16 @@ export function ProfilesProvider({ children }: { children: ReactNode }) {
     };
   }, [store, update, patch]);
 
-  return <ProfilesContext.Provider value={value}>{children}</ProfilesContext.Provider>;
+  return (
+    <ProfilesContext.Provider value={value}>
+      <ActiveOverridesContext.Provider value={value.activeProfile.overrides}>{children}</ActiveOverridesContext.Provider>
+    </ProfilesContext.Provider>
+  );
+}
+
+/** The active profile's overrides, or null outside a ProfilesProvider. See `ActiveOverridesContext`. */
+export function useActiveOverrides(): Overrides | null {
+  return useContext(ActiveOverridesContext);
 }
 
 export function useProfiles(): ProfilesValue {

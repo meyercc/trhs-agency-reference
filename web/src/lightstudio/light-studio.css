@@ -266,3 +266,33 @@
 .ls.compact .ls-canvas {
   pointer-events: none;
 }
+
+/* ── Labels pinned to the desk (Personalize's Lighting overview) ─────────────
+   The scene moves each .ls-anchor to its device or tower part every frame; the
+   host's label inside centres itself on that point. Hidden while the anchor is
+   out of frame or its device is not shown. */
+.ls-anchors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ls-anchor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+  transition: opacity 0.2s ease;
+}
+.ls-anchor[data-shown='false'] {
+  opacity: 0;
+  visibility: hidden;
+}
+.ls-anchor > * {
+  pointer-events: auto;
+}
+
+/* A compact desk you can click and turn (the Lighting overview). */
+.ls.compact.interactive .ls-canvas {
+  pointer-events: auto;
+}

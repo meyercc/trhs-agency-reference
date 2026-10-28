@@ -1,0 +1,12 @@
+{
+  "$comment": "The responsive scale: five size classes named for the SPACE a layout has (not a device), each the lower bound in px. Read by web/postcss.config.js, which expands (--bp-<step>), (--bp-<step>-up) and (--bp-<step>-down) inside @media and @container, and by web/src/app/breakpoints.ts, the JS mirror. The table and the rules of use are in shared/tokens.css under Breakpoints. `widths` are named single thresholds, expanded as (--w-<name>) → (width >= N px): board-8 / board-10 are where the Home board fits eight / ten of its 1100px-grid tracks — track (1100 − 5·24)/6 = 163.33, one widget + gap = 374.67, content 1474.67 / 1849.33, plus the page's 2·24 padding, rounded up. Derived at the comfortable 24px gutter; density compact (12px) would fit ~28px sooner, which is invisible.",
+  "compact": 0,
+  "medium": 600,
+  "expanded": 1024,
+  "wide": 1600,
+  "ultra": 2560,
+  "widths": {
+    "board-8": 1523,
+    "board-10": 1898
+  }
+}

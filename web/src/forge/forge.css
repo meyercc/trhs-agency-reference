@@ -1,0 +1,999 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Forge (?modal=agents) — the store that replaced the Agent Catalog.
+   Reuses .modal-shell, .ds-modal-nav and the DS controls; what is here is the
+   store's own composition: the listing card, the hero, the detail page and
+   its trust and recipe panels. Token-only. The sizes are scoped custom
+   properties on the root, so every fixed dimension has one name.
+
+   Hosts: `.forge` (in ModalShell) and `.forge-inline` (Nova → Agents).
+   ══════════════════════════════════════════════════════════════════════════ */
+.forge,
+.forge-inline {
+  --fg-nav-w: 236px;
+  --fg-card-min: 300px;
+  --fg-tile: 40px;
+  --fg-tile-lg: 64px;
+  --fg-aside-w: 300px;
+  --fg-hero-media: 44%;
+  --fg-access-ico: 24px;
+  --fg-stat-min: 160px;
+  --fg-type-min: 200px;
+  --fg-measure: 72ch;
+  --fg-score-w: 4ch;
+  --fg-titles-min: 320px;
+}
+.forge .modal-body {
+  grid-template-columns: var(--fg-nav-w) 1fr;
+}
+.forge .modal-left {
+  padding: var(--gutter-sm);
+  gap: var(--gutter-xxxs);
+  overflow-y: auto;
+}
+.forge .modal-right {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── Top bar: search + submit ── */
+.fg-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+  padding: var(--gutter) var(--gutter) var(--gutter-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+.fg-bar .ds-input-group {
+  flex: 1;
+  min-width: 0;
+}
+.fg-bar .ds-input-wrap,
+.fg-bar .ds-input {
+  width: 100%;
+}
+.fg-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--gutter);
+}
+
+/* ── Section furniture ── */
+.fg-intro {
+  margin: 0 0 var(--gutter-sm);
+  max-width: var(--fg-measure);
+  font-size: var(--text-caption);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.fg-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  margin-bottom: var(--gutter);
+}
+.fg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+}
+.fg-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gutter-xs);
+  margin: var(--gutter) 0 var(--gutter-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.fg-group-title:first-child {
+  margin-top: 0;
+}
+.fg-group-title span {
+  color: var(--text-dim);
+  font-weight: var(--font-regular);
+}
+.fg-empty {
+  margin: 0 0 var(--gutter-sm);
+  padding: var(--gutter-sm);
+  border: 1px dashed var(--border-med);
+  border-radius: var(--radius);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+/* An explanation of a rule the store applies — ranking, verification. */
+.fg-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+  margin: var(--gutter-sm) 0 0;
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border-radius: var(--radius);
+  background: var(--surface-light);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.fg-note > svg {
+  flex-shrink: 0;
+  margin-top: var(--gutter-xxxs);
+}
+.fg-foot {
+  margin: var(--gutter) 0 0;
+  font-size: var(--text-micro);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.fg-stats-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--fg-stat-min), 1fr));
+  gap: var(--gutter-sm);
+  margin-bottom: var(--gutter);
+}
+
+/* ── Icon tile ──
+   Tinted with the listing's tone rather than a per-listing gradient, so every
+   hue comes from the themed --accent-* palette and re-themes with it. */
+.fg-tile {
+  --fg-tone: var(--accent-blue);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--fg-tile);
+  height: var(--fg-tile);
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--fg-tone) 35%, transparent);
+  background: color-mix(in srgb, var(--fg-tone) 16%, var(--surface));
+  color: var(--fg-tone);
+  overflow: hidden;
+}
+.fg-tile.lg {
+  width: var(--fg-tile-lg);
+  height: var(--fg-tile-lg);
+  border-radius: var(--radius-card);
+}
+.fg-tile[data-tone='indigo'] { --fg-tone: var(--accent-indigo); }
+.fg-tile[data-tone='purple'] { --fg-tone: var(--accent-purple); }
+.fg-tile[data-tone='orange'] { --fg-tone: var(--accent-orange); }
+.fg-tile[data-tone='green'] { --fg-tone: var(--accent-green); }
+.fg-tile[data-tone='red'] { --fg-tone: var(--accent-red); }
+.fg-tile[data-tone='yellow'] { --fg-tone: var(--accent-yellow); }
+.fg-tile[data-tone='pink'] { --fg-tone: var(--accent-pink); }
+/* A brand mark sits on a neutral plate; a light-on-dark mark keeps a dark one
+   in both themes (--ksg-n950 does not flip). */
+.fg-tile.logo {
+  border-color: var(--border-light);
+  background: var(--surface-light);
+}
+.fg-tile.logo.dark {
+  background: var(--ksg-n950);
+}
+.fg-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: var(--gutter-xxs);
+}
+
+/* ── Publisher line ── */
+.fg-pub {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.fg-verified {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  padding: var(--gutter-xxxs);
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+.fg-verified.official {
+  background: var(--accent-color);
+  color: var(--text-on-accent);
+}
+.fg-rate {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.fg-rate b {
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+
+/* ── Card grid ── */
+.fg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--fg-card-min), 100%), 1fr));
+  gap: var(--gutter-sm);
+  /* Cards in a row share one height (CLAUDE.md); the stats row takes the slack. */
+  align-items: stretch;
+}
+.fg-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  min-width: 0;
+  padding: var(--gutter-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  background: var(--surface-lightest);
+  transition:
+    border-color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+.fg-card:hover {
+  border-color: var(--border-med);
+  background: var(--surface-light);
+}
+.fg-card:focus-within:has(.fg-card-open:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.fg-card.is-added {
+  border-color: color-mix(in srgb, var(--accent-color) 30%, var(--border));
+}
+.fg-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-sm);
+}
+.fg-card-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+}
+.fg-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  min-width: 0;
+}
+/* The name is the card's one link: its ::after covers the card, so a click
+   anywhere opens the listing, while the real buttons sit above it. One tab
+   stop for "open", one per control — no button nested in a button. */
+.fg-card-open {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fg-card-open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+}
+.fg-card-open:focus-visible {
+  outline: none;
+}
+.fg-card .ds-btn,
+.fg-card .ds-btn-icon,
+.fg-card .fg-ctl {
+  position: relative;
+  z-index: 1;
+}
+.fg-card-desc {
+  margin: 0;
+  font-size: var(--text-caption);
+  font-weight: var(--font-light);
+  line-height: 1.45;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.fg-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xxs);
+}
+.fg-card-usage {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+}
+.fg-stats {
+  display: flex;
+  /* A fallback, not the layout: at --fg-card-min the row fits on one line;
+     narrower than that it wraps rather than spilling past the card. */
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  margin-top: auto;
+  padding-top: var(--gutter-xs);
+  border-top: 1px solid var(--border-light);
+}
+.fg-vote {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxxs);
+}
+.fg-score {
+  min-width: var(--fg-score-w);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}
+/* Compact count toggles (like, save). A real button with its count as text;
+   the glyph fills when pressed, so state never rides on color alone. */
+.fg-ctl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  padding: var(--gutter-xxs) var(--gutter-xxs);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+.fg-ctl:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.fg-ctl:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+/* Pressed reads by shape as well as hue: a filled, outlined pill. The vote
+   chevrons have no filled glyph, so this is their only non-color cue. */
+.fg-ctl[aria-pressed='true'] {
+  color: var(--accent-color);
+  background: var(--accent-dimmer);
+  border-color: var(--accent-dim);
+}
+.fg-ctl:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.fg-ctl.static {
+  cursor: default;
+}
+
+/* ── Hero ── */
+.fg-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr var(--fg-hero-media);
+  align-items: center;
+  gap: var(--gutter);
+  margin-bottom: var(--gutter);
+  padding: var(--gutter);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 0% 0%, var(--accent-dimmer), transparent 60%),
+    var(--surface);
+}
+.fg-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-color);
+}
+.fg-hero-title {
+  margin: var(--gutter-xxs) 0 var(--gutter-xs);
+  font-family: var(--font-display);
+  font-size: var(--text-sm-title);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.fg-hero-desc {
+  margin: 0 0 var(--gutter-sm);
+  font-size: var(--text-body);
+  font-weight: var(--font-light);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.fg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.fg-clip {
+  position: relative;
+  margin: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--ksg-n950);
+  aspect-ratio: 16 / 9;
+}
+.fg-clip video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.fg-clip-tag {
+  position: absolute;
+  top: var(--gutter-xs);
+  left: var(--gutter-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  padding: var(--gutter-xxxs) var(--gutter-xs);
+  border-radius: var(--radius-full);
+  background: var(--ksg-b80);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--ksg-n100);
+  pointer-events: none;
+}
+.fg-clip-dot {
+  width: var(--gutter-xs);
+  height: var(--gutter-xs);
+  border-radius: var(--radius-full);
+  background: var(--accent-red);
+}
+.fg-clip-caption {
+  margin: var(--gutter-xs) 0 0;
+  font-size: var(--text-caption);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+/* ── Detail ── */
+.fg-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  margin-bottom: var(--gutter-sm);
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.fg-back:hover {
+  color: var(--text-primary);
+}
+.fg-back:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.fg-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--gutter-sm);
+  margin-bottom: var(--gutter);
+}
+.fg-detail-titles {
+  /* A floor, so the actions wrap under the titles before the name does. */
+  flex: 1 1 var(--fg-titles-min);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+}
+.fg-detail-name {
+  margin: 0;
+  font-size: var(--text-section-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.fg-detail-summary {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--font-light);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.fg-linkish {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.fg-linkish:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.fg-detail-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--gutter-xs);
+}
+.fg-tabs {
+  margin-bottom: var(--gutter);
+}
+.fg-detail-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--fg-aside-w);
+  gap: var(--gutter);
+  align-items: start;
+}
+.fg-section-label {
+  margin: var(--gutter) 0 var(--gutter-xs);
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  color: var(--text-dim);
+}
+.fg-tabs + .fg-section-label,
+.fg-tabs + .fg-prose,
+.fg-detail-main > .fg-section-label:first-child,
+.fg-box > .fg-section-label:first-child {
+  margin-top: 0;
+}
+.fg-prose {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--font-light);
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+.fg-prose.dim {
+  color: var(--text-dim);
+  margin-bottom: var(--gutter-sm);
+}
+.fg-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.fg-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.fg-list li > svg {
+  flex-shrink: 0;
+  margin-top: var(--gutter-xxxs);
+  color: var(--accent-color);
+}
+.fg-list.quoted li {
+  color: var(--text-dim);
+  font-style: italic;
+}
+.fg-link {
+  color: var(--accent-color);
+}
+.fg-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* The recipe source, as a reader would see the file. */
+.fg-source {
+  margin: 0;
+  padding: var(--gutter-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+/* Trust card and versions — a two-column record. */
+.fg-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+  font-size: var(--text-caption);
+}
+.fg-table th,
+.fg-table td {
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border-bottom: 1px solid var(--border-light);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.5;
+}
+.fg-table tr:last-child th,
+.fg-table tr:last-child td {
+  border-bottom: 0;
+}
+.fg-table th {
+  width: 30%;
+  font-weight: var(--font-semibold);
+  color: var(--text-dim);
+  background: var(--surface-light);
+}
+.fg-table td {
+  color: var(--text-primary);
+}
+.fg-table thead th {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Aside ── */
+.fg-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.fg-box {
+  padding: var(--gutter-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--surface-light);
+}
+.fg-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+  margin-bottom: var(--gutter-xs);
+}
+.fg-box-head .fg-section-label {
+  margin: 0;
+}
+.fg-aside .fg-vote {
+  gap: var(--gutter-xs);
+}
+.fg-aside-rate {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  margin-bottom: var(--gutter-sm);
+}
+.fg-big {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm-title);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+}
+.fg-hint {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.fg-kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--gutter-xxs) var(--gutter-sm);
+  margin: var(--gutter-sm) 0 0;
+  font-size: var(--text-caption);
+}
+.fg-kv dt {
+  color: var(--text-dim);
+}
+.fg-kv dd {
+  margin: 0;
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+.fg-access {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.fg-access li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+}
+.fg-access-ico {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--fg-access-ico);
+  height: var(--fg-access-ico);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-dim);
+}
+.fg-access-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+}
+.fg-access-label {
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}
+.fg-access-note {
+  font-size: var(--text-micro);
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.fg-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  margin-top: var(--gutter-sm);
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border: 1px solid color-mix(in srgb, var(--accent-red) 45%, var(--border));
+  border-radius: var(--radius);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+/* ── Ratings ── */
+.fg-r-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--gutter);
+  margin-bottom: var(--gutter);
+}
+.fg-r-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gutter-xxs);
+}
+.fg-r-hist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+}
+.fg-composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--surface-light);
+}
+.fg-composer h4 {
+  margin: 0;
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+.fg-composer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.fg-composer-row.end {
+  justify-content: flex-end;
+}
+.fg-receipt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.fg-receipt code {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+.fg-reviews {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.fg-review {
+  padding: var(--gutter-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+}
+.fg-review.mine {
+  border-color: var(--accent-dim);
+}
+.fg-review-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xs);
+  margin-bottom: var(--gutter-xs);
+  font-size: var(--text-caption);
+}
+.fg-review-who {
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.fg-review-when {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+}
+.fg-review p {
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+/* ── Submit ── */
+.fg-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--fg-type-min), 1fr));
+  gap: var(--gutter-xs);
+  margin: var(--gutter-sm) 0 var(--gutter);
+}
+.fg-type {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  padding: var(--gutter-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  text-align: left;
+  color: var(--text-dim);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  cursor: pointer;
+}
+.fg-type b {
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+.fg-type:hover {
+  border-color: var(--border-med);
+}
+.fg-type:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.fg-type[aria-pressed='true'] {
+  border-color: var(--accent-color);
+  background: var(--accent-dimmer);
+}
+.fg-steps {
+  margin: 0;
+  padding-left: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.fg-steps li::marker {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+.fg-steps .ds-badge {
+  margin-left: var(--gutter-xxs);
+}
+
+/* ── Narrow ── */
+@media (max-width: 1100px) {
+  .fg-detail-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .fg-hero {
+    grid-template-columns: 1fr;
+  }
+  .fg-detail-actions {
+    justify-content: flex-start;
+  }
+}
+
+/* ── Inline host (Nova → Agents) ──────────────────────────────────────────
+   The same body without .modal-shell: the page scrolls, so .fg-content stops
+   being its own scroller. Nav beside content on wide screens, above it on
+   narrow ones. */
+.forge-inline {
+  /* The host (.nova-agents) is a scrolling flex column. `overflow: hidden`
+     below zeroes this item's automatic min-height, so without this the column
+     shrinks Forge to the viewport and clips it — nothing left to scroll. */
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: var(--fg-nav-w) 1fr;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  /* clip, not hidden: hidden would make this a scroll container of its own,
+     and the sticky nav below would stick to a box that never scrolls. */
+  overflow: clip;
+}
+.forge-inline-left {
+  display: flex;
+  flex-direction: column;
+  padding: var(--gutter-sm);
+  gap: var(--gutter-xxxs);
+  border-right: 1px solid var(--border-light);
+}
+/* The page (.nova-agents) scrolls past a long store; the categories stay put. */
+.forge-inline-left .ds-modal-nav {
+  position: sticky;
+  top: var(--gutter-sm);
+  flex: none;
+}
+.forge-inline-right {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.forge-inline .fg-content {
+  flex: none;
+  overflow: visible;
+}
+@media (max-width: 900px) {
+  .forge,
+  .forge-inline {
+    --fg-nav-w: 1fr;
+  }
+  .forge .modal-body,
+  .forge-inline {
+    grid-template-columns: 1fr;
+  }
+  .forge-inline-left {
+    border-right: 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .forge-inline .ds-modal-nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .forge-inline .ds-modal-nav-item {
+    width: auto;
+  }
+  .forge-inline .ds-modal-nav-foot {
+    margin-top: 0;
+    margin-left: auto;
+  }
+}

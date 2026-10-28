@@ -7,11 +7,12 @@
 // curation — if it ever does, point this back at /perform.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
 
-const OUT = process.argv[2] || '/tmp';
+const OUT = process.argv[2] || tmpdir();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 

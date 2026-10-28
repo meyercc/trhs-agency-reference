@@ -5,11 +5,12 @@
 // Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
 
-const OUT = process.argv[2] || '/tmp';
+const OUT = process.argv[2] || tmpdir();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
@@ -60,12 +61,15 @@ const CO = (id) => `(() => {
   if (!co) return null;
   const btn = co.querySelector('.ds-callout');
   return {
-    value: co.querySelector('.ds-callout-value')?.textContent.trim(),
+    // The overlay callout (the photo stage) labels in .ds-callout-overlay-label.
+    value: co.querySelector('.ds-callout-value, .ds-callout-overlay-label')?.textContent.trim(),
     aria: btn.getAttribute('aria-label'),
     armed: btn.classList.contains('armed'),
     assigned: btn.classList.contains('assigned'),
     off: btn.classList.contains('disabled'),
     flip: btn.classList.contains('flip'),
+    overlay: btn.classList.contains('overlay'),
+    drop: btn.classList.contains('drop'),
   };
 })()`;
 
@@ -99,7 +103,11 @@ async function main() {
   let s = await evalJs(send, CO('mouse-l'));
   check('callouts: default state shows the physical button name',
     s?.value === 'Mouse Left' && !s?.assigned, JSON.stringify(s));
-  check('callouts: left-flank slots are mirrored (flip)', s?.flip === true);
+  // Saga Pro has a top-down render, so its hero is the photo stage with the
+  // Figma Button Overlay callouts (no flip — each box sits at its Figma px).
+  check('callouts: the photo stage draws the overlay variant', s?.overlay === true, JSON.stringify(s));
+  check('callouts: each has its leader line',
+    (await evalJs(send, `document.querySelectorAll('.dc-co-lines .ds-callout-leader').length`)) === 6);
   check('callouts: they are real buttons (focusable, labeled by content)',
     await evalJs(send, `[...document.querySelectorAll('[data-callout] .ds-callout')].every(b => b.tagName === 'BUTTON')`));
 
@@ -170,7 +178,7 @@ async function main() {
   await waitFor(send, `document.querySelector('[data-callout="mouse-r"] .ds-callout.assigned')`);
   s = await evalJs(send, CO('mouse-r'));
   check('drag: ghost follows the pointer mid-drag', midDrag === true);
-  check('drag: hovering a callout highlights it as the drop target', overState?.armed === true, JSON.stringify(overState));
+  check('drag: hovering a callout highlights it as the drop target', overState?.drop === true || overState?.armed === true, JSON.stringify(overState));
   check('drag: dropping assigns the chip', s?.value === 'MOUS L' && s?.assigned === true, JSON.stringify(s));
   check('drag: ghost cleaned up after drop', (await evalJs(send, `!!document.querySelector('.dc-drag-ghost')`)) === false);
 
@@ -206,7 +214,7 @@ async function main() {
   await evalJs(send, `document.querySelector('.dc-reset').click()`);
   await waitFor(send, `!document.querySelector('.ds-callout.assigned') && !document.querySelector('.ds-callout.disabled')`);
   check('Reset Buttons: every callout back to defaults',
-    await evalJs(send, `[...document.querySelectorAll('[data-callout] .ds-callout-value')].map(v => v.textContent.trim()).join('/')`)
+    await evalJs(send, `[...document.querySelectorAll('[data-callout] .ds-callout-value, [data-callout] .ds-callout-overlay-label')].map(v => v.textContent.trim()).join('/')`)
       === 'Mouse Left/Mouse Right/Mouse Middle/Mouse 5/Mouse 4/DPI'
       || (await evalJs(send, `document.querySelectorAll('.ds-callout.assigned, .ds-callout.disabled').length`)) === 0);
 
@@ -223,7 +231,10 @@ async function main() {
   await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${Date.now() % 1e7}#/?sku=saga-pro&tab=buttons` });
   await waitFor(send, `document.readyState === 'complete' && document.querySelectorAll('[data-callout]').length > 0`);
   s = await evalJs(send, CO('mouse-4'));
-  check('profile: the assignment is still on the button after a reload', s?.assigned === true && s?.value === 'WHEEL UP', JSON.stringify(s));
+  // A glyph chip (wheel up/down) is drawn as its glyph on the overlay callout,
+  // so the assignment is read from the accessible name.
+  check('profile: the assignment is still on the button after a reload',
+    s?.assigned === true && (s?.value === 'WHEEL UP' || s?.aria === 'Mouse 4, assigned WHEEL UP'), JSON.stringify(s));
   await evalJs(send, `document.querySelector('.dc-reset').click()`);
   await waitFor(send, `!document.querySelector('.ds-callout.assigned')`);
 

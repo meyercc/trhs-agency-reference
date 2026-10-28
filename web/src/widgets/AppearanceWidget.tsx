@@ -1,8 +1,8 @@
 import { useSettings, type Theme } from '../state/Settings';
+import { ACCENTS } from '../state/bindings';
 import { WidgetShell, ToggleButtonGroup } from '../components';
 import './widgets.css';
 
-const ACCENTS = ['cyan', 'indigo', 'purple', 'orange', 'green', 'red', 'yellow'];
 
 /** Theme + accent quick-picker — re-themes the app live. Ported from vanilla `w-accent`. */
 export function AppearanceWidget() {

@@ -18,6 +18,12 @@ export interface GameTileProps {
   size?: GameTileSize;
   /** Show the centred play overlay on hover. */
   playable?: boolean;
+  /**
+   * Makes the play overlay a real button that launches, apart from the tile's
+   * own `onClick` (TH-504: a tile press opens the game's detail panel, so Play
+   * needs its own control). Without it the overlay is only a hint.
+   */
+  onPlay?: () => void;
   /** Platform icon (e.g. 'platform-steam'). */
   platform?: IconName;
   /** Renders a ••• menu button; called on click (stops propagation). The event
@@ -52,6 +58,7 @@ export function GameTile({
   forceGlow,
   size = 'md',
   playable = true,
+  onPlay,
   platform,
   onMenu,
   menuOpen,
@@ -86,9 +93,23 @@ export function GameTile({
       {badges}
       {playable && (
         <div className="ds-tile-overlay">
-          <div className="ds-btn-icon accent ds-tile-play">
-            <Icon name="play-fill" />
-          </div>
+          {onPlay ? (
+            <button
+              type="button"
+              className="ds-btn-icon accent ds-tile-play"
+              aria-label={`Play ${name ?? ariaLabel ?? ''}`.trim()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlay();
+              }}
+            >
+              <Icon name="play-fill" />
+            </button>
+          ) : (
+            <div className="ds-btn-icon accent ds-tile-play">
+              <Icon name="play-fill" />
+            </div>
+          )}
         </div>
       )}
       {onMenu && (
@@ -127,6 +148,19 @@ export function GameTile({
       aria-label={name ?? ariaLabel}
       aria-disabled={disabled || undefined}
       onClick={disabled ? undefined : onClick}
+      // A role="button" answers Enter and Space like one (TH-484: the tile
+      // became a real Play, and keyboard users could focus it but not press it).
+      onKeyDown={
+        disabled || !onClick
+          ? undefined
+          : (e) => {
+              if (e.target !== e.currentTarget) return; // the ⋮ inside handles its own keys
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+      }
     >
       {iconOnly ? (
         <div className="ds-tile-art icon-only">

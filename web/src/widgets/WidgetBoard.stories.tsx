@@ -10,9 +10,11 @@ const meta: Meta<typeof WidgetBoard> = {
     docs: {
       description: {
         component:
-          'The dashboard’s widget board: 6-column grid, drag a widget by its header to reorder ' +
+          'The dashboard’s widget board: a 6-column grid on the 1100px page (2 on a compact page, 8 and 10 where that many tracks fit a wider one), drag a widget by its header to reorder ' +
           '(spring-animated, `framer-motion` layout), drag the corner handle to resize, remove ' +
-          'with the corner ×, and add from the catalog picker. The layout persists to ' +
+          'with the corner ×, and add from the catalog picker. Cells are packed first-fit ' +
+          'by `pack.ts` (the same scan `grid-auto-flow: dense` does) so the “Add a widget” ' +
+          'cell is always the last thing on the board, never backfilled into a hole. The layout persists to ' +
           '`localStorage` (`board-layout`), so edits made here survive a reload — module-gated ' +
           'widgets and disconnected devices are hidden, not deleted. The `spring` prop picks the ' +
           'reorder animation feel.',

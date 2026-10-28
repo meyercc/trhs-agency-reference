@@ -1,0 +1,166 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Game detail panel (TH-504) — one game's hub in the right rail, the Devices
+   flyout's slot. Built on the DS .ds-panel (frosted slide-in), pinned to the
+   viewport like device-panel.css. Layout only; the parts are the system's
+   (GameTile, Button, Chip, SectionHeader, Disclosure, Ng3Spec, ListItem).
+   Tokens only.
+   ══════════════════════════════════════════════════════════════════════════ */
+.game-panel {
+  position: fixed;
+  top: calc(var(--nav-full-h) + var(--gutter-xxs));
+  right: var(--gutter);
+  bottom: var(--gutter);
+  width: var(--game-panel-w);
+  max-width: calc(var(--viewport-w) - var(--gutter) * 2);
+  z-index: 40; /* above content + nav, below modals (z-51) — as the Devices panel */
+}
+/* Floating over a page too narrow to reserve its width (shell.css
+   `.rail-overlay`): the elevation says so. */
+.shell.rail-overlay .game-panel {
+  box-shadow: var(--shadow-lv-4);
+}
+/* Compact: a sheet between the top bar and the bottom nav, as the other rails. */
+@media (--bp-compact) {
+  .game-panel {
+    top: var(--nav-full-h);
+    right: 0;
+    bottom: calc(var(--nav-bottom-h) + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    width: auto;
+    max-width: none;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+}
+
+/* ── Header: the cover, scaled up and blurred, behind the tile and title ── */
+.gp-hero {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  height: var(--game-panel-hero-h);
+  padding: var(--gutter-sm);
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+/* A quarter of the wallpaper's blur: the art should still read as the cover,
+   not a colour wash (the Figma frame blurs it lightly). */
+.gp-hero-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.25);
+  filter: blur(calc(var(--wp-blur) / 20));
+}
+/* The veil the title sits on: the top half leaves the art to be seen, the
+   bottom reaches the strong veil by the title line. The scrim tokens follow
+   the theme (black on dark, white on light), so `--text-primary` keeps its
+   contrast in both — verify-game-panel measures it. */
+.gp-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, var(--scrim-soft) 45%, var(--scrim-strong) 100%);
+}
+.gp-close {
+  position: absolute;
+  top: var(--gutter-xs);
+  right: var(--gutter-xs);
+  z-index: 2;
+}
+.gp-hero-id {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gutter-xs);
+  min-width: 0;
+  width: 100%;
+}
+/* The Figma tile: three section-steps wide (48), the 2:3 cover's own height. */
+.gp-hero-tile {
+  flex: none;
+  width: calc(var(--text-section) * 3);
+}
+.gp-hero-text {
+  min-width: 0;
+  padding-bottom: var(--gutter-xxxs);
+}
+.gp-title,
+.gp-caption {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gp-title {
+  color: var(--text-primary);
+}
+.gp-caption {
+  color: var(--text-dim);
+}
+
+/* ── Body ── */
+.gp-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+/* The body is the panel's SCROLLER (.ds-panel-body) and a flex column at once,
+   so a short panel shrank its children before anything overflowed — the Play
+   button went first, to a red line (Chris, October 27). Nothing in a scrolling
+   column gives up height: it keeps its own and the column scrolls. */
+.gp-body > * {
+  flex: none;
+}
+/* The page section header's margins are for a page; in a column they are the gap. */
+.game-panel .pg-section {
+  margin: 0 0 var(--gutter-xs);
+}
+.gp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+}
+.gp-row-link {
+  cursor: pointer;
+}
+/* Two across, the Figma 96 × 54 at this width without naming either. */
+.gp-thumbs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gutter-xs);
+}
+.gp-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  /* Also a div with an inline background for your own clips (TH-509): one frame, never tiled. */
+  background: var(--surface) center / cover no-repeat;
+}
+.gp-empty {
+  margin: 0;
+  color: var(--text-dim);
+}
+/* Info: four stacked facts; the field's own gap is for a control, tighter here. */
+.gp-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding-block: var(--gutter-xxs);
+}
+.gp-fact {
+  gap: var(--gutter-xxxs);
+}
+.gp-fact-value {
+  color: var(--text-primary);
+}
+.gp-actions {
+  display: flex;
+  flex-direction: column;
+}

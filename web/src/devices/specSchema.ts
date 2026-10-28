@@ -678,10 +678,15 @@ export const TYPE_LABEL: Record<string, string> = {
   'desktop-ram': 'Memory',
   'desktop-psu': 'Power Supply',
   'desktop-lighting': 'Lighting Controller',
+  'desktop-cooler-cap': 'Cooler Cap',
 };
 
 /** Hero-fallback glyph when a component SKU has no product photo. */
 export const TYPE_ICON: Record<string, IconName> = {
+  keyboard: 'keyboard',
+  mouse: 'mouse',
+  headset: 'audio-headset',
+  microphone: 'microphone',
   notebook: 'devices',
   desktop: 'devices',
   'notebook-webcam': 'camera-video',
@@ -694,4 +699,5 @@ export const TYPE_ICON: Record<string, IconName> = {
   'desktop-ram': 'grid',
   'desktop-psu': 'bolt',
   'desktop-lighting': 'lights',
+  'desktop-cooler-cap': 'image',
 };

@@ -1,72 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, ModalShell, Slider, Toggle, ToggleButtonGroup, Menu, type MenuItem } from '../components';
+import { Button, ModalShell, Toggle, ToggleButtonGroup, Menu, type MenuItem } from '../components';
 import { Icon, type IconName } from '../components/Icon';
-import { useSettings, type Theme, type Density } from '../state/Settings';
-import { useProfiles, type OverridableName } from '../state/Profiles';
-import { WALLPAPERS } from '../app/wallpapers';
-import '../widgets/widgets.css'; // wp-thumb / wg-swatch — same controls as the board widgets
+import { useSettings } from '../state/Settings';
+import { AppearancePanel } from '../app/appearance/AppearancePanel';
+import { GroupTitle, SettingsRow } from './settingsParts';
+import { DEVICES_ITEM, useVisibleNavTabs } from '../app/navItems';
+import { AccountsSection, ProfileSection } from './accountSections';
 import './settings-modal.css';
-
-/** One label/sublabel + control row inside a settings group. */
-function SettingsRow({
-  label,
-  sublabel,
-  control,
-  note,
-}: {
-  label: string;
-  sublabel: string;
-  control: React.ReactNode;
-  /** Optional status line under the sublabel (e.g. a profile-override note). */
-  note?: React.ReactNode;
-}) {
-  return (
-    <div className="ds-settings-row">
-      <div className="ds-settings-row-labels">
-        <div className="ds-settings-row-label">{label}</div>
-        <div className="ds-settings-row-sublabel">{sublabel}</div>
-        {note}
-      </div>
-      {control}
-    </div>
-  );
-}
-
-/**
- * Says when the active profile has taken a setting over.
- *
- * Without this the Appearance section is a trap: the rows edit the BASELINE,
- * but an override wins, so changing accent while a profile overrides it looks
- * like a broken control — the swatch moves and the app doesn't. The note names
- * who is winning and offers the one gesture that hands the key back.
- */
-function OverrideNote({ name }: { name: OverridableName }) {
-  const { isOverridden } = useSettings();
-  const { activeProfile, setOverride } = useProfiles();
-  if (!isOverridden(name)) return null;
-  return (
-    <span className="stx-override">
-      <Icon name="info" size={13} aria-hidden />
-      <span>
-        Set by the <strong>{activeProfile.name}</strong> profile
-      </span>
-      <button type="button" className="stx-override-clear" onClick={() => setOverride(activeProfile.id, name, undefined)}>
-        Clear
-      </button>
-    </span>
-  );
-}
-
-function GroupTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="ds-settings-group-header stx-static">
-      <div className="ds-settings-group-titles">
-        <div className="stx-group-title">{children}</div>
-      </div>
-    </div>
-  );
-}
 
 // The three personas assembled by onboarding (Settings.persona). Re-picking here
 // only retunes recommendations/defaults — it never reshapes the board or modules.
@@ -81,39 +22,54 @@ const PERSONA_BLURB: Record<string, string> = {
   minimalist: 'Just your devices — nothing extra',
 };
 
-const PREVIEW_TABS: MenuItem[] = [
-  { id: 'home', label: 'Dashboard', icon: <Icon name="home" />, active: true },
-  { id: 'play', label: 'Play', icon: <Icon name="play" /> },
-  { id: 'perform', label: 'Perform', icon: <Icon name="performance" /> },
-  { id: 'personalize', label: 'Personalize', icon: <Icon name="profile" /> },
+export type SettingsSection = 'profile' | 'accounts' | 'appearance' | 'navigation' | 'setup';
+// Two groups, one modal: Account is who you are, App is how Treehouse behaves.
+const GROUPS: { label: string; sections: { id: SettingsSection; label: string; icon: IconName }[] }[] = [
+  {
+    label: 'Account',
+    sections: [
+      { id: 'profile', label: 'Profile', icon: 'profile' },
+      { id: 'accounts', label: 'Linked accounts', icon: 'link-on' },
+    ],
+  },
+  {
+    label: 'App',
+    sections: [
+      { id: 'appearance', label: 'Appearance', icon: 'color-palette' },
+      { id: 'navigation', label: 'Navigation', icon: 'grid' },
+      { id: 'setup', label: 'Setup', icon: 'sparks' },
+    ],
+  },
 ];
-
-const ACCENTS = ['cyan', 'indigo', 'purple', 'orange', 'green', 'red', 'yellow'];
-
-type Section = 'appearance' | 'navigation' | 'setup';
-const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
-  { id: 'appearance', label: 'Appearance', icon: 'color-palette' },
-  { id: 'navigation', label: 'Navigation', icon: 'grid' },
-  { id: 'setup', label: 'Setup', icon: 'sparks' },
-];
+const ALL_SECTIONS = GROUPS.flatMap((g) => g.sections);
 
 /**
- * App preferences modal (`?modal=settings`) on the sectioned modal pattern
- * (ModalShell + `.ds-modal-nav` in the left slot, like the Module Browser).
- * Sections hold only what exists today: Appearance (theme / accent /
- * wallpaper — the app-appearance controls that used to sit on the Personalize
- * page), Navigation (nav label/icon toggles + live preview), Setup (experience
- * style + redo). New sections drop into SECTIONS with their content below.
+ * The one Settings modal (`?modal=settings&tab=<section>`) on the sectioned
+ * modal pattern (ModalShell + `.ds-modal-nav` in the left slot, like the
+ * Module Browser), in two groups:
+ *   Account — Profile (avatar, name) and Linked accounts. The avatar menu opens
+ *             here (`tab=profile`); `?modal=profile` is kept as an alias.
+ *   App     — Appearance (theme / accent / wallpaper / Looks), Navigation,
+ *             Setup (experience style + redo).
+ * Every setting has exactly one home. Modes are not here — they live with the
+ * desk in Personalize; the avatar menu's theme switch is a shortcut to the
+ * same setting as Appearance.
  */
-export function SettingsModal({ onClose }: { onClose: () => void }) {
-  const {
-    theme, setTheme, setAccent, density, setDensity,
-    setWallpaper, setWpBlur, setWpOpacity, isLight, getBaseline,
-    hideNavLabels, setHideNavLabels, hideNavIcons, setHideNavIcons,
-    persona, setPersona,
-  } = useSettings();
+export function SettingsModal({ onClose, initialSection = 'appearance' }: { onClose: () => void; initialSection?: string }) {
+  const { hideNavLabels, setHideNavLabels, hideNavIcons, setHideNavIcons, persona, setPersona, getBaseline } = useSettings();
+  // The preview is the real nav (same items, same order, same module gating),
+  // stripped of links so clicking it can't navigate away from Settings.
+  const navItems = [...useVisibleNavTabs(), DEVICES_ITEM];
+  const previewTabs: MenuItem[] = navItems.map(({ to: _to, end: _end, ...item }, i) => ({
+    ...item,
+    active: i === 0,
+  }));
+  const navNames = navItems.map((t) => t.label);
+  const navList = `${navNames.slice(0, -1).join(', ')}, and ${navNames[navNames.length - 1]}`;
   const navigate = useNavigate();
-  const [section, setSection] = useState<Section>('appearance');
+  const [section, setSection] = useState<SettingsSection>(
+    ALL_SECTIONS.some((s) => s.id === initialSection) ? (initialSection as SettingsSection) : 'appearance',
+  );
 
   // These rows write the baseline, so they must render the baseline — showing
   // the resolved value would make an overridden control look unresponsive.
@@ -139,116 +95,51 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
 
   const nav = (
     <nav className="ds-modal-nav" aria-label="Settings sections">
-      {SECTIONS.map((s) => (
-        <button
-          key={s.id}
-          type="button"
-          className={'ds-modal-nav-item' + (section === s.id ? ' active' : '')}
-          onClick={() => setSection(s.id)}
-        >
-          <Icon name={s.icon} size={15} aria-hidden />
-          <span>{s.label}</span>
-        </button>
+      {GROUPS.map((g) => (
+        <div key={g.label} role="group" aria-label={g.label} className="stx-nav-group">
+          <div className="ds-modal-nav-label">{g.label}</div>
+          {g.sections.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className={'ds-modal-nav-item' + (section === s.id ? ' active' : '')}
+              aria-current={section === s.id ? 'page' : undefined}
+              onClick={() => setSection(s.id)}
+            >
+              <Icon name={s.icon} size={15} aria-hidden />
+              <span>{s.label}</span>
+            </button>
+          ))}
+        </div>
       ))}
     </nav>
   );
 
   return (
     <ModalShell title="Settings" className="stx-modal settings-modal" onClose={onClose} left={nav}>
+      {section === 'profile' && (
+        <div className="ds-settings-group expanded">
+          <GroupTitle>Profile</GroupTitle>
+          <div className="ds-settings-group-items">
+            <ProfileSection onClose={onClose} />
+          </div>
+        </div>
+      )}
+
+      {section === 'accounts' && (
+        <div className="ds-settings-group expanded">
+          <GroupTitle>Linked accounts</GroupTitle>
+          <div className="ds-settings-group-items">
+            <AccountsSection />
+          </div>
+        </div>
+      )}
+
       {section === 'appearance' && (
         <div className="ds-settings-group expanded">
           <GroupTitle>Appearance</GroupTitle>
           <div className="ds-settings-group-items">
-            <SettingsRow
-              label="Theme"
-              sublabel="Dark, light, or follow the system"
-              control={
-                <ToggleButtonGroup
-                  aria-label="Theme"
-                  value={theme}
-                  onChange={(v) => setTheme(v as Theme)}
-                  options={[
-                    { label: 'Dark', value: 'dark' },
-                    { label: 'Light', value: 'light' },
-                    { label: 'System', value: 'system' },
-                  ]}
-                />
-              }
-            />
-            <SettingsRow
-              label="Density"
-              sublabel="How much breathing room the layout gets"
-              control={
-                <ToggleButtonGroup
-                  aria-label="Density"
-                  value={density}
-                  onChange={(v) => setDensity(v as Density)}
-                  options={[
-                    { label: 'Comfortable', value: 'comfortable' },
-                    { label: 'Compact', value: 'compact' },
-                  ]}
-                />
-              }
-            />
-            <SettingsRow
-              label="Accent Color"
-              sublabel="Used for selection, focus, and highlights across the app"
-              note={<OverrideNote name="accent" />}
-              control={
-                <div className="wg-swatch-row" role="group" aria-label="Accent color">
-                  {ACCENTS.map((id) => (
-                    <button
-                      key={id}
-                      type="button"
-                      aria-label={id}
-                      aria-pressed={accent === id}
-                      className="wg-swatch"
-                      onClick={() => setAccent(id)}
-                      style={{
-                        background: `var(--accent-${id})`,
-                        borderColor: accent === id ? 'var(--text-primary)' : undefined,
-                        transform: accent === id ? 'scale(1.12)' : undefined,
-                      }}
-                    />
-                  ))}
-                </div>
-              }
-            />
-            <div className="stx-wallpaper">
-              <div className="stx-preview-label">
-                Wallpaper
-                <OverrideNote name="wallpaper" />
-              </div>
-              <div className="wp-thumbs">
-                {WALLPAPERS.map((wp) => {
-                  const img = (isLight ? wp.light : wp.dark).img;
-                  const active = wallpaper === wp.id;
-                  return (
-                    <button
-                      key={wp.id}
-                      type="button"
-                      className={active ? 'wp-thumb is-active' : 'wp-thumb'}
-                      aria-label={wp.name}
-                      aria-pressed={active}
-                      onClick={() => setWallpaper(wp.id)}
-                      style={{ backgroundImage: `url("${img}")` }}
-                    >
-                      <span className="wp-thumb-name">{wp.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="wp-effect-row">
-                <span className="wp-effect-label">Blur</span>
-                <Slider min={0} max={60} step={2} value={wpBlur} onChange={setWpBlur} aria-label="Wallpaper blur" />
-                <span className="wp-effect-val">{wpBlur}px</span>
-              </div>
-              <div className="wp-effect-row">
-                <span className="wp-effect-label">Opacity</span>
-                <Slider min={0} max={100} step={5} value={wpOpacity} onChange={setWpOpacity} aria-label="Wallpaper opacity" />
-                <span className="wp-effect-val">{wpOpacity}%</span>
-              </div>
-            </div>
+            <AppearancePanel />
           </div>
         </div>
       )}
@@ -259,18 +150,18 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           <div className="ds-settings-group-items">
             <SettingsRow
               label="Show Nav Labels"
-              sublabel="Display text labels on the Dashboard, Play, Perform, Personalize, and Shop tabs"
+              sublabel={`Display text labels on ${navList}`}
               control={<Toggle checked={!hideNavLabels} onChange={onShowLabels} />}
             />
             <SettingsRow
               label="Show Nav Icons"
-              sublabel="Display icons on the Dashboard, Play, Perform, Personalize, and Shop tabs"
+              sublabel={`Display icons on ${navList}`}
               control={<Toggle checked={!hideNavIcons} onChange={onShowIcons} />}
             />
             <div className="stx-preview">
               <div className="stx-preview-label">Preview</div>
               <Menu
-                items={PREVIEW_TABS}
+                items={previewTabs}
                 orientation="horizontal"
                 hideLabels={hideNavLabels}
                 hideIcons={hideNavIcons}

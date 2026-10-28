@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './device-canvas.css';
 import {
@@ -6,23 +6,32 @@ import {
   Ng3Panel,
   Ng3Tool,
   Ng3Grid,
+  Ng3Col,
   Ng3Section,
   Ng3Row,
   Ng3Field,
   Ng3Label,
   ListItem,
+  Button,
+  Checkbox,
   Input,
   Dropdown,
   Radio,
   Slider,
   Toggle,
   Callout,
+  CalloutLeader,
+  ContextMenu,
   Tooltip,
   type IconName,
 } from '../components';
 import { type ResolvedSku, deviceImageUrl, heroImageFile, connectionStatus } from './skus';
 import { deviceTabs } from './deviceTabs';
 import { ProfileBar, ProfileActions, ProfileScopeBody, useDeviceProfileBar, useProfileValue, type ProfileBarState } from './ProfileBar';
+import { ProfileLightsPower, ProfileLightsTab } from './ProfileLights';
+import { DeviceSettingsCard } from './DeviceSettingsCard';
+import { MouseStage } from './MouseStage';
+import { mouseRenderFor } from './mouseRenders';
 
 /**
  * Full-canvas device modal — the Figma "Keys-Buttons" mouse design (node
@@ -205,15 +214,21 @@ const DPI_PRESET_COLORS = ['var(--red)', 'var(--blue)', 'var(--yellow)', 'var(--
 // SENSOR tab — Sensitivity (DPI presets + slider) on the left; polling, lift-off,
 // motion sync, angle adjustment + snapping on the right. Data-driven from
 // features.sensor, falling back to the same defaults as the generic modal.
+/** The DPI range and presets a mouse offers — read here and by Nova's live DPI control (TH-437), so the two cannot disagree. */
+export function dpiConfigOf(features: Record<string, any>): { min: number; max: number; step: number; presets: number[] } {
+  const dpiCfg = features?.sensor?.dpi || {};
+  return {
+    min: dpiCfg.min ?? 50,
+    max: dpiCfg.max ?? 26000,
+    step: dpiCfg.step ?? 50,
+    presets: Array.isArray(dpiCfg.presetValues) && dpiCfg.presetValues.length ? dpiCfg.presetValues : [400, 800, 1600, 2400, 3200],
+  };
+}
+
 function SensorTab({ features, profile }: { features: Record<string, any>; profile: ProfileBarState }) {
   const sensor = features?.sensor || {};
   const dpiCfg = sensor.dpi || {};
-  const min: number = dpiCfg.min ?? 50;
-  const max: number = dpiCfg.max ?? 26000;
-  const step: number = dpiCfg.step ?? 50;
-  const presets: number[] = Array.isArray(dpiCfg.presetValues) && dpiCfg.presetValues.length
-    ? dpiCfg.presetValues
-    : [400, 800, 1600, 2400, 3200];
+  const { min, max, step, presets } = dpiConfigOf(features);
   const ticks: number[] = Array.isArray(dpiCfg.ticks) && dpiCfg.ticks.length
     ? dpiCfg.ticks
     : [50, 400, 800, 1600, 2400, 3200, 6400, 9600, 12800, 16000, 26000, 30000];
@@ -353,6 +368,102 @@ function SensorTab({ features, profile }: { features: Record<string, any>; profi
   );
 }
 
+/**
+ * Settings tab (Figma Device Settings 10461:45224) — the device's own card and
+ * its battery alert on the left, Windows' pointer properties on the right over
+ * a hand-off to the control panel that really owns them.
+ *
+ * Sensitivity and double-click speed carry WINDOWS' ranges (1–11 and 1–10, both
+ * resting at 6) rather than invented ones: the panel mirrors Mouse Properties
+ * and hands off to it, so a slider that disagreed with the system's would be
+ * lying about what it sets.
+ *
+ * Every value is profile-scoped like the Sensor tab's — a profile that changes
+ * DPI wants its own pointer speed with it, and profile capture then picks these
+ * up for free.
+ */
+function SettingsTab({
+  sku,
+  features,
+  profile,
+}: {
+  sku: ResolvedSku;
+  features: Record<string, any>;
+  profile: ProfileBarState;
+}) {
+  const support = (features.support && typeof features.support === 'object' ? features.support : {}) as Record<string, unknown>;
+  const firmware = typeof features.firmware === 'string' ? features.firmware : null;
+  // The battery alert belongs to the device, so it only appears on a device
+  // that has a battery to warn about — the SKU says (features.power).
+  const hasLowPowerAlert = features.power?.lowPowerAlert === true;
+
+  const [sensitivity, setSensitivity] = useProfileValue(profile, 'settings.sensitivity', 6);
+  const [enhance, setEnhance] = useProfileValue(profile, 'settings.enhancePointerPrecision', false);
+  const [dblClick, setDblClick] = useProfileValue(profile, 'settings.doubleClickSpeed', 6);
+  const [lowPower, setLowPower] = useProfileValue(profile, 'settings.lowPowerAlert', 10);
+
+  return (
+    <Ng3Grid className="dc-settings">
+      <Ng3Col className="dc-set-rail">
+        <DeviceSettingsCard
+          name={sku.name}
+          firmware={firmware}
+          deviceManager={support.deviceManager !== false}
+          getSupport={support.getSupport !== false}
+        />
+        {hasLowPowerAlert && (
+          <Ng3Section>
+            <Ng3Field>
+              <Ng3Row>
+                <Ng3Label strong>Low Power Alert</Ng3Label>
+                <span className="dc-mono-val">{lowPower}%</span>
+              </Ng3Row>
+              <Slider
+                min={5}
+                max={50}
+                step={5}
+                value={lowPower}
+                onChange={setLowPower}
+                aria-label="Low power alert threshold"
+              />
+            </Ng3Field>
+          </Ng3Section>
+        )}
+      </Ng3Col>
+
+      <Ng3Section className="dc-set-pointer">
+        <Ng3Field>
+          <Ng3Row>
+            <Ng3Label strong>Mouse Sensitivity</Ng3Label>
+            <span className="dc-mono-val">{sensitivity}</span>
+          </Ng3Row>
+          <Slider min={1} max={11} value={sensitivity} onChange={setSensitivity} aria-label="Mouse sensitivity" />
+          <Checkbox
+            label="Enhance pointer precision"
+            checked={enhance}
+            onChange={(e) => setEnhance(e.target.checked)}
+          />
+        </Ng3Field>
+        <span className="dc-divider" />
+        <Ng3Field>
+          <Ng3Row>
+            <Ng3Label strong>Double-Click Speed</Ng3Label>
+            <span className="dc-mono-val">{dblClick}</span>
+          </Ng3Row>
+          <Slider min={1} max={10} value={dblClick} onChange={setDblClick} aria-label="Double-click speed" />
+        </Ng3Field>
+        {/* Windows owns these three properties; this hands off rather than
+            pretending the panel is the system's. On the card floor, away from
+            the controls — the same shape as the headset's sound-devices row. */}
+        <Button className="dc-set-handoff">
+          <Icon name="mouse" size={16} />
+          Windows Mouse Properties
+        </Button>
+      </Ng3Section>
+    </Ng3Grid>
+  );
+}
+
 export function DeviceCanvas({
   sku,
   onClose,
@@ -370,6 +481,9 @@ export function DeviceCanvas({
   const active = TABS.find((t) => t.id === tabId) ?? TABS[0];
 
   const heroSrc = deviceImageUrl(heroImageFile(sku));
+  // The photo stage is the default hero wherever the SKU has a top-down
+  // render and slot geometry; any other mouse keeps its product photo.
+  const render = useMemo(() => mouseRenderFor(sku.id), [sku.id]);
   const conn = connectionStatus(sku.features);
   const dpi = defaultDpi(sku.features);
 
@@ -490,6 +604,47 @@ export function DeviceCanvas({
     };
   }, [menu]);
 
+  // One state per callout, shared by its box and its leader so they agree.
+  const calloutState = (id: string) => {
+    const bind = binds[id];
+    return {
+      armed: armed === id,
+      assigned: !!bind && bind !== 'disabled',
+      off: bind === 'disabled',
+      dropTarget: dropTarget === id,
+    };
+  };
+  // Armed: the assignment hint. Otherwise the hover copy carries the identity
+  // a reassigned label drops ("Mouse 4 · G").
+  const calloutTip = (c: { label: string; id: string }, bind: CalloutBind | undefined) =>
+    armed === c.id
+      ? 'Nice pick! Press any key or use the panel below to assign it.'
+      : bind === 'disabled'
+        ? `${c.label} · disabled`
+        : bind
+          ? `${c.label} · ${bind.label}`
+          : c.label;
+  const calloutAria = (c: { label: string }, bind: CalloutBind | undefined) =>
+    c.label + (bind === 'disabled' ? ', disabled' : bind ? `, assigned ${bind.label}` : '');
+
+  // Right-click, or the keyboard's menu key / Shift+F10 — which fire the same
+  // event at 0,0, so the menu anchors to the callout instead.
+  const openMenu = (id: string, e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+    setArmed(null);
+    if (e.clientX === 0 && e.clientY === 0) {
+      const r = e.currentTarget.getBoundingClientRect();
+      setMenu({ id, x: r.left, y: r.bottom });
+    } else {
+      setMenu({ id, x: e.clientX, y: e.clientY });
+    }
+  };
+  // Focus moves into the menu when it opens, so the keyboard can pick a row.
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (menu) menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+  }, [menu]);
+
   const resetAll = () => {
     setBinds({});
     setArmed(null);
@@ -517,78 +672,130 @@ export function DeviceCanvas({
         <Icon name="close" />
       </button>
 
-      {/* Hero — with the button callouts overlaid while the Buttons tab is up */}
+      {/* Hero — the photo stage where the SKU has one (overlay callouts on
+          Buttons), else the product photo with anchored callouts. */}
       <div className="dc-hero">
-        {heroSrc && (
-          <span
-            className="dc-hero-fig"
+        {render ? (
+          <div
+            className="dc-hero-stage"
             // Interaction state, exposed for the CDP suites.
             data-armed={armed ?? undefined}
             data-armed-chip={armedChip ?? undefined}
             data-drop={dropTarget ?? undefined}
           >
-            <img src={heroSrc} alt={sku.name} />
-            {active.id === 'buttons' &&
-              callouts.map((c) => {
-                const pos = CALLOUT_POS[c.slot];
-                if (!pos) return null;
-                const bind = binds[c.id];
-                const isOff = bind === 'disabled';
-                const rebound = !!bind && !isOff;
-                return (
-                  <span
-                    key={c.id}
-                    data-callout={c.id}
-                    className={'dc-co' + (pos.flip ? ' flip' : '')}
-                    style={{
-                      left: `${pos.x}%`,
-                      top: `${pos.y}%`,
-                      ...(pos.line ? { ['--co-line' as string]: `${pos.line}px` } : {}),
-                    }}
-                  >
-                    <Tooltip
-                      placement="top"
-                      open={armed === c.id}
-                      // Armed: the assignment hint. Otherwise the hover copy
-                      // carries the identity the single-line label drops when
-                      // reassigned ("Mouse 4 · G").
-                      content={
-                        armed === c.id
-                          ? 'Nice pick! Press any key or use the panel below to assign it.'
-                          : rebound
-                            ? `${c.label} · ${(bind as { label: string }).label}`
-                            : isOff
-                              ? `${c.label} · disabled`
-                              : c.label
-                      }
+            <MouseStage render={render} alt={sku.name}>
+              {active.id === 'buttons' && (
+                <>
+                  <svg className="dc-co-lines" viewBox={`0 0 ${render.w} ${render.h}`} aria-hidden="true">
+                    {callouts.map((c) => {
+                      const g = render.callouts[c.slot];
+                      if (!g) return null;
+                      const st = calloutState(c.id);
+                      return <CalloutLeader key={c.id} start={g.start} run={g.run} end={g.dot} {...st} />;
+                    })}
+                  </svg>
+                  {callouts.map((c) => {
+                    const g = render.callouts[c.slot];
+                    if (!g) return null;
+                    const bind = binds[c.id];
+                    const isOff = bind === 'disabled';
+                    const rebound = !!bind && !isOff;
+                    const label = rebound ? (bind as { label: string }).label : null;
+                    // An assignment that is a glyph chip (wheel up/down) shows its glyph.
+                    const chip = label ? MOUSE_KEYS.find((k) => k.assign === label) : undefined;
+                    return (
+                      <span key={c.id} data-callout={c.id} className="dc-co-slot" style={{ left: g.box[0], top: g.box[1] }}>
+                        <Tooltip placement="top" open={armed === c.id} content={calloutTip(c, bind)}>
+                          <Callout
+                            variant="overlay"
+                            {...calloutState(c.id)}
+                            value={isOff ? 'Disabled' : chip?.icon ? <Icon name={chip.icon} size="sm" /> : (label ?? c.label)}
+                            aria-label={calloutAria(c, bind)}
+                            onClick={() => onCalloutClick(c.id)}
+                            onContextMenu={(e) => openMenu(c.id, e)}
+                          />
+                        </Tooltip>
+                      </span>
+                    );
+                  })}
+                </>
+              )}
+            </MouseStage>
+          </div>
+        ) : (
+          <>
+          {heroSrc && (
+            <span
+              className="dc-hero-fig"
+              // Interaction state, exposed for the CDP suites.
+              data-armed={armed ?? undefined}
+              data-armed-chip={armedChip ?? undefined}
+              data-drop={dropTarget ?? undefined}
+            >
+              <img src={heroSrc} alt={sku.name} />
+              {active.id === 'buttons' &&
+                callouts.map((c) => {
+                  const pos = CALLOUT_POS[c.slot];
+                  if (!pos) return null;
+                  const bind = binds[c.id];
+                  const isOff = bind === 'disabled';
+                  const rebound = !!bind && !isOff;
+                  return (
+                    <span
+                      key={c.id}
+                      data-callout={c.id}
+                      className={'dc-co' + (pos.flip ? ' flip' : '')}
+                      style={{
+                        left: `${pos.x}%`,
+                        top: `${pos.y}%`,
+                        ...(pos.line ? { ['--co-line' as string]: `${pos.line}px` } : {}),
+                      }}
                     >
-                      {/* Single-line label (per the Figma) — assigned callouts swap
-                          their text for the assignment; the physical button's
-                          identity stays in the accessible name and the leader
-                          line pointing at it. Two-line labels collide in the
-                          tight hero rows and steal each other's clicks/drops. */}
-                      <Callout
-                        flip={pos.flip}
-                        armed={armed === c.id || dropTarget === c.id}
-                        assigned={rebound}
-                        off={isOff}
-                        value={isOff ? 'Disabled' : rebound ? (bind as { label: string }).label : c.label}
-                        aria-label={
-                          c.label +
-                          (rebound ? `, assigned ${(bind as { label: string }).label}` : isOff ? ', disabled' : '')
+                      <Tooltip
+                        placement="top"
+                        open={armed === c.id}
+                        // Armed: the assignment hint. Otherwise the hover copy
+                        // carries the identity the single-line label drops when
+                        // reassigned ("Mouse 4 · G").
+                        content={
+                          armed === c.id
+                            ? 'Nice pick! Press any key or use the panel below to assign it.'
+                            : rebound
+                              ? `${c.label} · ${(bind as { label: string }).label}`
+                              : isOff
+                                ? `${c.label} · disabled`
+                                : c.label
                         }
-                        onClick={() => onCalloutClick(c.id)}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          setArmed(null);
-                          setMenu({ id: c.id, x: e.clientX, y: e.clientY });
-                        }}
-                      />
-                    </Tooltip>
-                  </span>
-                );
-              })}
-          </span>
+                      >
+                        {/* Single-line label (per the Figma) — assigned callouts swap
+                            their text for the assignment; the physical button's
+                            identity stays in the accessible name and the leader
+                            line pointing at it. Two-line labels collide in the
+                            tight hero rows and steal each other's clicks/drops. */}
+                        <Callout
+                          flip={pos.flip}
+                          armed={armed === c.id || dropTarget === c.id}
+                          assigned={rebound}
+                          off={isOff}
+                          value={isOff ? 'Disabled' : rebound ? (bind as { label: string }).label : c.label}
+                          aria-label={
+                            c.label +
+                            (rebound ? `, assigned ${(bind as { label: string }).label}` : isOff ? ', disabled' : '')
+                          }
+                          onClick={() => onCalloutClick(c.id)}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            setArmed(null);
+                            setMenu({ id: c.id, x: e.clientX, y: e.clientY });
+                          }}
+                        />
+                      </Tooltip>
+                    </span>
+                  );
+                })}
+            </span>
+          )}
+          </>
         )}
       </div>
 
@@ -604,36 +811,37 @@ export function DeviceCanvas({
       {/* Callout context menu — Reset / Disable */}
       {menu &&
         createPortal(
-          <div className="dc-cmenu" role="menu" style={{ left: menu.x, top: menu.y }}>
-            <button
-              type="button"
-              className="dc-cmenu-item"
-              role="menuitem"
-              onClick={() => {
-                setBinds((b) => {
-                  const next = { ...b };
-                  delete next[menu.id];
-                  return next;
-                });
+          <ContextMenu ref={menuRef} className="dc-cmenu" aria-label="Button actions" style={{ left: menu.x, top: menu.y }}>
+            {[
+              { id: 'reset', icon: 'undo' as IconName, label: 'Reset Button', run: () => setBinds((b) => {
+                const next = { ...b };
+                delete next[menu.id];
+                return next;
+              }) },
+              { id: 'disable', icon: 'decline' as IconName, label: 'Disable Button', run: () => setBinds((b) => ({ ...b, [menu.id]: 'disabled' })) },
+            ].map((row) => {
+              const choose = () => {
+                row.run();
                 setMenu(null);
-              }}
-            >
-              <Icon name="undo" size={16} />
-              Reset Button
-            </button>
-            <button
-              type="button"
-              className="dc-cmenu-item"
-              role="menuitem"
-              onClick={() => {
-                setBinds((b) => ({ ...b, [menu.id]: 'disabled' }));
-                setMenu(null);
-              }}
-            >
-              <Icon name="close" size={16} />
-              Disable Button
-            </button>
-          </div>,
+              };
+              return (
+                <ListItem
+                  key={row.id}
+                  role="menuitem"
+                  className="dc-cmenu-item"
+                  leading={<Icon name={row.icon} size="sm" aria-hidden />}
+                  label={row.label}
+                  onClick={choose}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      choose();
+                    }
+                  }}
+                />
+              );
+            })}
+          </ContextMenu>,
           document.body,
         )}
 
@@ -643,7 +851,9 @@ export function DeviceCanvas({
           leading={<ProfileBar state={profile} />}
           trailing={<ProfileActions state={profile} />}
           width={active.width}
+          className={active.id === 'settings' ? 'dc-panel-settings' : undefined}
           header={active.title}
+          headerExtra={active.id === 'lighting' ? <ProfileLightsPower profile={profile} /> : undefined}
           tools={TABS.map((t) => (
             <Ng3Tool
               key={t.id}
@@ -672,6 +882,10 @@ export function DeviceCanvas({
             />
           ) : active.id === 'sensor' ? (
             <SensorTab key={profile.revision} features={sku.features} profile={profile} />
+          ) : active.id === 'lighting' ? (
+            <ProfileLightsTab key={profile.revision} profile={profile} />
+          ) : active.id === 'settings' ? (
+            <SettingsTab key={profile.revision} sku={sku} features={sku.features} profile={profile} />
           ) : (
             <div className="dc-placeholder">{active.title} settings — coming soon.</div>
           )}

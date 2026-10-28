@@ -55,13 +55,15 @@ export const EqPresetRail = forwardRef<EqPresetRailHandle, EqPresetRailProps>(fu
   // perfectly correct in the inline style. Outside the shell, both go away.
   // Flips above the button when it would run off the bottom.
   const [menuAt, setMenuAt] = useState<{ top: number; right: number } | null>(null);
+  // clientWidth, not innerWidth: innerWidth counts a classic scrollbar (Windows,
+  // Linux) but a fixed element's right edge does not, so the menu would sit a
+  // scrollbar-width left of the button it belongs to. Invisible on macOS.
   const openMenu = (id: string, btn: HTMLElement) => {
     const r = btn.getBoundingClientRect();
     const below = window.innerHeight - r.bottom;
+    const right = document.documentElement.clientWidth - r.right;
     setMenuAt(
-      below < MENU_H
-        ? { top: Math.max(GUTTER, r.top - MENU_H - 4), right: window.innerWidth - r.right }
-        : { top: r.bottom + 4, right: window.innerWidth - r.right },
+      below < MENU_H ? { top: Math.max(GUTTER, r.top - MENU_H - 4), right } : { top: r.bottom + 4, right },
     );
     setMenuFor(id);
   };

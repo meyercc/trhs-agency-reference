@@ -37,9 +37,13 @@ export function Gauge({
   unit = '%',
   sublabel,
   display,
+  size = 'md',
+  ...rest
 }: {
   value: number;
   className?: string;
+  /** 100px (default), or the 72px / 96px the Vitals modal uses — a prop since TH-454, not a per-page override class. */
+  size?: 'sm' | 'md' | 'lg';
   /** Center unit glyph (default '%'; pass '°' for temperature). */
   unit?: string;
   /** Small caption under the value (e.g. 'Celsius'). */
@@ -47,13 +51,13 @@ export function Gauge({
   /** Override the center number (fill/color still track `value`, 0–100) — e.g.
    *  a temp gauge fills on the °C scale but shows a °F number. */
   display?: number;
-}) {
+} & Record<`data-${string}`, string>) {
   const v = clamp(value, 0, 100);
   const [a, b, glow] = palette(v);
   const gid = 'gauge-' + useId().replace(/:/g, '');
   const end = START - (v / 100) * SWEEP;
   return (
-    <div className={'gauge-wrap' + (className ? ' ' + className : '')}>
+    <div className={['gauge-wrap', size === 'md' ? '' : size, className].filter(Boolean).join(' ')} {...rest}>
       <svg className="gauge-ec" viewBox="0 0 100 100" width="100" height="100" aria-hidden="true">
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="1" y2="0">

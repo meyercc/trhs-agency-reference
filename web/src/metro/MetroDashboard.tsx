@@ -121,6 +121,7 @@ const WIDGET_GALLERY = [
   { kind: 'dev-saga', name: 'Pulsefire Saga Pro' },
   { kind: 'dev-oled', name: 'OMEN OLED 27' },
   { kind: 'dev-cloud', name: 'Cloud III' },
+  { kind: 'dev-omen16', name: 'OMEN 16 VALORANT' },
 ];
 function instWidget(kind: string, id?: string | null, cols?: number, rows?: number): GlanceWidget | null {
   const make = WIDGET_CATALOG[kind];
@@ -141,6 +142,7 @@ const DEVICE_SKUS: Record<string, string> = {
   'dev-saga': 'saga-pro',
   'dev-oled': 'pulse-27',
   'dev-cloud': 'cloud-iii',
+  'dev-omen16': 'hx-omen-16-valorant',
 };
 function instDevice(kind: string, id?: string | null, cols?: number, rows?: number): DeviceMetroWidget | null {
   const skuId = DEVICE_SKUS[kind];
@@ -188,7 +190,7 @@ const CATALOG: Record<string, () => Template> = {
   devices: () => ({
     title: 'Devices',
     rows: 4,
-    widgets: [instDevice('dev-saga', 'dev-saga-0'), instDevice('dev-cloud', 'dev-cloud-0'), instDevice('dev-oled', 'dev-oled-0')].filter(Boolean) as Widget[],
+    widgets: [instDevice('dev-omen16', 'dev-omen16-0'), instDevice('dev-saga', 'dev-saga-0'), instDevice('dev-cloud', 'dev-cloud-0'), instDevice('dev-oled', 'dev-oled-0')].filter(Boolean) as Widget[],
   }),
 };
 
@@ -339,9 +341,9 @@ function Deals({ items, cols = 2 }: { items: DealData[]; cols?: number }) {
 }
 
 const FEATURE_WIDTH: Record<number, string> = {
-  1: 'min(360px, 80vw)',
-  2: 'min(520px, 34vw)',
-  3: 'min(680px, 52vw)',
+  1: 'min(360px, calc(80 * var(--vw)))',
+  2: 'min(520px, calc(34 * var(--vw)))',
+  3: 'min(680px, calc(52 * var(--vw)))',
 };
 function Feature({ art, eyebrow, title, sub, cols = 2 }: FeatureWidget) {
   return (

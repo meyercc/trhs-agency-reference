@@ -135,7 +135,14 @@ check('the card shows the room it is on', /Dark/.test(roomShown), roomShown || '
 await open('#/?modal=admin');
 const cards = await ev(`[...document.querySelectorAll('.admin-tool-name')].map((e) => e.textContent.trim())`);
 const OURS = ['Display scenario'];
-const THEIRS = ['First-boot onboarding', 'Device simulator'];
+// Cards that belong to the main app rather than the monitor section. 'Play
+// layout' joined on 2026-10-01 (TH-425); Kristy's 'Personalize suggestions'
+// switch (2026-10-01) sits with Chris's tools and is listed here for the same
+// reason. This allowlist is what keeps the check honest — the card count below
+// is the point, not the names.
+// 'This PC' (which computer the app runs on, and the A/B switch for its IA)
+// joined on 2026-10-19 with option B.
+const THEIRS = ['First-boot onboarding', 'Device simulator', 'Advertising', 'Play layout', 'Personalize suggestions', 'This PC'];
 check('our demo block is a single card', cards.filter((n) => !THEIRS.includes(n)).length === 1, cards.join(' · '));
 check('and it is the last one', cards[cards.length - 1] === OURS[0], cards.join(' · '));
 check(

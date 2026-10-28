@@ -69,3 +69,11 @@ export const Q: Story = {
 export const Disabled: Story = {
   render: () => <Live initial={6} disabled format={(v) => `${v.toFixed(1)} dB`} aria-label="Gain" />,
 };
+
+/** `size="sm"` — the short field for a three-digit value (Figma Degree Input). */
+export const Small: Story = {
+  render: () => {
+    const [v, setV] = useState(360);
+    return <Stepper size="sm" value={v} min={0} max={360} step={15} precision={0} onChange={setV} aria-label="Angle" />;
+  },
+};

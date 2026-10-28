@@ -15,9 +15,11 @@ export interface CleanerCardProps {
   kind: 'system' | 'fan';
   onClean: () => void;
   onSchedule?: () => void;
+  /** The receipt: when the last clean ran and who ran it ("3 days ago · Scheduled"). */
+  lastCleaned?: string;
 }
 
-export function CleanerCard({ kind, onClean, onSchedule }: CleanerCardProps) {
+export function CleanerCard({ kind, onClean, onSchedule, lastCleaned }: CleanerCardProps) {
   const title = kind === 'system' ? 'System Cleaner' : 'Fan Cleaner';
 
   const header = (
@@ -46,7 +48,7 @@ export function CleanerCard({ kind, onClean, onSchedule }: CleanerCardProps) {
         <Facts
           items={[
             { label: 'Recoverable', value: '7.04 GB' },
-            { label: 'Last cleaned', value: '3 days ago' },
+            { label: 'Last cleaned', value: lastCleaned ?? '3 days ago' },
           ]}
         />
         {footer}

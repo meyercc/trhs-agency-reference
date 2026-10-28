@@ -46,6 +46,4 @@ export interface AssignType {
 export const ASSIGN_TYPES: AssignType[] = [
   { id: 'keys', label: 'Keys / Buttons', icon: 'buttons' },
   { id: 'macro', label: 'Macro', icon: 'macro' },
-  { id: 'text', label: 'Text', icon: 'message' },
-  { id: 'launcher', label: 'Launcher', icon: 'open-app' },
 ];

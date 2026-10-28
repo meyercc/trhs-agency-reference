@@ -7,6 +7,17 @@ import { activePcName, deskPcNames } from '../devices/arrangement';
 import { getResolvedSku } from '../devices/skus';
 import { useSettings } from '../state/Settings';
 import { useDeviceSim } from '../state/DeviceSim';
+import { POWER_MODE_LABEL, usePowerModeEvent } from '../state/powerMode';
+import { isPcType } from '../devices/pcDirectory';
+import { SCREEN_CONTENT_LABEL, psuStatusWord, useCoolerCap } from '../devices/pcParts';
+import { cpuReading } from '../widgets/perform5/vitalsData';
+import { FAN_CLEANER } from '../widgets/perform6/CleanerCard';
+import { usePersonalize } from '../pages/personalize/state';
+import { towerLook } from '../pages/personalize/looks';
+import { useChassisMachine } from '../lightstudio/ChassisLights';
+import { zonesOf } from '../lightstudio/towerZones';
+import { PcDirectory } from './PcDirectory';
+import { inertWhen } from './GamePanel';
 import './device-panel.css';
 
 /**
@@ -19,27 +30,34 @@ import './device-panel.css';
 export function DevicePanel({
   open,
   focusSku,
+  focusKey,
   onClose,
 }: {
   open: boolean;
   /** Select this device on open — set when the Devices nav closes that device's
       modal, so the panel continues from what you were looking at. */
   focusSku?: string;
+  /** Changes on every request to focus, so asking for the device that is
+      already `focusSku` selects it again after the player moved to another. */
+  focusKey?: number;
   onClose: () => void;
 }) {
   const [params, setParams] = useSearchParams();
   // What is on THIS desk (Admin), not the whole inventory — a display the Admin
   // row took off the desk has no tab here, the same way it has no card on the
   // home board and no tile in the desk picture (2026-09-18).
-  const { kvm, setKvm, deskDevices, pcCount } = useSettings();
-  const models = useMemo(
-    () => deskDeviceIds(deskDevices).map((id) => deviceCardModel(id)).filter(Boolean) as DeviceCardModel[],
-    [deskDevices],
-  );
+  const { kvm, setKvm, deskDevices, pcCount, thisPc, mvpScope, tempUnit } = useSettings();
+  // This PC leads the list, and is the device selected when the panel opens:
+  // its entries are the first thing here (see PcDirectory). Any other computer
+  // in the roster is not a device of this one, so it is left out.
+  const models = useMemo(() => {
+    const peripherals = deskDeviceIds(deskDevices).filter((id) => !isPcType(getResolvedSku(id)?.type));
+    return [thisPc, ...peripherals].map((id) => deviceCardModel(id)).filter(Boolean) as DeviceCardModel[];
+  }, [deskDevices, thisPc]);
   const [selectedId, setSelectedId] = useState<string | undefined>(models[0]?.skuId);
   useEffect(() => {
     if (focusSku && models.some((m) => m.skuId === focusSku)) setSelectedId(focusSku);
-  }, [focusSku, models]);
+  }, [focusSku, focusKey, models]);
   const selected = models.find((m) => m.skuId === selectedId) ?? models[0];
 
   // "My Devices" is inventory, not just what's live right now — a device that
@@ -47,6 +65,19 @@ export function DevicePanel({
   // KVM "handed off" state below. Hiding it would make the state invisible.
   const { simState, batteryOf } = useDeviceSim();
   const selectedConnected = selected ? simState(selected.skuId).connected : true;
+
+  // This PC's face is its directory (PcDirectory); the hero opens the PC's
+  // page, as any device's hero opens its window.
+  const isPc = isPcType(selected?.type);
+  const pcSku = isPc && selected ? getResolvedSku(selected.skuId) : undefined;
+  const shortcuts = isPc ? [] : selected?.shortcuts ?? [];
+  const [modeEvent] = usePowerModeEvent();
+  const [cap] = useCoolerCap();
+  // The desktop's lighting as its 3D label reads it (looks.ts), so the row
+  // and the label agree.
+  const personalize = usePersonalize();
+  const chassisZones = zonesOf(useChassisMachine());
+  const chassisLook = towerLook(personalize.desk.lighting.tower, chassisZones).name;
 
   // KVM: a routed-away keyboard/mouse reads "handed off"; the Treehouse 32
   // gets a `Gear Switch` line once a second computer is on the desk. The OMEN
@@ -97,6 +128,7 @@ export function DevicePanel({
       className={'ds-panel device-panel' + (open ? ' open' : '')}
       aria-label="My Devices"
       aria-hidden={!open}
+      {...inertWhen(!open)}
     >
       <div className="ds-panel-header">
         <span className="ds-panel-title">My Devices</span>
@@ -155,7 +187,9 @@ export function DevicePanel({
                   </span>
                 )}
                 <span className="devp-badge">{selected.subtitle}</span>
-                {kvmAway ? (
+                {isPc ? (
+                  <span className="devp-badge connected">This PC</span>
+                ) : kvmAway ? (
                   <span className="devp-badge handed-off">
                     {/* The host name comes from the same field the switch row above
                         reads. It was the literal "Work Laptop" until 2026-08-20, which
@@ -238,9 +272,22 @@ export function DevicePanel({
                 "Shortcuts", but a list of every tab is a table of contents, and
                 the modal already draws that as its tab strip. The word moved up
                 to the action row, which earns it (2026-08-20, Cindy). */}
-            {selected.shortcuts.length > 0 && (
+            {pcSku ? (
+              <PcDirectory
+                pc={pcSku}
+                live={{
+                  mode: POWER_MODE_LABEL[modeEvent.mode],
+                  capShows: cap.on ? SCREEN_CONTENT_LABEL[cap.content] : 'Off',
+                  psuStatus: psuStatusWord(),
+                  vitals: cpuReading(tempUnit),
+                  fanCleaner: FAN_CLEANER.label,
+                  chassisLook,
+                }}
+                onLeave={onClose}
+              />
+            ) : shortcuts.length > 0 && (
               <div className="devp-features">
-                {selected.shortcuts.map((s) => (
+                {shortcuts.map((s) => (
                   <button key={s.tab} type="button" className="devp-feature" onClick={() => openModal(s.tab)}>
                     <span className="devp-feature-icon">
                       <Icon name={s.icon} size={16} aria-hidden />

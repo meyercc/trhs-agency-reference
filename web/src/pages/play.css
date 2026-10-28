@@ -6,13 +6,13 @@
    and rail span the full app window. The content below re-constrains itself. */
 .play-page {
   position: relative;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
+  width: var(--viewport-w);
+  margin-left: calc(50% - var(--viewport-w) / 2);
 }
 .play-inner {
   position: relative;
   z-index: 2;
-  max-width: 1100px;
+  max-width: var(--page-max-w);
   margin: 0 auto;
   padding: 0 var(--gutter) calc(var(--gutter) * 3);
 }
@@ -79,13 +79,14 @@
 
 /* ── Rail (floating top-right, fades on scroll) ── */
 .play-hero-rail {
+  --play-rail-w: 420px;
   position: absolute;
   top: 8px;
   right: 40px;
-  width: 420px;
+  width: var(--play-rail-w);
   z-index: 3;
   transition: opacity 60ms linear;
-  @media (min-width: 1600px) {
+  @container page (--bp-wide-up) {
     top: 315px;
   }
 }
@@ -169,9 +170,13 @@
 }
 .play-rail-footer {
   display: flex;
+  /* The "Now playing" badge can be long ("· 1 h 45 min played · Night City
+     profile applied"); the actions wrap below it instead of being pushed past
+     the card's edge (TH-484). */
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--gutter-xs) var(--gutter-sm);
 }
 .play-rail-friends-block {
   display: flex;
@@ -232,7 +237,7 @@
   flex-shrink: 0;
 }
 
-@media (min-width: 1600px) {
+@container page (--bp-wide-up) {
   .play-hero {
     height: 900px;
   }
@@ -243,10 +248,19 @@
     right: 240px;
   }
 }
-@media (max-width: 1100px) {
+@container page (--bp-medium-down) {
   .play-hero-rail {
-    right: 24px;
-    width: 360px;
+    --play-rail-w: 360px;
+    right: var(--gutter);
+  }
+}
+/* Compact: the rail spans the page over the hero rather than hanging off its
+   right edge at a width the window does not have. */
+@container page (--bp-compact) {
+  .play-hero-rail {
+    left: var(--gutter);
+    right: var(--gutter);
+    width: auto;
   }
 }
 
@@ -284,6 +298,10 @@
 .gtm-ctrl {
   display: inline-flex;
   pointer-events: none;
+}
+/* "New collection…" as a name field (TH-505), at the rows' inset. */
+.gtm-new {
+  padding: var(--gutter-xxs) var(--gutter-xs);
 }
 /* Platform row label: platform glyph + name. */
 .gtm-plat {
@@ -325,7 +343,7 @@
   top: calc(100% + 6px);
   right: 0;
   width: 248px;
-  max-height: 72vh;
+  max-height: calc(72 * var(--vh));
   overflow-y: auto;
   z-index: 50;
 }
@@ -392,4 +410,76 @@
   flex-direction: column;
   gap: 7px;
   padding: 4px var(--gutter-sm) 10px calc(var(--gutter) + 6px);
+}
+
+/* ── "Jump Back In" — the alternate top of the page (Admin → Play layout) ──
+   Four equal covers in the normal content flow, where the hero is fixed and
+   full-bleed. Figma 207:8904 is four 280px tiles with 24px gutters in a 1192
+   row; expressed as four equal tracks it holds that proportion at our measure
+   without naming a width. The tile owns its own 2:3 ratio.
+   ──────────────────────────────────────────────────────────────────────── */
+.jbi {
+  margin-bottom: var(--gutter);
+}
+.jbi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gutter);
+  align-items: start;
+}
+
+/* ── Featured (TH-506) ───────────────────────────────────────────────────
+   Six columns: the lead tile spans three, three covers follow. The row
+   stretches, so the lead tile takes the covers' 2:3 height and every bottom
+   ends on one line. Narrower, three columns: the lead tile takes the row and
+   the covers sit under it, three across. */
+.frc {
+  margin-bottom: var(--gutter);
+}
+.frc-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--gutter);
+  align-items: stretch;
+}
+.frc-lead {
+  grid-column: span 3;
+}
+@container page (--bp-medium-down) {
+  .frc-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  /* On a row of its own there are no covers to take a height from, so it
+     keeps the Figma frame's proportion (543 × 245). */
+  .frc-lead {
+    aspect-ratio: 543 / 245;
+  }
+}
+
+/* With no hero behind it the content starts at the top of the shell, so the
+   page supplies the breathing room the hero's spacer used to. */
+.play-inner.no-hero {
+  padding-top: var(--gutter);
+}
+
+@container page (--bp-medium-down) {
+  .jbi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@container page (--bp-compact) {
+  .jbi-grid {
+    grid-template-columns: 1fr;
+    gap: var(--gutter-sm);
+  }
+}
+
+/* "Now playing" sits on the rail's glass card, which stays dark over the art in
+   both themes. The positive badge's own text (--green) is a light-theme dark
+   green there — unreadable on dark glass — so the words take the on-image
+   colour and the badge keeps its green wash (TH-484, measured in light).
+   html:root, because `.ds-badge.status.positive` and the Kintsugi layer's
+   `html:root .ds-badge` both out-specify a plain pair (gotcha 7). */
+html:root .play-rail-card .ds-badge.play-rail-now {
+  color: var(--text-on-image);
 }

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Toggle, ToggleButtonGroup, Slider, Icon } from '../components';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Toggle, ToggleButtonGroup, Slider, Icon, Button } from '../components';
 import {
   LightStudioScene,
   DEVICE_IDS,
@@ -9,9 +9,15 @@ import {
   type CameraView,
   type DeviceId,
   type DeviceStates,
+  type FocusShot,
+  type AnchorId,
+  type ViewInsets,
 } from './scene';
+import type { CapScreenLook } from './capScreen';
+import type { ChassisZoneId } from './towerZones';
 import { LightPresets, wornPresetId } from './LightPresets';
-import { CAMERA_VIEWS } from './lighting';
+import { CAMERA_VIEWS, LIT_DEVICE_IDS, isLit } from './lighting';
+import { ChassisLightsTab } from './ChassisLights';
 import './light-controls.css';
 import './light-studio.css';
 
@@ -36,6 +42,38 @@ export interface LightStudioProps {
   /** The host draws the camera views itself (compact only): no bar above the
    *  desk, and the view follows `cameraView`. */
   cameraView?: CameraView;
+  /** Something covers the desk (a modal, a device panel): it stops drawing
+   *  until uncovered. It also stops by itself off screen or in a hidden tab. */
+  covered?: boolean;
+  /** Show this one device alone, framed, with no studio chrome — the host draws
+   *  its own controls (the PC page's Lights tab, option B). It can change: the
+   *  camera flies to the new device, and null flies back to the whole desk
+   *  (Personalize's Lighting overview). */
+  focus?: DeviceId | null;
+  /** With `focus`: where the camera looks at it from. A new shot moves the
+   *  camera there (This PC's page, per tab and part). */
+  shot?: FocusShot;
+  /** With `focus`: how much of the desk's box the host covers with cards of its
+   *  own, in CSS px in from each edge. The focused device is framed in what is
+   *  left and centred on it (This PC's full-screen layout). Omit it and the
+   *  device is framed in the whole box, as every other desk is. */
+  frameInsets?: ViewInsets | null;
+  /** With `focus: 'tower'`: dim every one of its lights to a fifth except these
+   *  zones' (`[]` dims them all), fading over about 300 ms. A display
+   *  multiplier only; the lighting is not touched. Omit it or pass null and
+   *  nothing dims, as on every other desk (This PC's full-screen layout). */
+  dimExcept?: ChassisZoneId[] | null;
+  /** Labels pinned to the desk: one per anchor, drawn by `renderAnchor` and
+   *  moved with its device or tower part as the camera moves. */
+  anchors?: AnchorId[];
+  renderAnchor?: (id: AnchorId) => ReactNode;
+  /** A compact desk that takes clicks and turns under the pointer, with every
+   *  device kept where it is (the Lighting overview). Other compact desks pass
+   *  clicks through to their tile. */
+  interactive?: boolean;
+  /** The cooler cap's screen on the tower, drawing this look; null or omitted
+   *  shows none. For illustration — the model has no cap (capScreen.ts). */
+  capScreen?: CapScreenLook | null;
 }
 
 /**
@@ -44,7 +82,7 @@ export interface LightStudioProps {
  * controls read/write device lighting via that scene. Gated behind the
  * `lightstudio` module (rendered only on Personalize when installed).
  */
-export function LightStudio({ states, onStatesChange, initialSelected, compact = false, side = false, cameraView, onSelect }: LightStudioProps = {}) {
+export function LightStudio({ states, onStatesChange, initialSelected, compact = false, side = false, cameraView, onSelect, covered = false, focus, shot, frameInsets, dimExcept, anchors, renderAnchor, interactive = false, capScreen }: LightStudioProps = {}) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<LightStudioScene | null>(null);
   const [ui, setUi] = useState<UIState>({
@@ -58,6 +96,10 @@ export function LightStudio({ states, onStatesChange, initialSelected, compact =
   // refs so the scene is built once and mirroring never echoes a value back.
   const cb = useRef({ onStatesChange, onSelect });
   cb.current = { onStatesChange, onSelect };
+  const shotRef = useRef(shot);
+  shotRef.current = shot;
+  const capRef = useRef(capScreen);
+  capRef.current = capScreen;
   const agreed = useRef(states ? JSON.stringify(states) : '');
   // The browser can refuse a 3D canvas (too many live WebGL contexts, no GPU).
   // The desk then says so instead of taking the page down with it.
@@ -90,6 +132,11 @@ export function LightStudio({ states, onStatesChange, initialSelected, compact =
       return;
     }
     sceneRef.current = scene;
+    // A compact desk is a picker that opens devices, lit or not.
+    scene.pickUnlit = compact;
+    scene.movable = !interactive;
+    if (focus) scene.focusDevice(focus, false, shotRef.current ?? null);
+    scene.setCapScreen(capRef.current ?? null);
     initialSelected?.forEach((id, i) => scene.select(id, i > 0));
     return () => {
       scene.dispose();
@@ -113,19 +160,111 @@ export function LightStudio({ states, onStatesChange, initialSelected, compact =
   const picked = ui.selected.join(',');
   useEffect(() => {
     cb.current.onSelect?.(picked ? (picked.split(',') as DeviceId[]) : []);
-  }, [picked]);
+    // On an interactive glance a click goes somewhere; it does not select, so
+    // no ring is left on the device afterwards.
+    if (interactive && picked) sceneRef.current?.clearSelection();
+  }, [picked, interactive]);
+
+  // The cap's screen follows its look; keyed on what it draws, not on identity.
+  const capKey = capScreen ? JSON.stringify(capScreen) : '';
+  useEffect(() => {
+    sceneRef.current?.setCapScreen(capRef.current ?? null);
+  }, [capKey, generation]);
+
+  // Keyed on `generation` too, so a rebuilt scene starts covered if it should.
+  useEffect(() => {
+    sceneRef.current?.setCovered(covered);
+  }, [covered, generation]);
+
+  // The part of the box the host covers. Keyed on the numbers, and on
+  // `generation`, so a rebuilt scene is told again. It goes before the shot
+  // effect below, so a shot flown in the same render is framed inside them.
+  const insetsKey = frameInsets ? `${frameInsets.top},${frameInsets.right},${frameInsets.bottom},${frameInsets.left}` : '';
+  useEffect(() => {
+    sceneRef.current?.setInsets(frameInsets ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [insetsKey, generation]);
+
+  // The zones kept at full strength while the rest dim; keyed on the list, so
+  // a new array with the same zones does not restart anything.
+  const dimKey = dimExcept ? `keep:${dimExcept.join(',')}` : '';
+  useEffect(() => {
+    sceneRef.current?.setDimExcept(dimExcept ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dimKey, generation]);
+
+  // A host-driven focus or shot, once the scene is built (it took the first
+  // one itself). A new device or a new shot flies there, a frame later so the
+  // hero has taken the new tab's size first; a focus that goes away (the
+  // Lighting overview's "All devices") flies back to the desk.
+  const shotKey = shot ? JSON.stringify(shot) : '';
+  const firstShot = useRef(true);
+  const lastFocus = useRef<DeviceId | null>(focus ?? null);
+  useEffect(() => {
+    if (firstShot.current) {
+      firstShot.current = false;
+      return;
+    }
+    const was = lastFocus.current;
+    lastFocus.current = focus ?? null;
+    if (!focus) {
+      if (was) sceneRef.current?.focusDevice(null);
+      return;
+    }
+    const id = requestAnimationFrame(() => sceneRef.current?.focusDevice(focus, true, shotRef.current ?? null));
+    return () => cancelAnimationFrame(id);
+  }, [shotKey, focus]);
 
   // A host-driven view (the Mode tile's own view buttons).
   useEffect(() => {
     if (cameraView) sceneRef.current?.setCameraView(cameraView);
   }, [cameraView]);
 
+  // Labels on the desk: the scene says where each anchor is every frame, and
+  // each label moves by a transform, so following the camera re-renders nothing.
+  const anchorEls = useRef(new Map<AnchorId, HTMLDivElement>());
+  const anchorKey = anchors?.join(',') ?? '';
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    const ids = anchorKey ? (anchorKey.split(',') as AnchorId[]) : [];
+    if (!ids.length) return;
+    scene.setAnchors(ids, (list) =>
+      list.forEach((a) => {
+        const el = anchorEls.current.get(a.id);
+        if (!el) return;
+        el.style.transform = `translate(${a.x.toFixed(1)}px, ${a.y.toFixed(1)}px)`;
+        el.dataset.shown = a.shown ? 'true' : 'false';
+      }),
+    );
+    return () => scene.setAnchors([], null);
+  }, [anchorKey, generation]);
+
+  // Option A's one more click: with the tower picked, "Set zones" frames it
+  // alone and swaps the controls for its zones. Leaving puts the desk back.
+  const [zoning, setZoning] = useState(false);
+  const canZone = !compact && !focus && !ui.sync && ui.selected.length === 1 && ui.selected[0] === 'tower';
+  useEffect(() => {
+    if (zoning && !canZone) {
+      setZoning(false);
+      sceneRef.current?.focusDevice(null);
+    }
+  }, [zoning, canZone]);
+  const enterZones = () => {
+    setZoning(true);
+    sceneRef.current?.focusDevice('tower');
+  };
+  const leaveZones = () => {
+    setZoning(false);
+    sceneRef.current?.focusDevice(null);
+  };
+
   const s = sceneRef.current;
   const t = ui.target;
   const hasTarget = !!t;
 
   // Presets act on the selection (or Sync), else on the whole desk.
-  const presetTargets: DeviceId[] = ui.sync || !ui.selected.length ? [...DEVICE_IDS] : ui.selected;
+  const presetTargets: DeviceId[] = ui.sync || !ui.selected.length ? [...LIT_DEVICE_IDS] : ui.selected.filter(isLit);
   const presetTargetLabel =
     presetTargets.length === 1 ? LABELS[presetTargets[0]] : `${presetTargets.length} devices`;
   const activePresetId = wornPresetId(presetTargets.map((id) => ui.states[id]));
@@ -137,10 +276,10 @@ export function LightStudio({ states, onStatesChange, initialSelected, compact =
   else if (ui.selected.length > 1) title = `${ui.selected.length} devices selected`;
 
   return (
-    <div className={['ls', compact ? 'compact' : '', side ? 'side' : ''].filter(Boolean).join(' ')}>
+    <div className={['ls', compact || focus ? 'compact' : '', interactive ? 'interactive' : '', side ? 'side' : '', focus ? 'focus' : '', zoning ? 'zoning' : ''].filter(Boolean).join(' ')}>
       {/* ── Stage: camera views, the desk (fills the height), device rail ── */}
       <div className="ls-stage">
-        {!cameraView && (
+        {!cameraView && !focus && !zoning && (
         <div className="ls-bar">
           {!compact && (
             <div className="ls-actions">
@@ -171,11 +310,29 @@ export function LightStudio({ states, onStatesChange, initialSelected, compact =
         {/* The scene appends its own canvas here. */}
         <div className="ls-viewport" ref={viewportRef}>
           <div className="ls-loading">{failed ? 'Desk preview unavailable — reload the page' : 'Loading devices…'}</div>
+          {!!anchors?.length && !failed && (
+            <div className="ls-anchors">
+              {anchors.map((id) => (
+                <div
+                  key={id}
+                  className="ls-anchor"
+                  data-anchor={id}
+                  data-shown="false"
+                  ref={(el) => {
+                    if (el) anchorEls.current.set(id, el);
+                    else anchorEls.current.delete(id);
+                  }}
+                >
+                  {renderAnchor?.(id)}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         {/* Device rail — quick select without hunting on the desk */}
-        {!compact && (
+        {!compact && !focus && !zoning && (
           <div className="ls-rail" role="group" aria-label="Devices">
-              {DEVICE_IDS.map((id: DeviceId) => (
+              {LIT_DEVICE_IDS.map((id: DeviceId) => (
                 <button
                   key={id}
                   type="button"
@@ -198,7 +355,20 @@ export function LightStudio({ states, onStatesChange, initialSelected, compact =
       {/* ── Controls: everything that changes the lighting, in one column beside
           the desk — presets, then fine-tuning; each names what it acts on. It scrolls on its own, so
           the desk never leaves the screen. ── */}
-      {!compact && (
+      {zoning && (
+        <div className="ls-controls">
+          <section className="ls-section" aria-label="Tower zones">
+            <div className="ls-section-head">
+              <button type="button" className="ls-action" onClick={leaveZones}>
+                <Icon name="chevron-left" size={14} /> All devices
+              </button>
+              <span className="ls-section-note">{LABELS.tower} · zones</span>
+            </div>
+          </section>
+          <ChassisLightsTab tower={ui.states.tower} onChange={(patch) => s?.applyTo(['tower'], patch)} />
+        </div>
+      )}
+      {!compact && !focus && !zoning && (
         <div className="ls-controls">
           {/* Presets — NGENUITY's list, in its order. A preset lands on the
               selected devices, or on the whole desk when nothing is selected. */}
@@ -206,7 +376,7 @@ export function LightStudio({ states, onStatesChange, initialSelected, compact =
             <div className="ls-section-head">
               <span className="ls-group-label">Presets</span>
               <span className="ls-section-note">
-                {presetTargets.length === DEVICE_IDS.length ? 'Every device' : presetTargetLabel}
+                {presetTargets.length === LIT_DEVICE_IDS.length ? 'Every device' : presetTargetLabel}
               </span>
             </div>
             <LightPresets activeId={activePresetId} onPick={(patch) => s?.applyTo(presetTargets, patch)} />
@@ -234,6 +404,22 @@ export function LightStudio({ states, onStatesChange, initialSelected, compact =
             </div>
             </div>
           </fieldset>
+
+          {/* The PC's lights zone by zone sit one click in: the desk-wide
+              controls above light the tower whole. */}
+          {canZone && (
+            <section className="ls-section" aria-label="Tower zones">
+              <div className="ls-section-head">
+                <span className="ls-group-label">Zones</span>
+                <span className="ls-section-note">
+                  {ui.states.tower?.chassis ? 'Set in the PC\'s Lights' : 'Fans, memory and graphics card, one by one'}
+                </span>
+              </div>
+              <Button size="sm" onClick={enterZones}>
+                Set zones
+              </Button>
+            </section>
+          )}
         </div>
       )}
     </div>

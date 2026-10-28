@@ -80,7 +80,7 @@ try {
     width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false,
   });
   // Warm the route first: against a cold Vite the page is measured before it
-  // mounts and every check reads false. See the HANDOFF reference block.
+  // mounts and every check reads false. See .claude/agents/verify-runner.md.
   await send('Page.navigate', { url: `http://localhost:${APP_PORT}/#/play` });
   await sleep(2000);
   await send('Page.navigate', { url: `http://localhost:${APP_PORT}/#/play` });

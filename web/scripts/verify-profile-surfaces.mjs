@@ -62,9 +62,34 @@ async function evalJs(expression) {
 
 let loadN = 0;
 /** `?r=N` before the hash forces a real boot — a hash-only change never does. */
+/**
+ * Navigate and come back when the route has actually rendered.
+ *
+ * This was a flat `sleep(2800)` — generous because the Personalize page mounts
+ * a three.js canvas per profile card — paid on all eight call sites whether the
+ * route needed it or not (TH-449). Now it waits for the shell, for a modal when
+ * the route opens one, and for a composited frame; the call sites that read
+ * something slower already follow with their own `waitFor`.
+ */
 const goto = async (hash) => {
+  const loaded = new Promise((resolve) => {
+    const onMsg = (raw) => {
+      const m = JSON.parse(raw.toString());
+      if (m.method === 'Page.loadEventFired') { ws.off('message', onMsg); resolve(); }
+    };
+    ws.on('message', onMsg);
+  });
   await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#/${hash}` });
-  await sleep(2800);
+  await Promise.race([loaded, sleep(8000)]);
+  const ready = `!!document.querySelector('.shell') && document.body.innerText.trim().length > 50`
+    + (/modal=/.test(hash) ? ` && !!document.querySelector('[role="dialog"], .profiles-modal, .ds-modal, .modal')` : '');
+  const until = Date.now() + 8000;
+  while (Date.now() < until) {
+    if (await evalJs(ready).catch(() => false)) break;
+    await sleep(50);
+  }
+  await evalJs(`new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(1))))`).catch(() => {});
+  await sleep(300);
 };
 
 const results = [];
@@ -94,13 +119,9 @@ await goto('');
 await evalJs(`localStorage.clear()`);
 await goto('');
 
-check('the switcher sits in the nav', await evalJs(`!!document.querySelector('.shell-util .profile-switcher-wrap')`));
-check('it sits LEFT of the account avatar', await evalJs(`(() => {
-  const u = document.querySelector('.shell-util');
-  const kids = [...u.children];
-  return kids.findIndex(k => k.classList.contains('profile-switcher-wrap'))
-       < kids.findIndex(k => k.classList.contains('account-menu-wrap'));
-})()`));
+check('the switcher sits in the nav, top-left where the HyperX mark was',
+  await evalJs(`!!document.querySelector('.shell-nav > .shell-brand > .profile-switcher-wrap')`));
+check('the mark is gone from the nav', !(await evalJs(`!!document.querySelector('.shell-nav .hyperx-logo')`)));
 check('it names the active profile', (await trigger()).includes('Gaming'), await trigger());
 check('the trigger is labeled for screen readers',
   (await evalJs(`document.querySelector('.profile-switcher-btn').getAttribute('aria-label')`)) === 'Profile: Gaming');
@@ -190,6 +211,11 @@ await evalJs(`[...document.querySelectorAll('.pfm-days .ds-chip')].find(c=>/Sat/
 await sleep(400);
 check('a schedule day toggles on',
   ((await store())?.profiles.find((p) => p.name === 'Focus')?.schedule.days ?? []).includes(6));
+// The time fields' clock glyph is drawn by the browser: it vanished on the dark
+// field until the theme declared color-scheme (2026-10-06; now on the theme
+// root, 2026-10-22).
+const timeScheme = await evalJs(`(() => { const t = document.querySelector('.profiles-modal input[type=time]'); return t ? getComputedStyle(t).colorScheme : 'no time field'; })()`);
+check('the schedule time field draws its native glyph for the dark theme', timeScheme === 'dark', timeScheme);
 await evalJs(`[...document.querySelectorAll('.profiles-modal button')].find(b=>/Choose games|linked/.test(b.textContent))?.click()`);
 await sleep(400);
 check('the game picker lists linkable games',
@@ -200,7 +226,7 @@ check('picking a game links it',
   ((await store())?.profiles.find((p) => p.name === 'Focus')?.gameLink.gameIds ?? []).length === 1);
 
 // The details manifest is derived from what was captured, not authored.
-await click('.pfm-disclosure[aria-controls="pfm-details"]');
+await click('.pfm-details-toggle');
 await sleep(400);
 check('with nothing captured, Details teaches where settings come from',
   /Nothing captured yet/.test(await evalJs(`document.querySelector('.pfm-empty')?.textContent || ''`)));
@@ -214,18 +240,22 @@ await evalJs(`(() => {
   localStorage.setItem('trhs-profiles', JSON.stringify(s));
 })()`);
 await goto('?modal=profiles');
-await click('.pfm-disclosure[aria-controls="pfm-details"]');
+await click('.pfm-details-toggle');
 await sleep(500);
 check('the manifest names the device', /ALLOY|ORIGINS|65/i.test(await evalJs(`document.querySelector('.pfm-device-head')?.textContent || ''`)),
   await evalJs(`document.querySelector('.pfm-device-head')?.textContent || 'none'`));
 check('and groups captured keys under the device\'s own tab titles', await evalJs(`(() => {
-  const titles = [...document.querySelectorAll('.pfm-group-title')].map(t => t.textContent.trim());
+  const titles = [...document.querySelectorAll('.pfm-group-head .ds-ng3-label')].map(t => t.textContent.trim());
   return titles.includes('Lights') && titles.includes('Settings');
-})()`), await evalJs(`[...document.querySelectorAll('.pfm-group-title')].map(t=>t.textContent.trim()).join(' | ')`));
+})()`), await evalJs(`[...document.querySelectorAll('.pfm-group-head .ds-ng3-label')].map(t=>t.textContent.trim()).join(' | ')`));
 check('showing the captured value, read-only', await evalJs(`(() => {
   const rows = [...document.querySelectorAll('.pfm-row')].map(r => r.textContent.trim());
   return rows.some(r => /Brightness42/.test(r.replace(/\\s+/g,''))) &&
-         document.querySelectorAll('.pfm-manifest input, .pfm-manifest button').length === 0;
+         document.querySelectorAll('.pfm-manifest input, .pfm-manifest button:not(.pfm-copy *)').length === 0;
+})()`));
+check('every group can be copied to another profile (TH-447)', await evalJs(`(() => {
+  const groups = document.querySelectorAll('.pfm-group');
+  return groups.length > 0 && [...groups].every(g => g.querySelector('.pfm-copy .ds-btn-icon'));
 })()`));
 
 // ── Export / import, from the rail's foot ───────────────────────────────────
@@ -325,10 +355,12 @@ await goto('?modal=settings');
 check('Settings says which profile took a setting over',
   /Set by the/.test(await evalJs(`document.querySelector('.stx-override')?.textContent || ''`)),
   await evalJs(`document.querySelector('.stx-override')?.textContent.trim() || 'NONE'`));
+// Appearance moved into its own panel and its swatches are the design
+// system's <Swatch> (.ds-swatch, named "Orange"), not the old .wg-swatch row.
 check('the row shows the BASELINE it edits, not the resolved value', await evalJs(`(() => {
-  const swatches = [...document.querySelectorAll('[aria-label="Accent color"] .wg-swatch')];
-  const on = swatches.findIndex(b => b.getAttribute('aria-pressed') === 'true');
-  return swatches[on]?.getAttribute('aria-label') === 'orange';
+  const swatches = [...document.querySelectorAll('[aria-label="Accent presets"] .ds-swatch')];
+  const on = swatches.find(b => b.getAttribute('aria-pressed') === 'true');
+  return on?.getAttribute('aria-label')?.toLowerCase() === 'orange';
 })()`));
 const accentVar = () => evalJs(`getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim()`);
 const purple = await evalJs(`getComputedStyle(document.documentElement).getPropertyValue('--accent-purple').trim()`);
@@ -341,11 +373,19 @@ check('Clear hands it back live, with no reload', (await accentVar()) === orange
 // ── Personalize section ─────────────────────────────────────────────────────
 await goto('personalize');
 // The section mounts after the page's own data settles; read it once it is there.
-check('Personalize has a Profiles section', await waitFor('.pmg'));
-check('it lists every profile as a card',
-  (await evalJs(`document.querySelectorAll('.pmg-card').length`)) === (await store())?.profiles.length);
-check('the active card says so in words, not just an accent border',
-  await evalJs(`!!document.querySelector('.pmg-card.is-active .pmg-badge')`));
+// The profile band (TH-439) replaced the Profiles card grid: the active
+// profile is named in words at the top, every other profile is one chip away.
+check('Personalize has the profile band', await waitFor('.qc-band'));
+{
+  const s = await store();
+  const activeName = s?.profiles.find((p) => p.id === s.activeId)?.name;
+  check('the band names the active profile in words',
+    (await evalJs(`document.querySelector('.qc-band .qc-band-name')?.textContent.trim()`)) === activeName, activeName);
+  // 2026-10-09: the band keeps one Manage Profiles button; switching is the nav's.
+  check('the band offers Manage Profiles, and no profile chips',
+    (await evalJs(`[...document.querySelectorAll('.qc-band .ds-quick-tile-actions button')].map(b => b.textContent.trim()).join('|')`)) === 'Manage Profiles' &&
+    (await evalJs(`document.querySelectorAll('.qc-band .ds-chip').length`)) === 0);
+}
 
 // ── Light theme ─────────────────────────────────────────────────────────────
 await evalJs(`localStorage.setItem('theme','light')`);

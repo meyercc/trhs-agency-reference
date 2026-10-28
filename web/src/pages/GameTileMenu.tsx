@@ -1,12 +1,11 @@
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ContextMenu, ContextMenuLabel, ListItem, Separator, Checkbox, Radio, Icon } from '../components';
+import { ContextMenu, ContextMenuLabel, ListItem, Separator, Checkbox, Radio, Icon, Input } from '../components';
 import type { Game } from '../data/games';
+import type { OptimizeState } from '../state/gameOptimize';
 
 export type GamePlatform = 'steam' | 'geforce';
-export interface OptimizeState {
-  booster: boolean;
-  omenAi: boolean;
-}
+// The state moved to a persisted store (TH-504); the name still resolves here.
+export type { OptimizeState };
 
 export interface GameTileMenuProps {
   game: Game;
@@ -16,6 +15,21 @@ export interface GameTileMenuProps {
   optimize: OptimizeState;
   platform: GamePlatform;
   onClose: () => void;
+  /** Launch the game — `useLaunchGame` (TH-484). Until then this row only closed the menu. */
+  onPlay?: () => void;
+  /** Ask Who Made This about the game (docs/who-made-this-demo-plan.md); the row shows only when given. */
+  onWhoMade?: () => void;
+  /** Open the game's detail panel (TH-504) — "Details"; the row shows only when given. */
+  onDetails?: () => void;
+  /**
+   * The collections other than Favorites (which has its own row), each with
+   * whether this game is in it — "Add to collection" (TH-505). The group shows
+   * only when given.
+   */
+  collections?: { id: string; name: string; checked: boolean }[];
+  onToggleCollection?: (id: string) => void;
+  /** A new collection holding this game. */
+  onNewCollection?: (name: string) => void;
   onToggleFavorite: () => void;
   onRemove: () => void;
   onSetOptimize: (key: keyof OptimizeState, value: boolean) => void;
@@ -40,6 +54,12 @@ export function GameTileMenu({
   optimize,
   platform,
   onClose,
+  onPlay,
+  onWhoMade,
+  onDetails,
+  collections,
+  onToggleCollection,
+  onNewCollection,
   onToggleFavorite,
   onRemove,
   onSetOptimize,
@@ -77,6 +97,8 @@ export function GameTileMenu({
     };
   }, [onClose]);
 
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState('');
   const act = (fn?: () => void) => {
     fn?.();
     onClose();
@@ -89,7 +111,7 @@ export function GameTileMenu({
       style={{ position: 'fixed', left: pos?.left ?? anchor.left, top: pos?.top ?? anchor.bottom + 4, visibility: pos ? 'visible' : 'hidden' }}
     >
       <ContextMenu aria-label={`${game.title} options`}>
-        <ListItem role="menuitem" leading={<Icon name="play-fill" size={16} />} label="Play" onClick={() => act()} />
+        <ListItem role="menuitem" leading={<Icon name="play-fill" size={16} />} label="Play" onClick={() => act(onPlay)} />
         <ListItem
           role="menuitem"
           leading={<Icon name={favorite ? 'star-fill' : 'star'} size={16} />}
@@ -97,7 +119,47 @@ export function GameTileMenu({
           onClick={() => act(onToggleFavorite)}
         />
         <ListItem role="menuitem" leading={<Icon name="minus" size={16} />} label="Remove from Library" onClick={() => act(onRemove)} />
-        <ListItem role="menuitem" label="More Info" onClick={() => act()} />
+        {/* "More Info" was a dead row until the detail panel (TH-504). */}
+        {onDetails && <ListItem role="menuitem" leading={<Icon name="info" size={16} />} label="Details" onClick={() => act(onDetails)} />}
+        {onWhoMade && <ListItem role="menuitem" leading={<Icon name="microphone" size={16} />} label="Who made this?" onClick={() => act(onWhoMade)} />}
+
+        {collections && onToggleCollection && (
+          <>
+            <Separator />
+            <ContextMenuLabel>Collections</ContextMenuLabel>
+            {collections.map((c) => (
+              <ListItem
+                key={c.id}
+                role="menuitemcheckbox"
+                aria-checked={c.checked}
+                leading={<Control><Checkbox checked={c.checked} readOnly tabIndex={-1} /></Control>}
+                label={c.name}
+                onClick={() => onToggleCollection(c.id)}
+              />
+            ))}
+            {onNewCollection &&
+              (naming ? (
+                // The name field replaces the row; Enter makes the collection
+                // with this game in it, Esc puts the row back.
+                <div className="gtm-new">
+                  <Input
+                    autoFocus
+                    aria-label="New collection name"
+                    placeholder="Collection name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      if (e.key === 'Enter' && name.trim()) act(() => onNewCollection(name.trim()));
+                      if (e.key === 'Escape') setNaming(false);
+                    }}
+                  />
+                </div>
+              ) : (
+                <ListItem role="menuitem" leading={<Icon name="add" size={16} />} label="New collection…" onClick={() => setNaming(true)} />
+              ))}
+          </>
+        )}
 
         <Separator />
         <ContextMenuLabel>Optimize</ContextMenuLabel>

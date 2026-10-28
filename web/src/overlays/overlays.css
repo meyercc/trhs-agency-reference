@@ -1,0 +1,35 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Overlays (TH-438) — the HUD layer. One fixed, full-window layer that lets
+   every click through except on the cards themselves; each card is a
+   motion element the person drags, constrained to the layer. The card's
+   look is the system's .ds-hud (shared/components.css); this file only
+   places it.
+   ══════════════════════════════════════════════════════════════════════════ */
+.overlay-layer {
+  position: fixed;
+  inset: 0;
+  /* Above the rail panels (40) and the ad host (39), below modals (50/51):
+     a readout kept while playing sits over the app, not over a dialog. */
+  z-index: 45;
+  pointer-events: none;
+}
+.overlay-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+}
+
+/* The preview in a Nova reply: the Hud as it will look, and its state. */
+.overlay-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gutter-xxs);
+}
+.overlay-preview .ds-hud {
+  box-shadow: none;
+}
+.overlay-preview-state {
+  color: var(--text-dim);
+}

@@ -5,12 +5,32 @@
    ══════════════════════════════════════════════════════════════════════════ */
 .device-panel {
   position: fixed;
-  top: calc(var(--nav-full-h) + 4px);
+  top: calc(var(--nav-full-h) + var(--gutter-xxs));
   right: var(--gutter);
   bottom: var(--gutter);
   width: var(--devices-panel-w, 340px);
-  max-width: calc(100vw - var(--gutter) * 2);
+  max-width: calc(var(--viewport-w) - var(--gutter) * 2);
   z-index: 40; /* above content + nav (z-10), below modals (z-51) */
+}
+/* On a window too narrow to reserve its width (shell.css `.rail-overlay`,
+   2026-10-20) the panel floats over the page instead of squeezing it, with
+   the elevation that says so. */
+.shell.rail-overlay .device-panel {
+  box-shadow: var(--shadow-lv-4);
+}
+/* Compact: a sheet between the top bar and the bottom nav, as nova-panel.css. */
+@media (--bp-compact) {
+  .device-panel {
+    top: var(--nav-full-h);
+    right: 0;
+    bottom: calc(var(--nav-bottom-h) + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    width: auto;
+    max-width: none;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
 }
 
 /* ── Device tabs (top row) ── */
@@ -272,4 +292,72 @@
 .devp-kvm-cta > svg:last-child {
   color: var(--text-muted);
   flex: 0 0 auto;
+}
+
+/* ── This PC: a directory of entries (PcDirectory.tsx) ──────────────────────
+   The same rows as any device's feature list, grouped by where each feature
+   lives. A row adds what is true now (`reading`), and a row that only reports
+   drops the fill, the hover and the chevron, so it does not pass for a door. */
+/* Spacing (JY, 2026-10-21): 16 px above every group label, the first one
+   included, so the groups do not run into the This PC button or each other;
+   8 px from a label to its first row (the label's 4 px margin plus the
+   group's 4 px gap), 4 px from row to row. The panel's own 4 px flex gap is
+   dropped here so the 16 px is not stacked on it. */
+.devp-pc {
+  gap: 0;
+}
+.devp-pc-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  margin-top: var(--gutter-sm);
+}
+/* Every row is one line and one height: the label never wraps, the reading
+   takes what is left, sits at the right and is the one that truncates. */
+.devp-pc .devp-feature-label {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.devp-pc .devp-feature-chev {
+  margin-left: auto;
+}
+/* Room for the reading (JY, 2026-10-21): a row is about 290 px, and with
+   16 px on every side and between every piece "Performance" lost its last
+   letters. Inside a row: the This PC button's 12 px edge, 12 px from the icon
+   to its label, 8 px between label, reading and chevron. */
+.devp-pc .devp-feature {
+  padding-inline: 12px;
+  gap: var(--gutter-xs);
+}
+.devp-pc .devp-feature-icon {
+  margin-right: var(--gutter-xxs);
+}
+/* The reading is the row's second voice, a step under the label: at 12 px the
+   longest, Chassis lighting's "Custom by part", fits beside its label
+   (JY, 2026-10-21: the row reads the tower's look, as its 3D label does). */
+.devp-feature-reading {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+.devp-feature:hover .devp-feature-reading {
+  color: var(--text-dim);
+}
+.devp-feature.devp-feature-static,
+.devp-feature.devp-feature-static:hover {
+  cursor: default;
+  background: transparent;
+  border-color: var(--border-light);
+  color: var(--text-dim);
+}
+.devp-feature.devp-feature-static:hover .devp-feature-icon {
+  color: var(--text-dim);
 }

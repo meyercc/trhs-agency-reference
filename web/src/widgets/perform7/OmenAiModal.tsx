@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Badge, Button, ModalShell, Toggle, ToggleButtonGroup } from '../../components';
+import { settingIn, useChangeRecords, writeSetting } from '../../state/changeLog';
 import { OmenAiIcon } from '../perform3/OmenAiHeader';
 import { InfoDisclosure } from './InfoDisclosure';
 
@@ -53,6 +54,28 @@ const INITIAL_GAMES: Game[] = [
   { id: 'lol', title: 'League of Legends', meta: 'Riot · MOBA', on: true, mode: 'performance', fps: 144, version: 'v2.1 · 5 days ago', badge: 'Latest', emoji: '⚔️' },
 ];
 
+// ── What OMEN AI holds for each game, kept in the page's record of changes ──
+// Whether OMEN AI is on for the game, and which of its profiles is applied
+// (null: the game's own settings, as before OMEN AI). It lives in the record
+// (state/changeLog.ts) rather than in this modal, so a change OMEN AI made at a
+// game's launch can be listed and reverted behind the record's door, and the
+// toggle here shows the result.
+export interface OmenAiGameState {
+  on: boolean;
+  profile: string | null;
+}
+export const omenAiGameKey = (id: string) => `game:${id}`;
+
+/** The game a Simulator session plays, and the profile OMEN AI has waiting for it (v1.4, today). */
+export const SESSION_GAME = { id: 'cyberpunk', title: 'Cyberpunk 2077', profile: 'v1.4' } as const;
+
+/** Before anything is recorded: each game as the list opens, Cyberpunk still on yesterday's profile. */
+export function omenAiGameFallback(id: string): OmenAiGameState {
+  const g = INITIAL_GAMES.find((x) => x.id === id);
+  if (!g?.on) return { on: false, profile: null };
+  return { on: true, profile: id === SESSION_GAME.id ? 'v1.3' : g.version.split(' · ')[0] };
+}
+
 const FPS_OPTIONS = [30, 60, 90, 120, 144, 165, 240, 280, 360];
 const MODE_OPTIONS = [
   { label: 'Performance', value: 'performance' },
@@ -74,6 +97,14 @@ export interface OmenAiModalProps {
 
 export function OmenAiModal({ onClose }: OmenAiModalProps) {
   const [games, setGames] = useState<Game[]>(INITIAL_GAMES);
+  const records = useChangeRecords();
+  const held = (id: string) => settingIn(records, 'omen-ai', omenAiGameKey(id), omenAiGameFallback(id));
+  // The player's toggle is a write like any other: recorded, never signed.
+  const setOn = (g: Game, on: boolean) =>
+    writeSetting('omen-ai', omenAiGameKey(g.id), { ...held(g.id), on }, omenAiGameFallback(g.id), {
+      source: 'user',
+      summary: `Turned OMEN AI ${on ? 'on' : 'off'} for ${g.title}`,
+    });
 
   const update = (id: string, patch: Partial<Game>) => setGames((gs) => gs.map((g) => (g.id === id ? { ...g, ...patch } : g)));
   // Revert = back to the profile OMEN AI shipped for this title, which in this
@@ -87,7 +118,7 @@ export function OmenAiModal({ onClose }: OmenAiModalProps) {
     return !!o && (o.mode !== g.mode || o.fps !== g.fps);
   };
 
-  const tracked = games.filter((g) => g.on).length;
+  const tracked = games.filter((g) => held(g.id).on).length;
 
   const about = (
     <InfoDisclosure label="About OMEN AI" title="OMEN AI" icon={<OmenAiIcon />}>
@@ -134,7 +165,7 @@ export function OmenAiModal({ onClose }: OmenAiModalProps) {
 
       <div className="pv5-omm-sect">Per-game optimization</div>
       <div className="pv5-omm-games">
-        {games.map((g) => (
+        {games.map((g) => ({ ...g, on: held(g.id).on })).map((g) => (
           <div className={'pv5-omm-game' + (g.on ? '' : ' pv5-omm-game-off')} key={g.id}>
             <div className="pv5-omm-game-head">
               <span className="pv5-omm-game-thumb" aria-hidden="true">{g.emoji}</span>
@@ -142,8 +173,8 @@ export function OmenAiModal({ onClose }: OmenAiModalProps) {
                 <span className="pv5-omm-game-title">{g.title}</span>
                 <span className="pv5-omm-game-meta">{g.meta} · {g.version}</span>
               </span>
-              <Badge variant="status" tone={g.on ? 'positive' : 'neutral'}>{g.badge}</Badge>
-              <Toggle checked={g.on} onChange={(v) => update(g.id, { on: v, badge: v ? 'Latest' : 'Paused' })} aria-label={`OMEN AI for ${g.title}`} />
+              <Badge variant="status" tone={g.on ? 'positive' : 'neutral'}>{g.on ? 'Latest' : 'Paused'}</Badge>
+              <Toggle checked={g.on} onChange={(v) => setOn(g, v)} aria-label={`OMEN AI for ${g.title}`} />
             </div>
             {g.on && (
               <div className="pv5-omm-game-body">

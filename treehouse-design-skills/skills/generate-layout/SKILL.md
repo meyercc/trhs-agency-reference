@@ -31,8 +31,8 @@ layer (no ad-hoc CSS, no hardcoded values). Consume the system; don't fork it.
 > component (via Code Connect + Storybook), and produces the build plan this skill's
 > Step 1 consumes. Come back here once you have that plan.
 
-> The vanilla `prototype.html` / `design-system.html` are **retired** — do not read or
-> generate them. **Generate React** in `web/`; the living catalog is Storybook.
+> **Generate React** in `web/`; the living catalog is Storybook. (The vanilla
+> `prototype.html` / `design-system.html` were deleted on 2026-10-16.)
 
 ---
 

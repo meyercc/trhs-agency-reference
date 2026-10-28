@@ -53,7 +53,15 @@ const QUIET = !!process.env.QUIET;
 // toggle redraws the card, not the chooser).
 const SURFACES = {
   'home-card': { url: '#/', root: '.ds-devcard.rich' },
-  'customize-card': { url: '#/', pre: '.ds-devcard.rich .devw-face-link', root: '.modal-shell-narrow', effect: '.ds-devcard.rich' },
+  // The chooser is the card's ⋮ menu now (Cindy, 2026-10), not a narrow modal.
+  // Two presses: the card's ⋮, then its Customize row. The chooser's own button
+  // (`.devw-face-btn`) went when CardMenu became the one menu (TH-462).
+  'customize-card': {
+    url: '#/',
+    pre: ['.ds-devcard .card-menu button', '.card-menu-pop [data-action="customize"]'],
+    root: '.card-menu-pop .devw-face-menu',
+    effect: '.ds-devcard',
+  },
   // Light Studio off: it is three.js, and headless WebGL makes this page crawl. It
   // is Chris's section, not the one walked here.
   'personalize-display': { url: '#/personalize', root: '.pg-rail.pg-rail-fill', seed: { 'trhs-modules': { lightstudio: false } } },
@@ -104,10 +112,17 @@ const open = async () => {
     // about to vanish (0 controls, 2026-09-23). Wait for this navigation's own URL.
     if ((await ev(`new URLSearchParams(location.search).get('v')`)) !== String(n)) continue;
     // The chooser is reached the way a hand reaches it: press its door at the pixel.
-    if (SURF?.pre && !(await has(ROOT)) && (await has(SURF.pre))) {
-      const p = await ev(`(() => { const el = document.querySelector(${JSON.stringify(SURF.pre)}); el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
-      await clickAt(p.x, p.y);
-      continue;
+    if (SURF?.pre && !(await has(ROOT))) {
+      // The LAST step that is on screen, so a sequence advances: only the ⋮ is
+      // there to begin with, and once it is open the Customize row is too.
+      const steps = Array.isArray(SURF.pre) ? SURF.pre : [SURF.pre];
+      let step = null;
+      for (const sel of steps) if (await has(sel)) step = sel;
+      if (step) {
+        const p = await ev(`(() => { const el = document.querySelector(${JSON.stringify(step)}); el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+        await clickAt(p.x, p.y);
+        continue;
+      }
     }
     if (await has(READY)) { await sleep(600); return; }
   }
@@ -134,7 +149,7 @@ window.__walk = window.__walk || (() => {
   const findEl = (key) => { controls(); const el = window.__walkMap[key]; if (!el) return null; el.scrollIntoView({ block: 'center', inline: 'nearest' }); const r = el.getBoundingClientRect(); const c = { cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; const hit = elAt(c.cx, c.cy); /* an ANCESTOR on top is the component's own chrome (the DS slider paints its track over the native input) — only a stranger counts as cover */ return { c, hitDesc: desc(hit), covered: !(hit === el || el.contains(hit) || hit.contains(el)) }; };
   const snapFor = (key) => { controls(); return snapshot(window.__walkMap[key] || null); };
   const tooltips = () => { const d = dialog(); if (!d) return []; return [...d.querySelectorAll('.ds-tooltip-wrap')].filter(vis).map((w, i) => { const t = w.querySelector('.ds-tooltip-trigger') || w.firstElementChild || w; const r = t.getBoundingClientRect(); return { i, card: card(w), cx: r.left + r.width / 2, cy: r.top + r.height / 2, text: (w.querySelector('.ds-tooltip-popup, .ds-tooltip')?.textContent || '').trim().slice(0, 60) }; }); };
-  const tooltipState = (i, tx, ty) => { const w = [...dialog().querySelectorAll('.ds-tooltip-wrap')].filter(vis)[i]; const p = w && w.querySelector('.ds-tooltip-popup, .ds-tooltip'); if (!p) return { shown: false, at: 'popup 없음' }; const cs = getComputedStyle(p); const r = p.getBoundingClientRect(); const shown = +cs.opacity > 0.5 && cs.visibility !== 'hidden' && r.width > 4; if (!shown) return { shown, at: desc(elAt(tx, ty)) }; const prev = p.style.pointerEvents; p.style.pointerEvents = 'auto'; const x = r.left + r.width / 2, y = r.top + r.height / 2; const hit = elAt(x, y); const stack = document.elementsFromPoint(x, y); const idx = stack.indexOf(p); const above = idx > 0 ? stack.slice(0, idx).filter((el) => !p.contains(el)) : []; p.style.pointerEvents = prev; return { shown, occluded: !(hit === p || p.contains(hit)), by: above.map(desc).slice(0, 2).join(' > ') || desc(hit), offscreen: r.top < 0 || r.left < 0 || r.right > innerWidth || r.bottom > innerHeight }; };
+  const tooltipState = (i, tx, ty) => { const d0 = dialog(); if (!d0) return { shown: false, at: '화면 없음' }; const w = [...d0.querySelectorAll('.ds-tooltip-wrap')].filter(vis)[i]; const p = w && w.querySelector('.ds-tooltip-popup, .ds-tooltip'); if (!p) return { shown: false, at: 'popup 없음' }; const cs = getComputedStyle(p); const r = p.getBoundingClientRect(); const shown = +cs.opacity > 0.5 && cs.visibility !== 'hidden' && r.width > 4; if (!shown) return { shown, at: desc(elAt(tx, ty)) }; const prev = p.style.pointerEvents; p.style.pointerEvents = 'auto'; const x = r.left + r.width / 2, y = r.top + r.height / 2; const hit = elAt(x, y); const stack = document.elementsFromPoint(x, y); const idx = stack.indexOf(p); const above = idx > 0 ? stack.slice(0, idx).filter((el) => !p.contains(el)) : []; p.style.pointerEvents = prev; return { shown, occluded: !(hit === p || p.contains(hit)), by: above.map(desc).slice(0, 2).join(' > ') || desc(hit), offscreen: r.top < 0 || r.left < 0 || r.right > innerWidth || r.bottom > innerHeight }; };
   const labels = () => { const d = dialog(); if (!d) return []; return [...d.querySelectorAll('.ds-ng3-section')].map((s) => { const title = card(s); const rows = [...s.querySelectorAll('.ds-ng3-row, .ds-ng3-field')].map((row) => { const l = row.querySelector('.ds-ng3-label'); if (!l || !vis(l)) return null; const cs = getComputedStyle(l); const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.3; const r = l.getBoundingClientRect(); return { label: l.textContent.trim().slice(0, 30), lines: Math.max(1, Math.round(r.height / lh)), labelW: Math.round(r.width), rowW: Math.round(row.getBoundingClientRect().width) }; }).filter(Boolean); return { title, rows }; }); };
   const density = () => { const d = dialog(); if (!d) return []; return [...d.querySelectorAll('.ds-ng3-section')].map((s) => { const chars = (s.innerText || '').replace(/\\s+/g, ' ').trim().length; const ctrls = [...s.querySelectorAll('button, [role="button"], [role="radio"], [role="switch"], [role="checkbox"], input, select, a[href]')].filter(vis).length; return { title: card(s), chars, ctrls, ratio: Math.round(chars / Math.max(1, ctrls)) }; }); };
   // Side-by-side cards end on one line (2026-09-23, Cindy: «메뉴 전부 다 높이 사이즈 체크»).
@@ -202,8 +217,9 @@ for (let iter = 0; iter < 90; iter++) {
 await open(); await ev(HELPERS);
 const tips = await ev(`__walk.tooltips()`);
 for (const t of tips) {
-  await ev(`(() => { const w = [...document.querySelectorAll('[role="dialog"] .ds-tooltip-wrap')][${t.i}]; w && w.scrollIntoView({ block: 'center' }); return true; })()`);
-  const at = await ev(`(() => { const w = [...document.querySelector('[role="dialog"]').querySelectorAll('.ds-tooltip-wrap')].filter((e) => e.getBoundingClientRect().width > 2)[${t.i}]; const tt = w.querySelector('.ds-tooltip-trigger') || w.firstElementChild || w; const r = tt.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+  await ev(`(() => { const w = [...document.querySelectorAll(${JSON.stringify(ROOT)} + ' .ds-tooltip-wrap')][${t.i}]; w && w.scrollIntoView({ block: 'center' }); return true; })()`);
+  const at = await ev(`(() => { const d0 = document.querySelector(${JSON.stringify(ROOT)}); if (!d0) return null; const w = [...d0.querySelectorAll('.ds-tooltip-wrap')].filter((e) => e.getBoundingClientRect().width > 2)[${t.i}]; const tt = w.querySelector('.ds-tooltip-trigger') || w.firstElementChild || w; const r = tt.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+  if (!at) continue; // the surface went while walking it
   await mouse('mouseMoved', at.x - 40, at.y + 40); await sleep(80); await mouse('mouseMoved', at.x, at.y); await sleep(700);
   let st = await ev(`__walk.tooltipState(${t.i}, ${at.x}, ${at.y})`);
   if (!st.shown) { await mouse('mouseMoved', at.x + 1, at.y + 1); await sleep(900); st = await ev(`__walk.tooltipState(${t.i}, ${at.x}, ${at.y})`); }

@@ -35,8 +35,8 @@ import { getResolvedSku } from '../devices/skus';
 import { useBrightnessLevel } from '../devices/monitor/monitorMode';
 import './widgets.css';
 
-/** The modes a monitor offers, read off its SKU (empty for one without modes). */
-const modesOf = (skuId: string): string[] => {
+/** The modes a monitor offers, read off its SKU (empty for one without modes). Shared with Nova's brightness control (TH-437). */
+export const modesOf = (skuId: string): string[] => {
   const f = (getResolvedSku(skuId)?.features ?? {}) as Record<string, unknown>;
   return Array.isArray(f.modes) ? (f.modes as string[]) : [];
 };

@@ -22,6 +22,7 @@ import { MIC_PRESET_LABEL } from '../../devices/audioLabels';
 import {
   BUTTONS_LABEL,
   EQ_LABEL,
+  lightingSpread,
   lightingSummary,
   type ButtonLayout,
   type EqPreset,
@@ -30,20 +31,36 @@ import {
   type TileId,
 } from './model';
 import { SUGGESTIONS } from './suggestions';
-import { useActiveContext, usePersonalize } from './state';
+import { usePersonalize } from './state';
 import { useLightsPower } from './LightingModal';
 import { CAMERA_VIEWS } from '../../lightstudio/lighting';
 import type { CameraView, DeviceId } from '../../lightstudio/scene';
 
-const LightStudio = lazy(() => import('../../lightstudio/LightStudio').then((m) => ({ default: m.LightStudio })));
+const LightStudio = lazy(() => import('../../lightstudio/LightStudio').then(m => ({ default: m.LightStudio })));
 import type { SuggestionId } from './model';
+import { useLookReader } from './looks';
 
-/** Where a tile sits decides its state: ranked by context, pinned, or overridden. */
-export type Placement = 'ranked' | 'pinned';
+/**
+ * How a tile is shown (Quick Controls direction A, 2026-10-06). Context never
+ * moves a tile: `ranked` only lights it up in place. `pinned` is one you
+ * starred; `plain` is everything else.
+ */
+export type Placement = 'ranked' | 'pinned' | 'plain';
 
-interface TileContext {
+export interface TileContext {
   placement: Placement;
+  /** In the front group, so it can be picked up and moved (see Personalize.tsx). */
+  movable?: boolean;
+  /** This tile is the one being dragged: its cell becomes the drop placeholder. */
+  dragging?: boolean;
 }
+
+/** What every quick-control tile carries for the grid: a hook for the drag
+ *  (`data-qc-tile`) and the placeholder look while it is lifted. */
+const gridProps = (id: TileId, ctx: TileContext) => ({
+  'data-qc-tile': id,
+  className: [ctx.movable && 'qc-movable', ctx.dragging && 'qc-dragging'].filter(Boolean).join(' ') || undefined,
+});
 
 /** The device a control belongs to. Tiles no longer link out (depth is the
  *  device card), but "Audio EQ · FPS" with no owner leaves you guessing whose
@@ -57,21 +74,49 @@ const DEVICE_OF: Partial<Record<TileId, string>> = {
   buttons: 'Pulsefire Saga Pro',
   dpi: 'Pulsefire Saga Pro',
 };
-const onDevice = (id: TileId, reason: string) => (DEVICE_OF[id] ? `${DEVICE_OF[id]} · ${reason}` : reason);
+/** The device's own glyph, for the tile's foot. */
+const DEVICE_ICON: Partial<Record<TileId, IconName>> = {
+  volume: 'audio-headset',
+  eq: 'audio-headset',
+  spatial: 'audio-headset',
+  sidetone: 'audio-headset',
+  mic: 'microphone',
+  buttons: 'mouse',
+  dpi: 'mouse',
+};
+/**
+ * A quick control's foot: the icon of the device it belongs to, nothing to
+ * hover (Kristy 2026-10-06: the old reason icons, a profile's glyph or a
+ * context's, could not be read; "改成跟title device一致的icon", "拿掉tooltip").
+ * The device name still names it for assistive tech.
+ */
+const deviceFoot = (id: TileId) => ({
+  reason: DEVICE_OF[id],
+  reasonIcon: DEVICE_ICON[id],
+  reasonTooltip: false,
+});
 
 function useOwner(key: ModeOwned, placement: Placement) {
   const p = usePersonalize();
-  const scenario = useActiveContext();
   const overridden = p.overrides.includes(key);
   const modeName = p.modeName(p.mode);
-  const modeIcon = ((p.modes.find((m) => m.id === p.mode)?.icon as IconName | undefined) ?? 'star') as IconName;
+  const modeIcon = ((p.modes.find(m => m.id === p.mode)?.icon as IconName | undefined) ?? 'star') as IconName;
   const state: TileState = overridden ? 'overridden' : placement === 'ranked' ? 'context' : 'default';
-  // Quiet by default: a tile says nothing about its owner until you've changed
-  // it (the reason icon still names the mode on hover).
+  // What you change here is saved to the active profile, and the tile says so
+  // for a moment ("Saved to Gaming") — then goes quiet again. `overridden` is
+  // left only for a suggestion you accepted, which is temporary and has its
+  // own Undo.
+  const justSaved = p.saved?.key === key;
   const badge = overridden ? (
     <Badge variant="status" tone="neutral">
       Changed
     </Badge>
+  ) : justSaved ? (
+    <span role="status" className="qc-saved">
+      <Badge variant="status" tone="positive">
+        Saved to {modeName}
+      </Badge>
+    </span>
   ) : undefined;
   const reset = () => p.resetOwned(key);
   const save = () => p.saveToMode(key);
@@ -91,16 +136,6 @@ function useOwner(key: ModeOwned, placement: Placement) {
       </TileLink>
     </>
   );
-  // A tile that context put in front of you has to say so — a list that
-  // reorders itself and won't explain is a list people learn to ignore. The
-  // signal stays in the icon's tooltip (Kristy, Sept 15: no "Because ·" line).
-  const ranked = placement === 'ranked' && !overridden;
-  const reasonIcon: IconName = overridden ? 'edit' : ranked ? scenario.icon : modeIcon;
-  const ownerReason = overridden
-    ? `You changed this. Keep it for ${modeName}, or put it back the way ${modeName} had it.`
-    : ranked
-      ? `Up here now — ${scenario.modeReason}. The ${modeName} profile set it.`
-      : `You pinned this. The ${modeName} profile set it.`;
   return {
     overridden,
     modeName,
@@ -110,8 +145,6 @@ function useOwner(key: ModeOwned, placement: Placement) {
     reset,
     save,
     changedActions,
-    reasonIcon,
-    ownerReason: onDevice(key as TileId, ownerReason),
   };
 }
 
@@ -150,19 +183,20 @@ function tileOpens(label: string, open: () => void) {
 }
 
 // ── Lighting (full row) ──────────────────────────────────────────────────────
-// The desk, lit the way it is right now. Lighting is page-local for now (it does
-// not follow the profile until the desk is reconciled onto the per-device profile
-// keys the device panels use), so this tile shows the desk, not a profile.
-// Clicking it opens Light Studio; the toggle turns the desk lights off.
+// The desk, lit the way it is right now. Lighting belongs to the active profile
+// (Settings' `deskLighting`, overridden per profile), so this tile shows what
+// the profile in the nav switcher is wearing — there is no second switcher here.
+// Clicking it opens the list of devices with lights, each a door to its own
+// window (2026-10-21: no whole-desk editor); the toggle turns the desk lights off.
 export function LightingTile({ onPick }: { onPick?: (id: DeviceId) => void } = {}) {
   const p = usePersonalize();
   const { has } = useModules();
   const openModal = useOpenModal();
-  const scenario = useActiveContext();
+  const [params] = useSearchParams();
   const { on, setOn } = useLightsPower();
   const [view, setView] = useState<CameraView>('front');
-  const auto = p.autoSwitch && p.autoSwitch.to === p.mode;
   const lit = p.desk.lighting;
+  const read = useLookReader(lit);
   const name = p.modeName(p.mode);
 
   const openLighting = () => openModal('lighting');
@@ -174,7 +208,7 @@ export function LightingTile({ onPick }: { onPick?: (id: DeviceId) => void } = {
       title="Lighting"
       className="qc-desk qc-opens"
       id="qc-lighting"
-      {...tileOpens(`Change the desk lighting — ${lightingSummary(lit)}`, openLighting)}
+      {...tileOpens(`Devices with lights — ${lightingSummary(lit, read)}`, openLighting)}
       controls={
         <span className="qc-desk-light-head">
           <Toggle checked={on} onChange={setOn} aria-label="Desk lighting" />
@@ -183,28 +217,34 @@ export function LightingTile({ onPick }: { onPick?: (id: DeviceId) => void } = {
     >
       {/* What the desk is wearing, and whose it is. */}
       <div className="qc-desk-mode">
-        <div className="qc-mode-name">{lightingSummary(lit)}</div>
+        <div className="qc-mode-name">{lightingSummary(lit, read)}</div>
+        {/* Where each look is, then whose lighting this is. Audio and mic
+            used to ride on this line; they are not lighting, and they have
+            their own tiles. */}
         <span className="qc-mode-summary">
-          {EQ_LABEL[p.desk.eq]} audio · {MIC_PRESET_LABEL[p.desk.micPreset]} mic · {name} profile
+          {lightingSpread(lit, read)} · Saved in the {name} profile
         </span>
       </div>
 
-      {/* The lit desk, full width. Anywhere on the tile opens Light Studio. */}
+      {/* The lit desk, full width. Anywhere on the tile opens the device list. */}
       {/* A click on the desk belongs to the device you clicked — it opens that
-          device's own settings. The footer link is what opens the studio. */}
-      <div className="qc-desk-light" onClick={onPick ? (e) => e.stopPropagation() : undefined}>
+          device's own settings. The footer link is what opens the list. */}
+      <div className="qc-desk-light" onClick={onPick ? e => e.stopPropagation() : undefined}>
         {has('lightstudio') ? (
           <Suspense fallback={<div className="qc-desk-fallback">Loading desk…</div>}>
             <LightStudio
               compact
+              // A modal or a device panel over the page hides the desk; it stops
+              // drawing so what is on top stays responsive.
+              covered={params.has('modal') || params.has('sku')}
               cameraView={view}
               states={lit}
               onStatesChange={p.replaceLighting}
-              onSelect={(ids) => ids.length === 1 && onPick?.(ids[0])}
+              onSelect={ids => ids.length === 1 && onPick?.(ids[0])}
             />
           </Suspense>
         ) : (
-          <div className="qc-desk-fallback">{lightingSummary(lit)}</div>
+          <div className="qc-desk-fallback">{lightingSummary(lit, read)}</div>
         )}
       </div>
 
@@ -214,18 +254,14 @@ export function LightingTile({ onPick }: { onPick?: (id: DeviceId) => void } = {
       <div className="qc-desk-bottom">
         <ToggleButtonGroup
           aria-label="Camera view"
-          options={CAMERA_VIEWS.map((v) => ({ value: v.id, label: v.label }))}
+          options={CAMERA_VIEWS.map(v => ({ value: v.id, label: v.label }))}
           value={view}
-          onChange={(v) => setView(v as CameraView)}
+          onChange={v => setView(v as CameraView)}
         />
         <span className="ds-quick-tile-actions">
-          {auto && (
-            <TileLink icon="undo" title={`Switched by itself because ${scenario.modeReason}`} onClick={p.undoAutoSwitch}>
-              Undo auto-switch
-            </TileLink>
-          )}
+          {/* The Undo for a profile switch lives in the profile band, once. */}
           <TileLink chevron aria-haspopup="dialog" onClick={openLighting}>
-            Light Studio
+            Devices with lights
           </TileLink>
         </span>
       </div>
@@ -246,11 +282,11 @@ export function LightingTile({ onPick }: { onPick?: (id: DeviceId) => void } = {
  * Three chips over a 0-100 setting is how a tile ends up showing 40% with
  * nothing selected and no way back to it.
  */
-function QuickLevel({
+export function QuickLevel({
   label,
   value,
   onChange,
-  format = (v) => `${v}%`,
+  format = v => `${v}%`,
   step = 5,
 }: {
   label: string;
@@ -267,7 +303,7 @@ function QuickLevel({
   );
 }
 
-function QuickChoices<V extends string | number>({
+export function QuickChoices<V extends string | number>({
   label,
   options,
   value,
@@ -284,7 +320,7 @@ function QuickChoices<V extends string | number>({
 }) {
   return (
     <div className="qc-choices" role="group" aria-label={label}>
-      {options.map((v) => (
+      {options.map(v => (
         <Chip key={String(v)} selected={v === value} disabled={disabled} onClick={() => onPick(v)}>
           {format(v)}
         </Chip>
@@ -318,17 +354,17 @@ function PinAction({ id }: { id: TileId }) {
 }
 
 // ── Audio EQ (S) ─────────────────────────────────────────────────────────────
-export function EqTile({ placement }: TileContext) {
+export function EqTile(ctx: TileContext) {
   const p = usePersonalize();
-  const owner = useOwner('eq', placement);
+  const owner = useOwner('eq', ctx.placement);
   return (
     <Tile
+      {...gridProps('eq', ctx)}
       icon="eq"
       title="Audio EQ"
-      state={placement === 'pinned' && !owner.overridden ? 'default' : owner.state}
+      state={owner.state}
       controls={owner.badge}
-      reason={owner.ownerReason}
-      reasonIcon={owner.reasonIcon}
+      {...deviceFoot('eq')}
       actions={
         <>
           {owner.overridden && owner.changedActions}
@@ -340,47 +376,31 @@ export function EqTile({ placement }: TileContext) {
         label="EQ preset"
         options={['fps', 'music', 'movie', 'voice', 'flat']}
         value={p.desk.eq}
-        format={(v) => EQ_LABEL[v]}
-        onPick={(v) => p.update({ eq: v }, 'eq')}
+        format={v => EQ_LABEL[v]}
+        onPick={v => p.update({ eq: v }, 'eq')}
       />
     </Tile>
   );
 }
 
 // ── Microphone (S) ───────────────────────────────────────────────────────────
-export function MicTile({ placement }: TileContext) {
+export function MicTile(ctx: TileContext) {
   const p = usePersonalize();
-  const owner = useOwner('mic', placement);
-  const scenario = useActiveContext();
-  // Only a tile CONTEXT put here may claim a signal: a pinned one is here
-  // because you pinned it, and saying otherwise is the tile lying.
-  const signal =
-    placement !== 'ranked'
-      ? null
-      : scenario.id === 'valorant'
-        ? 'Up here because you’re in a Discord call'
-        : scenario.id === 'meeting'
-          ? 'Up here because your Teams call starts at 7:00 PM'
-          : scenario.id === 'stream'
-            ? 'Up here because you’re about to go live'
-            : null;
-  const micReason = !p.desk.micOn
-    ? 'Muted — people can’t hear you'
-    : p.desk.micNoise
-      ? 'Noise reduction is on'
-      : owner.overridden
-        ? owner.ownerReason
-        : (signal ? onDevice('mic', signal) : owner.ownerReason);
-  const micIcon: IconName = !p.desk.micOn ? 'alert' : p.desk.micNoise ? 'mic' : owner.overridden ? 'edit' : signal ? 'stream' : owner.modeIcon;
+  const owner = useOwner('mic', ctx.placement);
   return (
     <Tile
+      {...gridProps('mic', ctx)}
       icon="mic"
       title="Microphone"
-      state={p.desk.micOn ? (placement === 'pinned' && !owner.overridden ? 'default' : owner.state) : 'attention'}
-      controls={<Toggle checked={p.desk.micOn} onChange={(v) => p.update({ micOn: v })} aria-label="Microphone on" />}
+      state={p.desk.micOn ? owner.state : 'attention'}
+      controls={
+        <>
+          {owner.badge}
+          <Toggle checked={p.desk.micOn} onChange={v => p.update({ micOn: v })} aria-label="Microphone on" />
+        </>
+      }
       value={p.desk.micOn ? undefined : 'Muted'}
-      reason={micReason}
-      reasonIcon={micIcon}
+      {...deviceFoot('mic')}
       actions={
         <>
           {owner.overridden && owner.changedActions}
@@ -392,8 +412,8 @@ export function MicTile({ placement }: TileContext) {
         label="Mic preset"
         options={['gaming', 'streaming', 'podcast', 'conference']}
         value={p.desk.micPreset}
-        format={(v) => MIC_PRESET_LABEL[v]}
-        onPick={(v) => p.update({ micPreset: v }, 'mic')}
+        format={v => MIC_PRESET_LABEL[v]}
+        onPick={v => p.update({ micPreset: v }, 'mic')}
         disabled={!p.desk.micOn}
       />
     </Tile>
@@ -401,52 +421,51 @@ export function MicTile({ placement }: TileContext) {
 }
 
 // ── Mouse buttons (S) ────────────────────────────────────────────────────────
-export function ButtonsTile({ placement }: TileContext) {
+export function ButtonsTile(ctx: TileContext) {
   const p = usePersonalize();
-  const scenario = useActiveContext();
-  const auto = scenario.id === 'valorant' && p.desk.buttons === 'valorant';
   return (
     <Tile
+      {...gridProps('buttons', ctx)}
       icon="buttons"
       title="Mouse buttons"
-      state={auto && placement === 'ranked' ? 'context' : 'default'}
-      reason={onDevice('buttons', auto ? 'Switched by itself while Valorant is running' : 'Button layout')}
-      reasonIcon={auto ? 'stream' : 'buttons'}
+      state={ctx.placement === 'ranked' ? 'context' : 'default'}
+      controls={undefined}
+      {...deviceFoot('buttons')}
       actions={<PinAction id="buttons" />}
     >
       <QuickChoices<ButtonLayout>
         label="Button layout"
         options={['default', 'valorant', 'productivity']}
         value={p.desk.buttons}
-        format={(v) => BUTTONS_LABEL[v]}
-        onPick={(v) => p.update({ buttons: v })}
+        format={v => BUTTONS_LABEL[v]}
+        onPick={v => p.update({ buttons: v })}
       />
     </Tile>
   );
 }
 
 // ── Spatial audio (S) — on/off is the whole choice ───────────────────────────
-export function SpatialTile({ placement }: TileContext) {
+export function SpatialTile(ctx: TileContext) {
   const p = usePersonalize();
-  const owner = useOwner('spatial', placement);
+  const owner = useOwner('spatial', ctx.placement);
   return (
     <Tile
+      {...gridProps('spatial', ctx)}
       icon="spatial-audio"
       title="Spatial audio"
-      state={placement === 'pinned' && !owner.overridden ? 'default' : owner.state}
+      state={owner.state}
       controls={
         <>
           {owner.badge}
           <Toggle
             checked={p.desk.spatial}
-            onChange={(v) => p.update({ spatial: v }, 'spatial')}
+            onChange={v => p.update({ spatial: v }, 'spatial')}
             aria-label="Spatial audio"
           />
         </>
       }
       value={p.desk.spatial ? 'Hear360' : 'Off'}
-      reason={owner.ownerReason}
-      reasonIcon={owner.reasonIcon}
+      {...deviceFoot('spatial')}
       actions={
         <>
           {owner.overridden && owner.changedActions}
@@ -458,21 +477,23 @@ export function SpatialTile({ placement }: TileContext) {
 }
 
 // ── Sidetone (S) ─────────────────────────────────────────────────────────────
-export function SidetoneTile(_: TileContext) {
+export function SidetoneTile(ctx: TileContext) {
   const p = usePersonalize();
   return (
     <Tile
+      {...gridProps('sidetone', ctx)}
       icon="sidetone"
       title="Sidetone"
-      reason={onDevice('sidetone', 'How much of your own voice you hear')}
-      reasonIcon="audio-headset"
+      state={ctx.placement === 'ranked' ? 'context' : 'default'}
+      controls={undefined}
+      {...deviceFoot('sidetone')}
       actions={<PinAction id="sidetone" />}
     >
       <QuickLevel
         label="Sidetone"
         value={p.desk.sidetone}
-        format={(v) => (v === 0 ? 'Off' : `${v}%`)}
-        onChange={(v) => p.update({ sidetone: v })}
+        format={v => (v === 0 ? 'Off' : `${v}%`)}
+        onChange={v => p.update({ sidetone: v })}
       />
     </Tile>
   );
@@ -482,38 +503,42 @@ export function SidetoneTile(_: TileContext) {
 // The control a desk gets touched for most, and the page never had it. A level,
 // not chips: any value has to be reachable. Not profile-owned — a profile
 // restores how the desk looks and sounds, not yesterday's volume.
-export function VolumeTile(_: TileContext) {
+export function VolumeTile(ctx: TileContext) {
   const p = usePersonalize();
   return (
     <Tile
+      {...gridProps('volume', ctx)}
       icon="volume-up"
       title="Volume"
-      reason={onDevice('volume', 'How loud the headset is')}
-      reasonIcon="audio-headset"
+      state={ctx.placement === 'ranked' ? 'context' : 'default'}
+      controls={undefined}
+      {...deviceFoot('volume')}
       actions={<PinAction id="volume" />}
     >
-      <QuickLevel label="Volume" value={p.desk.volume} onChange={(v) => p.update({ volume: v })} />
+      <QuickLevel label="Volume" value={p.desk.volume} onChange={v => p.update({ volume: v })} />
     </Tile>
   );
 }
 
 // ── Mouse DPI (S) ────────────────────────────────────────────────────────────
-export function DpiTile(_: TileContext) {
+export function DpiTile(ctx: TileContext) {
   const p = usePersonalize();
   return (
     <Tile
+      {...gridProps('dpi', ctx)}
       icon="sensor"
       title="Mouse DPI"
-      reason={onDevice('dpi', 'How fast the pointer moves')}
-      reasonIcon="sensor"
+      state={ctx.placement === 'ranked' ? 'context' : 'default'}
+      controls={undefined}
+      {...deviceFoot('dpi')}
       actions={<PinAction id="dpi" />}
     >
       <QuickChoices<string>
         label="DPI preset"
         options={['800', '1600', '3200']}
         value={p.desk.dpi}
-        format={(v) => v}
-        onPick={(v) => p.update({ dpi: v })}
+        format={v => v}
+        onPick={v => p.update({ dpi: v })}
       />
     </Tile>
   );

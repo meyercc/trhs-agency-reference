@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════
    TREEHOUSE — SHARED COMPONENTS
-   Source of truth: design-system.html
-   Consumers: prototype.html · widget-simulator.html
+   This file is the source of truth (Storybook is the catalog).
+   Consumers: the React app (web/) · Storybook · the SKU editor (configurator/)
    ──────────────────────────────────────────
    Edit component styles here. Changes propagate
    to all consuming files automatically.
@@ -279,6 +279,24 @@
   height: 66.66%;
   object-fit: contain;
 }
+/* monogram — a person with no photo (Who Made This's cast rows, 2026-10-26).
+   A solid surface so the letters hold 4.5:1 in both themes; the letters scale
+   with the disc. */
+.ds-avatar.initials {
+  display: inline-grid;
+  place-items: center;
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+.ds-avatar-initials {
+  font-family: var(--font-cond);
+  font-weight: var(--font-semibold);
+  font-size: calc(var(--avatar-size) * 0.42);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  user-select: none;
+}
 
 /* ─────────────────────────────────────────
    BACKDROP  (.ds-backdrop)
@@ -454,6 +472,18 @@ html.light .ds-backdrop.plain {
 }
 
 /* ─────────────────────────────────────────
+   METER  (.ds-meter)
+   A reading as a level (TH-454, components/Meter.tsx): the .ds-spark-cell
+   label/value head over a .ds-prog-track bar. This root only stacks them.
+───────────────────────────────────────── */
+.ds-meter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  width: 100%;
+}
+
+/* ─────────────────────────────────────────
    SPARKLINE  (.ds-spark-cell / .ds-spark-lbl / .ds-spark-val)
    Legacy: .spark-cell / .spark-lbl / .spark-val
 ───────────────────────────────────────── */
@@ -479,6 +509,34 @@ html.light .ds-backdrop.plain {
   color: var(--text-primary);
   line-height: 1;
   letter-spacing: 0.03rem;
+}
+.ds-spark-unit {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  color: var(--text-muted);
+  margin-left: var(--gutter-xxs);
+}
+/* The graph the cell was named for (TH-454, components/Sparkline.tsx): the last
+   two minutes as a line over a faint area, in the accent. The SVG stretches to
+   its box; the stroke stays constant through vector-effect on the path. */
+.ds-spark-cell.graph {
+  gap: var(--gutter-xxs);
+}
+.ds-spark-graph {
+  display: block;
+  width: 100%;
+  height: var(--control-height-sm);
+  overflow: visible;
+}
+.ds-spark-area {
+  fill: color-mix(in srgb, var(--accent-color) 12%, transparent);
+}
+.ds-spark-line {
+  fill: none;
+  stroke: var(--accent-color);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* ─────────────────────────────────────────
@@ -521,6 +579,81 @@ html.light .ds-stat-grid {
 html[data-theme='light'] .ds-stat-cell,
 html.light .ds-stat-cell {
   background: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Stat tile (.ds-stat-tile) ─────────────────────────
+   One number with its name — a dashboard KPI, a popover
+   total. Composes the stat typography above (.ds-stat-val
+   / -unit / -lbl); this block adds only the surface and the
+   number's size, which a host sets with --ds-stat-tile-size.
+   Tones: .accent (default, the number in the accent) ·
+   .neutral · .positive. Variant rules at html:root (gotcha 7). */
+.ds-stat-tile {
+  --ds-stat-tile-size: calc(var(--text-section-lg) * 1.4);
+  /* layout */
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  min-width: 0;
+  padding: var(--gutter-sm);
+  /* visual */
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.ds-stat-tile .ds-stat-val {
+  font-size: var(--ds-stat-tile-size);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ds-stat-tile .ds-stat-unit {
+  margin-left: var(--gutter-xxxs);
+}
+.ds-stat-tile-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  color: var(--text-dim);
+}
+.ds-stat-tile-delta {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+/* Compact — the overlay (HUD) size: a readout that sits over a game. */
+.ds-stat-tile.compact {
+  --ds-stat-tile-size: var(--text-section);
+  gap: 0;
+  padding: var(--gutter-xxs) var(--gutter-xs);
+  border: 0;
+  background: transparent;
+  min-width: calc(var(--text-section) * 4);
+}
+.ds-stat-tile.compact .ds-stat-tile-head {
+  font-size: var(--text-nano);
+}
+/* At this size the number is body text, not large text, and the accent on
+   the HUD's translucent surface measures 3.33:1 light / 3.87:1 dark (rendered
+   pixels, 2026-10-02) — under AA's 4.5:1. So compact never colors the number:
+   the accent tone becomes a bar beside the tile, where the UI-component bar
+   of 3:1 is what applies, and both themes clear it. */
+html:root .ds-stat-tile.compact .ds-stat-val {
+  color: var(--text-primary);
+}
+.ds-stat-tile.compact:not(.neutral):not(.positive) {
+  box-shadow: inset 2px 0 0 var(--accent-color);
+}
+/* The label is the smallest text on the surface; --text-muted measures 4.85:1
+   in the dark theme — passing, with no margin. Same bump the feature card's
+   stat label gets (see its html:root rule). */
+html:root .ds-stat-tile .ds-stat-lbl {
+  color: var(--text-dim);
+}
+html:root .ds-stat-tile.neutral .ds-stat-val {
+  color: var(--text-primary);
+}
+html:root .ds-stat-tile.positive .ds-stat-val {
+  color: var(--green);
 }
 
 /* ─────────────────────────────────────────
@@ -1150,6 +1283,11 @@ html.light .ds-select option {
 .ds-stepper.disabled {
   opacity: 0.5;
 }
+/* Small: the field holds a short value ("360"). At html:root so it beats the
+   .ds-input width rules (gotcha 7). */
+html:root .ds-stepper.sm .ds-stepper-field {
+  width: var(--stepper-field-sm);
+}
 
 .ds-input-wrap {
   position: relative;
@@ -1456,7 +1594,7 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
 }
 
 .ds-carousel-title {
-  font-family: var(--font-cond);
+  font-family: var(--font-mono);
   font-size: var(--text-title);
   font-weight: var(--font-bold);
   letter-spacing: 0.02em;
@@ -1556,8 +1694,8 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
 .ds-carousel-aura {
   position: absolute;
   top: 0;
-  left: calc(50% - 50vw);
-  width: 100vw;
+  left: calc(50% - var(--viewport-w) / 2);
+  width: var(--viewport-w);
   height: 640px;
   pointer-events: none;
   overflow: hidden;
@@ -1920,6 +2058,36 @@ html.light .ds-input:hover:not(:focus):not(:disabled):not(.error) {
 /* Text-only nav — hide icons. */
 .ds-menu.hide-icons .ds-menu-icon {
   display: none;
+}
+
+/* Bar — the horizontal pill as a tab bar (Menu `variant="bar"`, 2026-10-20):
+   the app's bottom nav on a compact window. Items share the width equally,
+   stack the icon over the label, and meet the touch target. Labels are on
+   (the shell ignores `hideLabels` here): icon-only tabs at thumb distance
+   with no hover to name them fail discoverability. The label is the micro
+   step — 12px, the floor Chris set for anything read (2026-10-20). */
+.ds-menu.bar {
+  width: 100%;
+}
+.ds-menu.bar .ds-menu-item {
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--gutter-xxxs);
+  /* Border-box at the touch target exactly, so the item IS the target and
+     `--nav-bottom-h` can name the bar's height from it; the stacked icon and
+     label (20 + 2 + 16) fit inside it with the hairline padding. */
+  box-sizing: border-box;
+  height: var(--touch-target);
+  padding: var(--gutter-xxxs) var(--gutter-xs);
+  font-size: var(--text-micro);
+  letter-spacing: 0;
+}
+.ds-menu.bar .ds-menu-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Bottom tooltips — opt-in via the Menu `tooltips` prop. Uses the canonical
@@ -2973,6 +3141,19 @@ html.light .ds-thumb-meta {
   display: flex;
 }
 
+/* Compact: in a narrow column (the game detail panel's Info, TH-504) the
+   editor-scale header padding would leave no room for the title. */
+.ds-settings-group.compact {
+  margin-bottom: 0;
+}
+.ds-settings-group.compact .ds-settings-group-header {
+  padding: var(--gutter-xs) var(--gutter-sm);
+  gap: var(--gutter-xs);
+}
+.ds-settings-group.compact .ds-settings-group-items {
+  padding: 0 var(--gutter-sm) var(--gutter-xs);
+}
+
 /* ── Row ── */
 .ds-settings-row {
   display: flex;
@@ -3617,150 +3798,309 @@ html.light .ds-settings-row {
   border-bottom-color: rgba(0, 0, 0, 0.04);
 }
 
-/* ─────────────────────────────────────────
-   TOAST NOTIFICATIONS  (.ds-toast)
-   API: toast(message, { type, duration })
-   Types: default · success · warn · error
-   duration: ms (0 = persistent). Default 3000.
-───────────────────────────────────────── */
-.ds-toast-container {
+/* ── Floating action button (.ds-fab) ───────────────────────────────────
+   One round, raised, accent-filled button that floats over the page and
+   opens a surface of its own (the Nova chat window, TH-507). The HOST places
+   it (position, z-index, offsets); this block is only the button.
+   Parts: .ds-fab-ring (the thinking streak) · two .ds-fab-icon faces — the
+   rest face and the open face, crossing with a quarter turn · .ds-fab-badge.
+   States: .open (shows the open face; the caller sets aria-expanded) ·
+   .busy (the ring runs: an accent track with a HyperX-red streak orbiting
+   it, the brand's energy on top of the viewer's own accent) · a badge (a
+   reply arrived while closed — a shape AND the label, never the hue alone).
+   React: components/Fab.tsx. Story: Components/Fab.
+   ───────────────────────────────────────────────────────────────────────── */
+.ds-fab {
+  --ds-fab-size: var(--control-height-fab);
+  --ds-fab-ring-w: calc(var(--gutter-xxxs) * 1.5);
+  /* layout */
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--ds-fab-size);
+  height: var(--ds-fab-size);
+  padding: 0;
+  /* visual — a sheen over the accent so it reads as lit hardware, not a dot */
+  border: 1px solid color-mix(in srgb, var(--text-on-fill) 18%, transparent);
+  border-radius: var(--radius-full);
+  background:
+    radial-gradient(circle at 30% 22%, color-mix(in srgb, var(--text-on-fill) 26%, transparent), transparent 60%),
+    var(--accent-color);
+  color: var(--text-on-fill);
+  box-shadow: var(--shadow-lv-3);
+  cursor: pointer;
+  /* motion */
+  transition:
+    transform var(--dur-normal) var(--ease-spring),
+    box-shadow var(--dur-normal) var(--ease-default),
+    filter var(--dur-fast) var(--ease-default);
+  animation: ds-fab-in var(--dur-slow) var(--ease-spring) backwards;
+}
+.ds-fab:hover {
+  transform: translateY(calc(var(--gutter-xxxs) * -1));
+  box-shadow: var(--shadow-lv-4);
+  filter: brightness(1.08);
+}
+.ds-fab:active {
+  transform: scale(0.94);
+  transition-duration: var(--dur-instant);
+}
+.ds-fab:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: calc(var(--ds-fab-ring-w) + var(--gutter-xxxs));
+}
+@keyframes ds-fab-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+/* The two faces sit in one grid cell and cross: the rest face turns away as
+   the open face turns in. */
+.ds-fab-icon {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  transition:
+    transform var(--dur-slow) var(--ease-spring),
+    opacity var(--dur-normal) var(--ease-default);
+}
+.ds-fab-icon.open-face {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+}
+.ds-fab.open .ds-fab-icon.rest-face {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.5);
+}
+.ds-fab.open .ds-fab-icon.open-face {
+  opacity: 1;
+  transform: none;
+}
+/* Thinking, the rest face breathes with the ring. */
+.ds-fab.busy:not(.open) .ds-fab-icon.rest-face {
+  animation: ds-fab-breathe calc(var(--dur-xslow) * 3) var(--ease-default) infinite;
+}
+@keyframes ds-fab-breathe {
+  50% {
+    transform: scale(0.86) rotate(45deg);
+  }
+}
+
+/* The ring: drawn outside the button, masked to a band. At rest it is not
+   there; busy, an accent track fades in and a red streak orbits it. */
+.ds-fab-ring {
+  position: absolute;
+  inset: calc((var(--ds-fab-ring-w) + var(--gutter-xxxs)) * -1);
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--accent-color) 35%, transparent) 0 55%,
+    var(--ksg-hyperx) 88%,
+    color-mix(in srgb, var(--text-on-fill) 85%, var(--ksg-hyperx)) 100%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--ds-fab-ring-w)), black calc(100% - var(--ds-fab-ring-w) + 0.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - var(--ds-fab-ring-w)), black calc(100% - var(--ds-fab-ring-w) + 0.5px));
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  transition:
+    opacity var(--dur-normal) var(--ease-default),
+    transform var(--dur-normal) var(--ease-out);
+}
+.ds-fab.busy .ds-fab-ring {
+  opacity: 1;
+  transform: none;
+  animation: ds-fab-orbit calc(var(--dur-xslow) * 2) var(--ease-linear) infinite;
+}
+/* And a glow in the brand red that swells with it. */
+.ds-fab.busy {
+  animation: ds-fab-glow calc(var(--dur-xslow) * 3) var(--ease-default) infinite;
+}
+@keyframes ds-fab-orbit {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@keyframes ds-fab-glow {
+  0%,
+  100% {
+    box-shadow: var(--shadow-lv-3), 0 0 0 0 color-mix(in srgb, var(--ksg-hyperx) 0%, transparent);
+  }
+  50% {
+    box-shadow: var(--shadow-lv-3), 0 0 var(--gutter) var(--gutter-xxxs) color-mix(in srgb, var(--ksg-hyperx) 45%, transparent);
+  }
+}
+
+/* Unread: a dot at the shoulder that pings once as it lands. */
+.ds-fab-badge {
+  position: absolute;
+  top: var(--gutter-xxxs);
+  right: var(--gutter-xxxs);
+  width: calc(var(--gutter-xs) + var(--gutter-xxxs));
+  height: calc(var(--gutter-xs) + var(--gutter-xxxs));
+  border: 2px solid var(--bg-base);
+  border-radius: var(--radius-full);
+  background: var(--ksg-hyperx);
+  animation: ds-fab-badge-in var(--dur-slow) var(--ease-spring) backwards;
+}
+.ds-fab-badge::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--ksg-hyperx);
+  animation: ds-fab-ping calc(var(--dur-xslow) * 2) var(--ease-out) 2;
+}
+@keyframes ds-fab-badge-in {
+  from {
+    transform: scale(0);
+  }
+}
+@keyframes ds-fab-ping {
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-fab,
+  .ds-fab.busy,
+  .ds-fab-ring,
+  .ds-fab-icon,
+  .ds-fab-badge,
+  .ds-fab-badge::after,
+  .ds-fab.busy:not(.open) .ds-fab-icon.rest-face {
+    animation: none;
+    transition: none;
+  }
+  /* Thinking is still shown, as a still ring: the streak stands where it is. */
+  .ds-fab.busy .ds-fab-ring {
+    animation: none;
+  }
+  .ds-fab:hover,
+  .ds-fab:active {
+    transform: none;
+  }
+}
+
+/* ── Toast (.ds-toast) ──────────────────────────────────────────────────
+   A transient message from the app — something happened, or is about to,
+   that you did not ask for. Bottom-right, above modals, one stack.
+   Parts: optional icon · a title and a message (both wrap) · optional actions
+   (Buttons) · a close. Tones: default (accent) · .positive · .warn · .danger,
+   carried by the bar on the leading edge AND the icon, never the hue alone.
+   React: components/Toast.tsx (ToastStack hosts them; state/Toasts.tsx
+   raises them). Rewritten in tokens 2026-10-20 (TH-484); the vanilla
+   version it replaces had no consumers.
+   ───────────────────────────────────────────────────────────────────────── */
+.ds-toast-stack {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 9999;
+  right: var(--gutter);
+  /* A host with something else in the corner (the Nova FAB, TH-507) lifts the
+     stack above it by setting this, rather than restating the rule. */
+  bottom: var(--ds-toast-stack-bottom, var(--gutter));
+  z-index: 60; /* above .modal-shell (51) and the Nova panel */
   display: flex;
   flex-direction: column;
-  gap: 7px;
   align-items: flex-end;
+  gap: var(--gutter-xs);
+  max-width: calc(var(--viewport-w) - 2 * var(--gutter));
   pointer-events: none;
 }
-
 .ds-toast {
+  --ds-toast-tone: var(--accent-color);
+  --ds-toast-w: 360px;
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--gutter-sm);
-  padding: var(--gutter-sm)   14px;
-  background: #10131a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: var(--ds-toast-w);
+  max-width: 100%;
+  padding: var(--gutter-sm) var(--gutter-sm) var(--gutter-sm) var(--gutter);
+  border: 1px solid var(--border-med);
   border-radius: var(--radius);
-  box-shadow: 0  40px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(0, 0, 0, 0.5);
-  max-width: 260px;
-  min-width: 160px;
-  pointer-events: all;
-  /* enter/exit state */
-  transform: translateX(calc(100% + 28px));
-  opacity: 0;
-  transition:
-    transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
-    opacity 0.22s ease;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-lv-4);
+  color: var(--text-primary);
+  pointer-events: auto;
+  animation: ds-toast-in var(--dur-slow) var(--ease-out) both;
 }
-.ds-toast.ds-toast-in {
-  transform: translateX(0);
-  opacity: 1;
-}
-.ds-toast.ds-toast-out {
-  transform: translateX(calc(100% + 28px));
-  opacity: 0;
-}
-
-/* Left accent bar */
+.ds-toast.positive { --ds-toast-tone: var(--green); }
+.ds-toast.warn { --ds-toast-tone: var(--orange); }
+.ds-toast.danger { --ds-toast-tone: var(--red); }
+/* The tone bar on the leading edge. */
 .ds-toast::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 7px;
-  bottom: 7px;
-  width: 2px;
-  border-radius: 0 2px 2px 0;
-  background: rgba(255, 255, 255, 0.15);
+  left: var(--gutter-xs);
+  top: var(--gutter-sm);
+  bottom: var(--gutter-sm);
+  width: 3px;
+  border-radius: var(--radius-full);
+  background: var(--ds-toast-tone);
 }
-
 .ds-toast-icon {
   flex-shrink: 0;
-  width: 13px;
-  height: 13px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
+  color: var(--ds-toast-tone);
 }
-.ds-toast-icon svg {
-  width: 12px;
-  height: 12px;
-  display: block;
-}
-
-.ds-toast-msg {
-  font-family: 'Barlow', sans-serif;
-  font-size: 12px;
-  color: var(--text-dim);
-  line-height: 1.35;
+.ds-toast-body {
   flex: 1;
-  white-space: nowrap;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
 }
-
+.ds-toast-title {
+  font-family: var(--font-display);
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-lh);
+  font-weight: var(--type-strong-weight);
+  color: var(--text-primary);
+}
+.ds-toast-msg {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.ds-toast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+  margin-top: var(--gutter-xs);
+}
 .ds-toast-close {
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  border-radius: 3px;
-  padding: 0;
-  transition: color var(--dur-fast) ease,
-    background 0.12s ease;
-  margin-left: 2px;
+  margin: calc(-1 * var(--gutter-xxs)) calc(-1 * var(--gutter-xxs)) 0 0;
 }
-.ds-toast-close:hover {
-  color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.06);
+@keyframes ds-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--gutter-sm));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-.ds-toast-close svg {
-  width: 7px;
-  height: 7px;
-  display: block;
+@media (prefers-reduced-motion: reduce) {
+  .ds-toast {
+    animation: none;
+  }
 }
-
-/* ── Variants ── */
-.ds-toast-success .ds-toast-icon {
-  color: var(--green);
-}
-.ds-toast-success::before {
-  background: var(--green);
-}
-
-.ds-toast-warn .ds-toast-icon {
-  color: var(--orange);
-}
-.ds-toast-warn::before {
-  background: var(--orange);
-}
-
-.ds-toast-error .ds-toast-icon {
-  color: var(--red);
-}
-.ds-toast-error::before {
-  background: var(--red);
-}
-
-/* ── Light theme ── */
-html[data-theme='light'] .ds-toast,
-html.light .ds-toast {
-  background: #e8eaf0;
-  border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 0  28px rgba(0, 0, 0, 0.14),
-    0 0 0 1px rgba(0, 0, 0, 0.06);
-}
-html[data-theme='light'] .ds-toast-msg,
-html.light .ds-toast-msg {
-  color: rgba(20, 24, 32, 0.7);
+@media (max-width: 600px) {
+  .ds-toast-stack {
+    left: var(--gutter-sm);
+    right: var(--gutter-sm);
+    bottom: var(--gutter-sm);
+    align-items: stretch;
+  }
+  .ds-toast {
+    width: auto;
+  }
 }
 
 /* ─────────────────────────────────────────
@@ -4610,8 +4950,27 @@ html.light .ds-card.overlay:hover {
   max-width: 760px;
   inset: 108px 0;
   height: fit-content;
-  max-height: calc(100vh - 216px);
+  max-height: calc(var(--viewport-h) - 216px);
   margin: auto;
+}
+
+/* Phone width (2026-10-01). The 108px inset is a desktop margin: on all four
+   sides it left a 375px phone a 159px-wide modal (Profiles, Settings, Admin
+   alike). Below 600px the shell takes the screen less a small gutter, and
+   the narrow shell does the same, still hugging its content's height. */
+@media (--bp-compact) {
+  /* The top clears the nav bar, which draws above modals; the bottom clears
+     the bottom tab bar, which does too (shell.css, 2026-10-20). Edge to edge:
+     on a phone a modal is a screen, not a window over one. */
+  .modal-shell,
+  .modal-shell-narrow {
+    inset: var(--nav-full-h) 0 calc(var(--nav-bottom-h) + env(safe-area-inset-bottom, 0px));
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
 }
 
 /* Header row, right-hand end: surface-scope control (optional) then close. */
@@ -4800,8 +5159,8 @@ html.light .breadcrumb-back:hover {
 }
 
 /* ── Modal side navigation (.ds-modal-nav) ─────────────────────
-   The `left` slot as a section switcher — a stack of icon+label items with an
-   optional mono footer. Shared by every sectioned modal (Module Browser,
+   The `left` slot as a section switcher — a stack of icon+label items, optional
+   mono group labels (.ds-modal-nav-label) and an optional mono footer. Shared by every sectioned modal (Module Browser,
    Settings); pair with a narrower .modal-body column on the modal's own class
    (e.g. grid-template-columns: 230px 1fr). */
 .ds-modal-nav {
@@ -4846,6 +5205,16 @@ html.light .breadcrumb-back:hover {
   flex-shrink: 0;
   opacity: 0.85;
 }
+/* Group label over a run of items (e.g. Settings: Account / App). Same mono
+   kicker voice as the footer; not interactive. */
+.ds-modal-nav-label {
+  padding: var(--gutter-xs) var(--gutter-tablet) var(--gutter-xxs);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
 .ds-modal-nav-foot {
   margin-top: auto;
   padding: var(--gutter-sm) var(--gutter-tablet) var(--gutter-xxs);
@@ -4854,6 +5223,96 @@ html.light .breadcrumb-back:hover {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+/* Trailing count on an item (Forge: listings per category). Pushed to the row's
+   end so a column of items shows one column of numbers. --text-dim, not
+   --text-muted: the number is information, and muted fails 4.5:1 on dark. */
+.ds-modal-nav-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+}
+.ds-modal-nav-item.active .ds-modal-nav-count {
+  color: inherit;
+}
+
+/* ── Rating (.ds-rating) ─────────────────────────────────────────────────
+   Five stars. Display: a fractional fill (4.3 → four and a third), drawn as a
+   filled row clipped over an outline row so the shape reads without the
+   color. Neutral gray, not gold (Chris 2026-10-19): a store page of ratings
+   in a hue competes with the accent; the fill alone carries the value. Input (.ds-rating-input): a radiogroup of five star buttons.
+   Sizes: default, .sm (inline in a card), .lg (a summary figure).
+   ───────────────────────────────────────────────────────────────────────── */
+.ds-rating {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  /* The fill is a percentage of this box: a grid or flex parent that stretched
+     it would fill five stars for a 3.9. */
+  width: fit-content;
+  justify-self: start;
+  align-self: center;
+  vertical-align: middle;
+  color: var(--text-dim);
+  --ds-rating-star: 14px;
+}
+.ds-rating.sm {
+  --ds-rating-star: 11px;
+}
+.ds-rating.lg {
+  --ds-rating-star: 18px;
+}
+.ds-rating-row {
+  display: inline-flex;
+  gap: var(--gutter-xxxs);
+}
+.ds-rating-row svg {
+  width: var(--ds-rating-star);
+  height: var(--ds-rating-star);
+  flex-shrink: 0;
+}
+.ds-rating-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ds-rating-input {
+  display: inline-flex;
+  gap: var(--gutter-xxs);
+}
+.ds-rating-input button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter-xxs);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+.ds-rating-input button svg {
+  width: var(--gutter);
+  height: var(--gutter);
+}
+.ds-rating-input button.on {
+  color: var(--text-primary);
+}
+.ds-rating-input button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.ds-rating-input button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.ds-rating-input button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* ── Light theme ── */
@@ -4872,6 +5331,100 @@ html.light .modal-left {
 html[data-theme='light'] .modal-right,
 html.light .modal-right {
   scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+/* ── Lead tile (.ds-lead-tile) ─────────────────────────────────────────────
+   The wide game tile that leads a row of covers (Play's Featured layout,
+   TH-506; Figma scratchpad-2026 279:14859): the cover held to the right, a
+   veil from the left that the title and its facts sit on, and Play. Takes the
+   row's height (a grid stretches it to the covers beside it) and owns no
+   width — the grid spans it. Not `.ds-tile-*`: a namespace of its own (the
+   `.ds-tile` / `.ds-quick-tile` lesson).
+   React: components/LeadTile.tsx.
+   ───────────────────────────────────────────────────────────────────────── */
+.ds-lead-tile {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 0;
+  padding: var(--gutter);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-lv-1);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-default);
+}
+.ds-lead-tile:hover {
+  border-color: var(--border-med);
+}
+.ds-lead-tile:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+/* The cover: the right half, cropped from its top (where the key art is). */
+.ds-lead-tile-art {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+/* The veil follows the theme's ground, so the title keeps its contrast in both. */
+.ds-lead-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(67deg, var(--bg-elevated) 30%, transparent 82%);
+  pointer-events: none;
+}
+.ds-lead-tile-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  width: 100%;
+  min-width: 0;
+}
+.ds-lead-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  min-width: 0;
+}
+.ds-lead-tile-title {
+  margin: 0;
+  font-size: var(--text-section-lg);
+  line-height: 1.2;
+  font-weight: var(--font-regular);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ds-lead-tile-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xxs) var(--gutter-sm);
+  margin: 0;
+}
+.ds-lead-tile-fact {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ds-lead-tile-fact dt {
+  color: var(--text-dim);
+}
+.ds-lead-tile-fact dd {
+  margin: 0;
+  color: var(--text-primary);
 }
 
 /* ── Thumbnail Tile (.ds-tile) ──────────────
@@ -5019,7 +5572,10 @@ html.light .modal-right {
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease-default);
 }
-.ds-tile:hover .ds-tile-overlay {
+.ds-tile:hover .ds-tile-overlay,
+/* The overlay's Play is a real button when the tile has `onPlay` (TH-504):
+   a keyboard user tabbing to it must see it. */
+.ds-tile:focus-within .ds-tile-overlay {
   opacity: 1;
 }
 
@@ -5250,6 +5806,83 @@ html.light .ds-tile:hover .ds-tile-art {
   transform: translateX(0);
 }
 
+/* ── Resize handle (.ds-resize-handle) ───────────────────────────────────
+   A vertical strip on one edge of a resizable surface (a .ds-panel, a rail).
+   Drag it, or focus it and use ←/→ (Home = narrowest, End = widest). At rest
+   it is invisible but for the cursor; a grip line appears on hover, on
+   keyboard focus and while dragging, so the affordance is there exactly when
+   you are reaching for it. Sits INSIDE the edge — .ds-panel clips overflow.
+   Edges: .left (default) · .right size a width; .top · .bottom a height
+   (a horizontal splitter: row-resize, the grip lies along the edge).
+   React: components/ResizeHandle.tsx (role="separator", aria-value*).
+   ───────────────────────────────────────────────────────────────────────── */
+.ds-resize-handle {
+  --ds-resize-hit: var(--gutter-xs);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  width: var(--ds-resize-hit);
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+}
+.ds-resize-handle.right {
+  left: auto;
+  right: 0;
+}
+.ds-resize-handle.top,
+.ds-resize-handle.bottom {
+  top: 0;
+  bottom: auto;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: var(--ds-resize-hit);
+  cursor: row-resize;
+}
+.ds-resize-handle.bottom {
+  top: auto;
+  bottom: 0;
+}
+/* The grip: a line centred in the hit strip, a third of the edge tall. */
+.ds-resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: max(var(--gutter) * 2, 33%);
+  border-radius: var(--radius-full);
+  background: var(--border-med);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity var(--dur-fast) var(--ease-default),
+    background var(--dur-fast) var(--ease-default);
+}
+.ds-resize-handle.top::before,
+.ds-resize-handle.bottom::before {
+  width: max(var(--gutter) * 2, 33%);
+  height: 3px;
+}
+.ds-resize-handle:hover::before,
+.ds-resize-handle.dragging::before {
+  opacity: 1;
+}
+.ds-resize-handle.dragging::before {
+  background: var(--accent-color);
+}
+.ds-resize-handle:focus-visible {
+  outline: none;
+}
+.ds-resize-handle:focus-visible::before {
+  opacity: 1;
+  background: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
 /* ── Panel header ── */
 .ds-panel-header {
   display: flex;
@@ -5335,6 +5968,95 @@ html[data-theme='light'] .ds-panel-close:hover,
 html.light .ds-panel-close:hover {
   background: rgba(0, 0, 0, 0.06);
   color: #111;
+}
+
+/* ─────────────────────────────────────────
+   FAN CURVE  (.ds-fan-curve)
+   Fan speed against temperature: a grid, the
+   area under the curve, the line, and a
+   draggable point per stop. The React wrapper
+   owns the geometry; this owns the look.
+   ─────────────────────────────────────────
+   Variants: .compact — line + area only, no
+   axes, for a card or a chat bubble.
+   States: a .ds-fan-curve-point is a slider —
+   :focus-visible rings it; [data-live] marks
+   the current temperature.
+   Moved here from unleash-tuning.css (.ut-fc-*)
+   in TH-436, when the curve got a store and a
+   second and third home.                     */
+.ds-fan-curve {
+  /* layout */
+  display: block;
+  /* visual */
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.ds-fan-curve-svg {
+  display: block;
+  width: 100%;
+  touch-action: none;
+}
+.ds-fan-curve.editable .ds-fan-curve-svg {
+  cursor: crosshair;
+}
+.ds-fan-curve-grid {
+  stroke: var(--border-light);
+  stroke-width: 1;
+}
+.ds-fan-curve-tick,
+.ds-fan-curve-axis {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  fill: var(--text-muted);
+}
+.ds-fan-curve-area {
+  fill: color-mix(in srgb, var(--cyan) 7%, transparent);
+}
+.ds-fan-curve-line {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ds-fan-curve-point {
+  fill: var(--bg-elevated);
+  stroke: var(--cyan);
+  stroke-width: 2;
+  transition: r var(--dur-fast) var(--ease-default);
+}
+.ds-fan-curve.editable .ds-fan-curve-point {
+  cursor: ns-resize;
+}
+.ds-fan-curve.editable .ds-fan-curve-point:hover {
+  r: 7;
+}
+/* Focus is the system's ring (`html:root :focus-visible`, which outranks
+   anything written at plain specificity — the Kintsugi override layer); the
+   point only grows, the same as on hover, so the ring and the stop agree. */
+.ds-fan-curve-point:focus-visible {
+  r: 7;
+}
+/* The current temperature: a hairline and a mark where it meets the curve. */
+.ds-fan-curve-live {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.ds-fan-curve-live-dot {
+  fill: var(--cyan);
+}
+/* Compact: the card/bubble glyph. No chrome of its own — the host supplies it. */
+.ds-fan-curve.compact {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.ds-fan-curve.compact .ds-fan-curve-line {
+  stroke-width: 1.5;
 }
 
 /* ─────────────────────────────────────────
@@ -5757,6 +6479,210 @@ html.light .ds-card-select-tag {
     background: transparent;
     border-color: transparent;
   }
+}
+
+/* ── Callout, overlay variant (.ds-callout.overlay) ───────
+   Figma Keys-Buttons "Button Overlay" (4087:553111): a fixed 120 × 40
+   frosted box naming the button it points at, used over a device render
+   at the design's own px. No dot, no built-in leader, no motion — the
+   leader is a separate `.ds-callout-leader` in an SVG over the stage.
+   The box sits in a positioned parent (it is not absolute itself).
+   States: hover · .armed (accent stroke; the label hides, a Tooltip asks
+   for a key) · .assigned (accent wash) · .disabled (red wash, "Disabled"
+   label) · .drop (a chip is over it: 80%).
+   Every rule is at html:root so it beats the base .ds-callout rules and
+   their mobile collapse (gotcha 7).
+   ───────────────────────────────────────── */
+html:root .ds-callout.overlay {
+  position: relative;
+  z-index: auto;
+  box-sizing: border-box;
+  justify-content: center;
+  width: var(--callout-overlay-w);
+  height: var(--callout-overlay-h);
+  padding: var(--gutter-xs);
+  background: var(--ksg-b40);
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  border: 1px solid var(--ksg-w40);
+  border-radius: var(--radius-key);
+  box-shadow: 0 0 0 1px var(--ksg-b40);
+  color: var(--ksg-n100);
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default),
+    opacity var(--dur-fast) var(--ease-default);
+}
+html:root .ds-callout.overlay:hover {
+  transform: none;
+  background: var(--ksg-b60);
+  border-color: var(--ksg-w80);
+}
+html:root .ds-callout-overlay-label {
+  white-space: nowrap;
+}
+html:root .ds-callout.overlay.armed {
+  background: var(--ksg-b60);
+  border-color: var(--accent-color);
+}
+html:root .ds-callout.overlay.assigned {
+  background: linear-gradient(var(--key-assigned-wash), var(--key-assigned-wash)), var(--ksg-b40);
+  border-color: var(--accent-color);
+}
+html:root .ds-callout.overlay.disabled {
+  background: linear-gradient(var(--key-disabled-wash), var(--key-disabled-wash)), var(--ksg-b40);
+  border-color: var(--red);
+}
+html:root .ds-callout.overlay.drop {
+  opacity: 0.8;
+}
+html.light .ds-callout.overlay {
+  background: var(--ksg-w60);
+  border-color: var(--ksg-b10);
+  color: var(--ksg-n800);
+}
+html.light .ds-callout.overlay:hover,
+html.light .ds-callout.overlay.armed {
+  background: var(--ksg-w80);
+  border-color: var(--ksg-b30);
+}
+html.light .ds-callout.overlay.armed,
+html.light .ds-callout.overlay.assigned {
+  border-color: var(--accent-color);
+}
+html.light .ds-callout.overlay.assigned {
+  background: linear-gradient(var(--key-assigned-wash), var(--key-assigned-wash)), var(--ksg-w60);
+}
+html.light .ds-callout.overlay.disabled {
+  background: linear-gradient(var(--key-disabled-wash), var(--key-disabled-wash)), var(--ksg-w60);
+  border-color: var(--red);
+}
+
+/* ── Callout leader (.ds-callout-leader) ──────────────────
+   Figma "Connecting Line": an SVG <g> from an overlay callout to its
+   button — a horizontal run, Figma's corner curve, a 45° diagonal to a
+   dot. Drawn twice, as Figma does: a 3px dark halo under a 1px line in
+   the callout's state color. Strokes keep their px when the stage is
+   scaled. States mirror the callout: .armed / .assigned (accent),
+   .disabled (red), .drop (80%).
+   ───────────────────────────────────────── */
+.ds-callout-leader {
+  color: var(--ksg-w40);
+  transition:
+    color var(--dur-fast) var(--ease-default),
+    opacity var(--dur-fast) var(--ease-default);
+}
+.ds-callout-leader.armed,
+.ds-callout-leader.assigned {
+  color: var(--accent-color);
+}
+.ds-callout-leader.disabled {
+  color: var(--red);
+}
+.ds-callout-leader.drop {
+  opacity: 0.8;
+}
+.ds-callout-leader-halo {
+  fill: none;
+  stroke: var(--ksg-b40);
+  stroke-width: var(--leader-halo);
+  vector-effect: non-scaling-stroke;
+}
+.ds-callout-leader-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.ds-callout-leader-dot {
+  fill: var(--ksg-n200);
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+html.light .ds-callout-leader:not(.armed, .assigned, .disabled) {
+  color: var(--ksg-b10);
+}
+
+/* ── Keycap (.ds-keycap) ──────────────────────────────────
+   Figma Keys-Buttons "Key Overlay" (2091:399501): the control drawn over
+   one cap of a keyboard render. Fills whatever box its parent gives it
+   (the board places each cap absolutely, in the render's own px), legend
+   in 12px Subheadline caps or a 16px glyph.
+   States: hover · .dim (FN layer, no function on it) · .selected (Active)
+   · .selected.assigned (Active/Assigned: accent wash) · .drop (a chip is
+   over it: 80%, stroke unchanged).
+   .hit — the Lights tab's pick target: invisible until hovered; .picked
+   draws the white ring.
+   The .dim legend is n500 / light n700, not Figma's n600: n600 is 2.6:1 on
+   n900 and 3.2:1 on n400, under AA for 12px text.
+   ───────────────────────────────────────── */
+.ds-keycap {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xxxs);
+  padding: var(--gutter-xs) var(--gutter-xxxs);
+  background: var(--ksg-n800);
+  border: 1px solid var(--ksg-w40);
+  border-radius: var(--radius-key);
+  color: var(--ksg-n100);
+  font: inherit;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    border-color var(--dur-fast) var(--ease-default),
+    opacity var(--dur-fast) var(--ease-default);
+}
+.ds-keycap-label {
+  white-space: nowrap;
+}
+.ds-keycap:hover {
+  background: var(--ksg-n700);
+}
+.ds-keycap.dim {
+  background: var(--ksg-n900);
+  border-color: var(--ksg-w20);
+  color: var(--ksg-n500);
+}
+.ds-keycap.selected {
+  border-color: var(--accent-color);
+}
+.ds-keycap.selected.assigned {
+  background-image: linear-gradient(var(--key-assigned-wash), var(--key-assigned-wash));
+}
+.ds-keycap.drop {
+  opacity: 0.8;
+}
+.ds-keycap.hit {
+  background: transparent;
+  border-color: transparent;
+}
+.ds-keycap.hit:hover {
+  border-color: var(--ksg-w40);
+}
+.ds-keycap.hit.picked {
+  border-color: var(--white);
+  box-shadow: 0 0 0 1px var(--white);
+}
+html.light .ds-keycap:not(.hit) {
+  background-color: var(--ksg-n200);
+  border-color: var(--ksg-b40);
+  color: var(--ksg-n800);
+}
+html.light .ds-keycap:not(.hit):hover {
+  background-color: var(--ksg-n300);
+}
+html.light .ds-keycap.dim {
+  background-color: var(--ksg-n400);
+  border-color: var(--ksg-b20);
+  color: var(--ksg-n700);
+}
+html.light .ds-keycap.selected:not(.hit) {
+  border-color: var(--accent-color);
 }
 
 /* ─────────────────────────────────────────
@@ -6250,6 +7176,14 @@ html:root select {
     box-shadow var(--dur-fast) var(--ease-default);
   height: 32px;
   padding: 0 var(--gutter-xs);
+}
+/* A textarea is a .ds-input too, and the 32px above beat the base
+   `textarea.ds-input { height: auto }` — html:root out-specifies it (gotcha 7)
+   — so every Textarea was pinned and only its min-height hid it. The Nova
+   composer, whose floor is one control high, could never grow past one line
+   however many rows it asked for (found 2026-10-20). */
+html:root textarea.ds-input {
+  height: auto;
 }
 
 html:root .ds-input:hover,
@@ -6962,13 +7896,314 @@ html:root {
   }
 }
 
+/* ── Chat message (.ds-chat-msg) ─────────────────────
+   One turn of a conversation: avatar · bubble · meta ·
+   action chips. The user sits right on the accent wash,
+   the assistant left on the surface; a streaming reply
+   shows typing dots inside the bubble until text arrives.
+   Variants: .user | .assistant (role) · .streaming | .error
+   Variant rules sit at html:root so the Kintsugi layer
+   cannot out-specify them (gotcha 7). */
+.ds-chat-msg {
+  /* layout */
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+  max-width: 78%;
+  align-self: flex-start;
+}
+.ds-chat-msg.user {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+  max-width: 72%;
+}
+.ds-chat-msg-avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--accent-color);
+}
+.ds-chat-msg-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  min-width: 0;
+}
+.ds-chat-msg.user .ds-chat-msg-body {
+  align-items: flex-end;
+}
+.ds-chat-msg-bubble {
+  /* visual */
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--text-primary);
+  /* typography — plain text keeps its paragraph breaks */
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  /* motion */
+  transition: border-color var(--dur-fast) var(--ease-default);
+}
+html:root .ds-chat-msg.user .ds-chat-msg-bubble {
+  background: var(--accent-dimmer);
+  border-color: var(--accent-dim);
+}
+/* An error is marked by the border AND its meta line — never color alone. */
+html:root .ds-chat-msg.error .ds-chat-msg-bubble {
+  border-color: var(--orange);
+}
+.ds-chat-msg-meta {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.ds-chat-msg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xxs);
+  margin-top: var(--gutter-xxxs);
+}
+/* A reply carrying a live control sizes to the control, not to the sentence
+   (TH-437): a fixed width the bubble wants, capped by whatever column it is in
+   — so it is the full 380px panel and a 520px block on a wide page, not a
+   fan curve the size of the window. Component geometry, declared the way
+   .ds-dropdown declares --ds-dropdown-max-h. */
+.ds-chat-msg {
+  --ds-chat-msg-wide-w: 520px;
+}
+.ds-chat-msg.wide {
+  width: var(--ds-chat-msg-wide-w);
+  max-width: 100%;
+}
+.ds-chat-msg.wide .ds-chat-msg-body {
+  flex: 1;
+  min-width: 0;
+}
+/* Live controls inside the bubble, under the text. Each is a `.ds-live-control`
+   (below): the device it is bound to and its current value on one line, the
+   control beneath. The same frame carries a control inside an overlay
+   (.ds-hud), which is why it is not chat-namespaced. */
+.ds-chat-msg-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  margin-top: var(--gutter-sm);
+  padding-top: var(--gutter-sm);
+  border-top: 1px solid var(--border-light);
+}
+.ds-live-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.ds-live-control-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+.ds-live-control-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.ds-live-control-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}
+.ds-live-control-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xxs);
+}
+/* A switch beside its state word — the one-row body of a bound toggle
+   (mic monitoring, the lights) and of the Light Studio widget. */
+.ds-live-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+
+/* ─────────────────────────────────────────
+   HUD  (.ds-hud)
+   An overlay card placed on screen and kept
+   while playing (TH-438): a grip, a title, a
+   hide button, and a row of compact stat
+   tiles or live controls. Translucent over
+   whatever is behind it. Position, z-index
+   and the drag are the host's (OverlayHost).
+   ─────────────────────────────────────────  */
+.ds-hud {
+  /* layout */
+  display: inline-flex;
+  flex-direction: column;
+  min-width: calc(var(--text-section) * 8);
+  max-width: min(calc(90 * var(--vw)), calc(var(--text-section) * 30));
+  /* visual */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--bg-base) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-lv-3);
+  color: var(--text-primary);
+  /* typography */
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  user-select: none;
+}
+.ds-hud-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  padding: var(--gutter-xxs) var(--gutter-xxs) var(--gutter-xxs) var(--gutter-xs);
+  border-bottom: 1px solid var(--border-light);
+}
+/* No grip (a preview): the title carries the inset the grip would have. */
+.ds-hud-head > .ds-hud-title:first-child {
+  padding: 0 var(--gutter-xxs);
+}
+.ds-hud-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--text-micro);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+/* The grip is the drag handle AND the keyboard handle: focus it and the
+   arrow keys move the card. */
+.ds-hud-grip,
+.ds-hud-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-default),
+    color var(--dur-fast) var(--ease-default);
+}
+.ds-hud-grip {
+  cursor: grab;
+  touch-action: none;
+}
+.ds-hud.dragging .ds-hud-grip {
+  cursor: grabbing;
+}
+.ds-hud-grip:hover,
+.ds-hud-close:hover {
+  background: var(--surface-light);
+  color: var(--text-primary);
+}
+.ds-hud-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--gutter-xxs);
+  padding: var(--gutter-xxs);
+}
+.ds-hud-body > .ds-live-control {
+  padding: var(--gutter-xxs) var(--gutter-xs);
+  min-width: calc(var(--text-section) * 12);
+}
+
+/* Typing dots: three, rising in turn. Inline so they follow text that has
+   already arrived. */
+.ds-chat-msg-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxxs);
+  height: 1em;
+  vertical-align: middle;
+}
+.ds-chat-msg-bubble:not(:empty) > .ds-chat-msg-typing:not(:first-child) {
+  margin-left: var(--gutter-xxs);
+}
+.ds-chat-msg-typing > span {
+  width: calc(var(--gutter-xxs) * 1.5);
+  height: calc(var(--gutter-xxs) * 1.5);
+  border-radius: var(--radius-full);
+  background: currentColor;
+  opacity: 0.35;
+  animation: ds-chat-typing calc(var(--dur-xslow) * 2) var(--ease-default) infinite;
+}
+.ds-chat-msg-typing > span:nth-child(2) {
+  animation-delay: var(--dur-fast);
+}
+.ds-chat-msg-typing > span:nth-child(3) {
+  animation-delay: calc(var(--dur-fast) * 2);
+}
+@keyframes ds-chat-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(calc(var(--gutter-xxxs) * -1));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-chat-msg-typing > span {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/* ── Visually hidden (.ds-sr-only) ───────────────────
+   Keeps an element in the accessibility tree and out of
+   the layout — a page's <h1> when the visible chrome
+   carries the name another way, a live region that
+   announces but never shows. The standard clip pattern;
+   `white-space: nowrap` stops the 1px box from wrapping
+   words into separate announcements. */
+.ds-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* ── Typography (.ds-text-*) ──────────────────────────
    Hadouken type ramp. Brand styles (Title / Headline /
    Subheadline / Overline) use RBNo3.1 (--font-mono); UI
    styles (Body / Label / Caption) use the platform UI
    font (--font-display: Segoe UI · SF Pro). Add `.caps`
    for the uppercase + 0.4px-tracking variants, `.strong`
-   for the semibold UI variants. */
+   for the semibold UI variants. Every value is a --type-*
+   token (shared/tokens.css), kept apart from --text-*. */
 .ds-text-title-1,
 .ds-text-title-2,
 .ds-text-title-3,
@@ -6978,36 +8213,36 @@ html:root {
   font-family: var(--font-mono);
 }
 .ds-text-title-1 {
-  font-size: 32px;
-  line-height: 40px;
-  font-weight: 700;
+  font-size: var(--type-title-1-size);
+  line-height: var(--type-title-1-lh);
+  font-weight: var(--type-title-1-weight);
 }
 .ds-text-title-2 {
-  font-size: 24px;
-  line-height: 32px;
-  font-weight: 700;
+  font-size: var(--type-title-2-size);
+  line-height: var(--type-title-2-lh);
+  font-weight: var(--type-title-2-weight);
 }
 .ds-text-title-3 {
-  font-size: 20px;
-  line-height: 26px;
-  font-weight: 700;
+  font-size: var(--type-title-3-size);
+  line-height: var(--type-title-3-lh);
+  font-weight: var(--type-title-3-weight);
 }
 .ds-text-headline {
-  font-size: 16px;
-  line-height: 22px;
-  font-weight: 500;
+  font-size: var(--type-headline-size);
+  line-height: var(--type-headline-lh);
+  font-weight: var(--type-headline-weight);
 }
 .ds-text-subheadline {
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
+  font-size: var(--type-subheadline-size);
+  line-height: var(--type-subheadline-lh);
+  font-weight: var(--type-subheadline-weight);
 }
 .ds-text-overline {
-  font-size: 14px;
-  line-height: 19px;
-  font-weight: 500;
+  font-size: var(--type-overline-size);
+  line-height: var(--type-overline-lh);
+  font-weight: var(--type-overline-weight);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--type-tracking-caps);
 }
 
 .ds-text-body,
@@ -7016,19 +8251,19 @@ html:root {
   font-family: var(--font-display);
 }
 .ds-text-body {
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 400;
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+  font-weight: var(--type-body-weight);
 }
 .ds-text-label {
-  font-size: 14px;
-  line-height: 19px;
-  font-weight: 400;
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-lh);
+  font-weight: var(--type-label-weight);
 }
 .ds-text-caption {
-  font-size: 10px;
-  line-height: 14px;
-  font-weight: 400;
+  font-size: var(--type-caption-size);
+  line-height: var(--type-caption-lh);
+  font-weight: var(--type-caption-weight);
 }
 
 /* modifiers */
@@ -7038,11 +8273,27 @@ html:root {
 .ds-text-headline.caps,
 .ds-text-subheadline.caps {
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--type-tracking-caps);
 }
 .ds-text-label.strong,
 .ds-text-caption.strong {
-  font-weight: 600;
+  font-weight: var(--type-strong-weight);
+}
+/* .gradient — the Hadouken "Gradients/Title" fill (NGENUITY card titles, the
+   logotype): the brand title styles painted with --gradient-title instead of
+   a flat colour. Brand styles only; Body / Label / Caption stay solid. The
+   ramp runs n100→n400 (dark) and n950→n700 (light); both ends clear 3:1 for
+   large text on --bg-base, so the whole fill does. Selection highlight shows
+   through the transparent fill — expected for clipped text. */
+.ds-text-title-1.gradient,
+.ds-text-title-2.gradient,
+.ds-text-title-3.gradient,
+.ds-text-headline.gradient {
+  background: var(--gradient-title);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ── List Item (.ds-list-item) ────────────────────────
@@ -7104,6 +8355,26 @@ html:root {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+/* Description — a second line under the label (ListItem `description`).
+   The label and the description stack in .ds-list-item-text, which takes the
+   label's place in the row; the description clamps at two lines. */
+.ds-list-item-text {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+}
+.ds-list-item-text > .ds-list-item-label {
+  flex: none;
+}
+.ds-list-item-description {
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .ds-list-item-trailing {
   display: flex;
@@ -7204,20 +8475,28 @@ html:root {
    A floating menu panel of .ds-list-item rows (with
    leading icon / checkbox / radio slots, optional trailing
    chevron), .ds-separator dividers, and .ds-context-menu-
-   group labels. The blurred panel chrome matches the
-   dropdown / popover surface. */
+   group labels. The chrome is the Hadouken "Menu Modal"
+   (Figma Keys-Buttons 6220:413979), the panel recipe the
+   modals use: the panel surface under a 32px blur, a 2px
+   stroke with the 80% dark hairline outside it, lv-3. */
+/* The Hadouken panel recipe, shared with .ds-overlay-panel below. */
+.ds-context-menu,
+.ds-overlay-panel {
+  background: var(--ksg-panel-surface);
+  -webkit-backdrop-filter: blur(var(--blur-xl));
+  backdrop-filter: blur(var(--blur-xl));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 0 1px var(--ksg-b80),
+    var(--shadow-lv-3);
+}
 .ds-context-menu {
   display: flex;
   flex-direction: column;
   gap: 1px;
   min-width: 200px;
   padding: var(--gutter-xs);
-  background: var(--ksg-panel-surface);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-lv-3);
 }
 /* group label (e.g. "Optimize") */
 .ds-context-menu-group {
@@ -7232,6 +8511,145 @@ html:root {
 }
 .ds-context-menu .ds-list-item {
   max-height: var(--control-height);
+}
+
+/* ── Overlay Panel (.ds-overlay-panel) ────────────────
+   Figma "Overlay Panel": a floating panel over a canvas
+   or another panel — the context menu's surface at the
+   size of an editor. A title row (the Ng3 panel title
+   style), a body that takes the room, and a footer row
+   of actions on the right. */
+.ds-overlay-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  min-height: 0;
+  padding: var(--gutter-sm);
+}
+.ds-overlay-panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.ds-overlay-panel-title {
+  color: var(--text-muted);
+  padding-left: var(--gutter-xxxs);
+}
+.ds-overlay-panel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--gutter-xs);
+}
+.ds-overlay-panel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gutter-xs);
+}
+
+/* ── Gradient Stops (.ds-gradient-stops) ──────────────
+   Figma "Gradient Editor": a wide gradient pill with a
+   hairline across it and one ring handle per color stop,
+   evenly spaced. A handle is a button (select / open its
+   color); .active marks the stop being edited. Clicking
+   the bar between handles can insert a stop there. */
+.ds-gradient-stops {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.ds-gradient-stops-bar {
+  flex: 1;
+  cursor: copy;
+}
+.ds-gradient-stops-track {
+  position: absolute;
+  left: var(--gutter-xs);
+  right: var(--gutter-xs);
+  top: 50%;
+  height: 0;
+  pointer-events: none;
+}
+.ds-gradient-stops-line {
+  position: absolute;
+  inset: 0;
+  border-top: 1px solid var(--white);
+  box-shadow: 0 0 0 1px var(--ksg-b40);
+}
+.ds-gradient-stops-handle {
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  width: var(--icon-sz-sm);
+  height: var(--icon-sz-sm);
+  padding: 0;
+  transform: translate(-50%, -50%) scale(0.75);
+  border: 1px solid var(--ksg-b30);
+  border-radius: var(--radius-full);
+  background: var(--white);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-default);
+}
+/* The stop's own color, inset in the ring. */
+.ds-gradient-stops-handle::after {
+  content: '';
+  position: absolute;
+  inset: var(--gutter-xxxs);
+  border: 1px solid var(--ksg-b40);
+  border-radius: var(--radius-full);
+  background: var(--stop-color);
+}
+.ds-gradient-stops-handle:hover,
+.ds-gradient-stops-handle.active {
+  transform: translate(-50%, -50%);
+}
+.ds-gradient-stops-handle.active {
+  box-shadow: 0 0 0 2px var(--accent-color);
+}
+
+/* ── Angle Dial (.ds-angle-dial) ──────────────────────
+   Figma "Angle": a round 32px control whose indicator
+   points along the angle. Drag it round, or focus it and
+   use the arrow keys. Pairs with a small .ds-stepper for
+   the number. */
+.ds-angle-dial {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+  border: 2px solid var(--ksg-w20);
+  border-radius: var(--radius-full);
+  background: var(--ksg-b20);
+  box-shadow: 0 0 0 1px var(--ksg-b80);
+  cursor: grab;
+  touch-action: none;
+}
+.ds-angle-dial:active {
+  cursor: grabbing;
+}
+.ds-angle-dial-needle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(50% - var(--gutter-xxs));
+  height: 1px;
+  border-radius: var(--radius-full);
+  background: var(--ksg-w80);
+  transform-origin: 0 50%;
+  transform: rotate(var(--angle, 0deg));
+}
+html.light .ds-angle-dial {
+  border-color: var(--ksg-b20);
+  background: var(--ksg-w60);
+  box-shadow: 0 0 0 1px var(--ksg-b10);
+}
+html.light .ds-angle-dial-needle {
+  background: var(--ksg-b80);
 }
 
 /* ── Chip (.ds-chip) ──────────────────────────────────
@@ -8194,6 +9612,15 @@ button.ds-quick-tile:active {
 .ds-quick-tile-reason-icon:focus-visible {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;
+}
+/* A plain marker (reasonTooltip={false}): nothing to hover, so no help cursor
+   and no hover chip; the tile's own cursor (e.g. grab) shows through. */
+.ds-quick-tile-reason-icon.plain {
+  cursor: inherit;
+}
+.ds-quick-tile-reason-icon.plain:hover {
+  color: var(--text-dim);
+  background: none;
 }
 .ds-quick-tile-actions {
   display: inline-flex;

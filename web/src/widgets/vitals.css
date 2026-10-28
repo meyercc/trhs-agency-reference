@@ -58,6 +58,26 @@
   color: var(--text-muted);
   margin-left: 1px;
 }
+/* Sizes (TH-454). `sm` and `lg` were the Vitals modal's own override classes
+   (.vm-gauge, .vm-gauge-lg) until they became a prop; the values are theirs. */
+.gauge-wrap.sm {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+.gauge-wrap.sm .gauge-n {
+  font-size: var(--text-body); /* the 15px the modal used, which IS the live body size (ds-auditor, 2026-10-06) */
+}
+.gauge-wrap.lg {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+.gauge-wrap.lg .gauge-n {
+  font-size: 19px;
+}
 
 .vital-label {
   font-family: var(--font-mono);

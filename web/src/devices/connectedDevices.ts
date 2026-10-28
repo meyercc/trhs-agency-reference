@@ -13,6 +13,7 @@ export const CONNECTED_DEVICE_IDS = [
   'treehouse-32', // monitor  — Treehouse 32 (the main display; concept SKU)
   'pulse-27', // monitor  — OMEN OLED 27
   'solocast-2-pro', // mic      — SoloCast 2 Pro
+  'hx-omen-16-valorant', // notebook — HyperX OMEN 16 VALORANT Edition
 ];
 
 /**

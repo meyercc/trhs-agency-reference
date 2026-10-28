@@ -15,7 +15,7 @@ type Story = StoryObj<typeof Backdrop>;
 // Sample content behind the scrim so the blur is visible.
 const Behind = () => (
   <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', gap: 12 }}>
-    <div style={{ width: 320, height: 200, borderRadius: 12, background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))' }} />
+    <div style={{ width: 320, height: 200, borderRadius: 12, background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))' }} />
   </div>
 );
 

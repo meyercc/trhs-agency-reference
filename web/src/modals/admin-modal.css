@@ -3,7 +3,7 @@
    drop in as .admin-group blocks below it as they're added.
    ────────────────────────────────────────── */
 .admin-modal {
-  width: min(560px, 92vw);
+  width: min(560px, calc(92 * var(--vw)));
 }
 
 /* Empty state — centered glyph + copy while there are no tools yet. */
@@ -94,6 +94,21 @@
   display: flex;
   gap: var(--gutter-xs);
   flex: 0 0 auto;
+}
+
+/* Phone width (2026-10-01): the buttons drop to their own line under the
+   text, lined up with it, instead of squeezing the description to a word per
+   line beside them. */
+@media (max-width: 600px) {
+  .admin-modal .admin-tool {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: var(--gutter-sm);
+  }
+  .admin-modal .admin-tool-actions {
+    grid-column: 2;
+    flex-wrap: wrap;
+  }
 }
 
 /* Second group onward — the dialog now holds more than one heading (shared

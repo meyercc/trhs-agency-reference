@@ -94,6 +94,28 @@ export const TextOnly: Story = {
   render: () => <Demo orientation="horizontal" hideIcons />,
 };
 
+/**
+ * Bar — `variant="bar"` stretches the pill into a tab bar: items share the
+ * width, icon over label, 44px tall. The shell's bottom nav on a compact
+ * window (2026-10-20). `shortLabel` is what a slot prints when the full label
+ * would clip; the accessible name stays the full one. Shown at a phone's width.
+ */
+export const Bar: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => {
+    const [active, setActive] = useState('home');
+    const items: MenuItem[] = [
+      ...NAV.slice(0, 4).map((n) => ({ ...n, shortLabel: n.id === 'personalize' ? 'Style' : undefined, active: active === n.id, onClick: () => setActive(n.id) })),
+      { id: 'more', label: 'More', icon: <Icon name="more" />, active: active === 'more', onClick: () => setActive('more') },
+    ];
+    return (
+      <div style={{ width: 'min(100%, 343px)' }}>
+        <Menu items={items} orientation="horizontal" variant="bar" aria-label="Demo bar" />
+      </div>
+    );
+  },
+};
+
 export const BothVariants: Story = {
   parameters: { controls: { disable: true } },
   render: () => (

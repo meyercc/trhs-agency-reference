@@ -1,0 +1,364 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Autocast's cards and player (TH-509) — inside a Nova reply and in the clip
+   modal. The shell is the recipes' recap (recap.css); the parts are the
+   system's (Badge, Meter, the ds-text ramp, Icon); this file lays out what
+   is Autocast's own: a timeline, a cut list, a clip grid, a player frame.
+   Tokens only. Motion off under reduced motion.
+   ══════════════════════════════════════════════════════════════════════════ */
+.nova-autocast-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+
+/* ── Plan: label | value rows ── */
+.nova-autocast-kv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  margin: 0;
+}
+.nova-autocast-kv-row {
+  display: grid;
+  grid-template-columns: calc(var(--text-section) * 4) 1fr;
+  gap: var(--gutter-xs);
+  align-items: baseline;
+}
+.nova-autocast-kv dt,
+.nova-autocast-kv dd {
+  margin: 0;
+}
+
+/* ── Added: the can / cannot lists, the mark as well as the words ── */
+.nova-autocast-cans {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.nova-autocast-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nova-autocast-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+}
+.nova-autocast-list .ds-icon {
+  flex: none;
+  margin-top: var(--gutter-xxxs);
+  color: var(--green);
+}
+.nova-autocast-list.no .ds-icon {
+  color: var(--text-dim);
+}
+
+/* ── Live: REC · the clock · the timeline ── */
+.nova-autocast-live {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+}
+.nova-autocast-clock {
+  font-size: var(--text-section-lg);
+  font-weight: var(--font-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+/* The REC badge's own dot blinks; the word stays, so the state is never only the blink. */
+.nova-autocast-rec::before {
+  content: '';
+  display: inline-block;
+  width: var(--gutter-xs);
+  height: var(--gutter-xs);
+  margin-right: var(--gutter-xxs);
+  border-radius: var(--radius-full);
+  background: currentColor;
+  animation: nova-autocast-blink calc(var(--dur-xslow) * 2) var(--ease-default) infinite;
+}
+@keyframes nova-autocast-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.nova-autocast-timeline {
+  position: relative;
+  height: var(--gutter-sm);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overflow: hidden;
+}
+.nova-autocast-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent-dimmer);
+  transition: width var(--dur-instant) linear;
+}
+.nova-autocast-tick {
+  position: absolute;
+  top: var(--gutter-xxxs);
+  bottom: var(--gutter-xxxs);
+  width: var(--gutter-xxxs);
+  margin-left: calc(var(--gutter-xxxs) * -0.5);
+  border-radius: var(--radius-full);
+  background: var(--accent-color);
+  animation: nova-autocast-pop var(--dur-slow) var(--ease-out);
+}
+.nova-autocast-tick.keep {
+  background: var(--accent-red);
+}
+@keyframes nova-autocast-pop {
+  from {
+    transform: scaleY(0);
+  }
+}
+.nova-autocast-last {
+  min-height: calc(var(--text-body) * 1.45);
+}
+.nova-autocast-last b {
+  font-weight: var(--font-medium);
+  color: var(--accent-color);
+}
+
+/* ── Cutting: the rows and their state word ── */
+.nova-autocast-cut {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nova-autocast-cut-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.nova-autocast-cut-row.wait {
+  opacity: 0.45;
+}
+.nova-autocast-cut-st {
+  flex: none;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.nova-autocast-cut-row.done .nova-autocast-cut-st {
+  color: var(--green);
+}
+
+/* ── The clips: a grid of tiles at the plan's aspect ── */
+.nova-autocast-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gutter-xs);
+}
+.nova-autocast-grid[data-aspect='16:9'] {
+  grid-template-columns: repeat(2, 1fr);
+}
+.nova-autocast-grid[data-aspect='1:1'] {
+  grid-template-columns: repeat(3, 1fr);
+}
+.nova-autocast-clip {
+  position: relative;
+  padding: 0;
+  aspect-ratio: 9 / 16;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface) center / cover no-repeat;
+  color: var(--text-on-fill);
+  cursor: pointer;
+  text-align: left;
+  animation: nova-autocast-in var(--dur-slow) var(--ease-out) backwards;
+  transition:
+    border-color var(--dur-fast) var(--ease-default),
+    box-shadow var(--dur-fast) var(--ease-default),
+    opacity var(--dur-fast) var(--ease-default);
+}
+.nova-autocast-grid[data-aspect='16:9'] .nova-autocast-clip {
+  aspect-ratio: 16 / 9;
+}
+.nova-autocast-grid[data-aspect='1:1'] .nova-autocast-clip {
+  aspect-ratio: 1;
+}
+.nova-autocast-clip:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 1px var(--accent-color);
+}
+.nova-autocast-clip:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+/* Discarded: dimmed AND said — the word is on the tile. */
+.nova-autocast-clip.discarded {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+@keyframes nova-autocast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--gutter-xs)) scale(0.97);
+  }
+}
+.nova-autocast-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--scrim-strong), transparent 55%);
+}
+.nova-autocast-num,
+.nova-autocast-dur,
+.nova-autocast-state {
+  position: absolute;
+  top: var(--gutter-xxs);
+  padding: 0 var(--gutter-xxs);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-medium);
+  line-height: calc(var(--text-micro) * 1.6);
+}
+.nova-autocast-num {
+  left: var(--gutter-xxs);
+  background: var(--accent-red);
+}
+.nova-autocast-dur {
+  right: var(--gutter-xxs);
+  background: var(--scrim-strong);
+}
+.nova-autocast-state {
+  right: var(--gutter-xxs);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxxs);
+  background: var(--scrim-strong);
+}
+.nova-autocast-state.approved {
+  background: var(--green);
+  color: var(--text-on-fill);
+}
+.nova-autocast-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-full);
+  background: var(--scrim-strong);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.nova-autocast-clip:hover .nova-autocast-play,
+.nova-autocast-clip:focus-visible .nova-autocast-play {
+  opacity: 1;
+}
+.nova-autocast-lbl {
+  position: absolute;
+  left: var(--gutter-xxs);
+  right: var(--gutter-xxs);
+  bottom: var(--gutter-xxs);
+  font-weight: var(--font-medium);
+  line-height: 1.2;
+}
+
+/* ── The player (modals/FeatureModalHost → AutocastPlayer) ── */
+.nova-autocast-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+.nova-autocast-frame {
+  position: relative;
+  height: min(calc(60 * var(--vh)), calc(var(--text-section) * 36));
+  aspect-ratio: 9 / 16;
+  max-width: 100%;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--bg-base) center / cover no-repeat;
+  box-shadow: var(--shadow-lv-4);
+  color: var(--text-on-fill);
+}
+.nova-autocast-frame[data-aspect='16:9'] {
+  height: auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+.nova-autocast-frame[data-aspect='1:1'] {
+  aspect-ratio: 1;
+}
+.nova-autocast-caption {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 16%;
+  text-align: center;
+  font-family: var(--font-cond);
+  font-weight: var(--font-bold);
+  font-size: clamp(var(--text-section), calc(3.2 * var(--vh)), var(--text-section-lg) * 1.4);
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 var(--bg-base), 0 0 var(--gutter-sm) var(--scrim-strong);
+  animation: nova-autocast-cap var(--dur-xslow) var(--ease-out) calc(var(--dur-slow)) both;
+}
+@keyframes nova-autocast-cap {
+  from {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+.nova-autocast-hud {
+  position: absolute;
+  top: var(--gutter-xs);
+  left: var(--gutter-xs);
+  right: var(--gutter-xs);
+  display: flex;
+  justify-content: space-between;
+  font-weight: var(--font-medium);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px var(--bg-base);
+}
+.nova-autocast-prog {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--gutter-xxxs);
+  background: color-mix(in srgb, var(--text-on-fill) 25%, transparent);
+}
+.nova-autocast-prog > i {
+  display: block;
+  height: 100%;
+  background: var(--accent-red);
+}
+.nova-autocast-wm {
+  position: absolute;
+  right: var(--gutter-xs);
+  bottom: var(--gutter-xs);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+.nova-autocast-meta {
+  text-align: center;
+}
+.nova-autocast-ctl {
+  display: flex;
+  justify-content: center;
+  gap: var(--gutter-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-autocast-rec::before,
+  .nova-autocast-tick,
+  .nova-autocast-clip,
+  .nova-autocast-caption {
+    animation: none;
+  }
+}

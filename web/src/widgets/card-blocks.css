@@ -1,0 +1,74 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Card blocks (TH-450) — the app panels a composed card can hold, inside a
+   board card (.wb-card-items) or the HUD (.ds-hud-body). The parts are the
+   system's (ListItem, Price, Badge, Input, StatTile); this file only sizes a
+   row to the card's tile-row and lays the blocks out full width.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* A block takes the row, as a bound control does, in both homes. */
+.wb-card-items > .cb-block,
+.ds-hud-body > .cb-block {
+  flex-basis: 100%;
+}
+.ds-hud-body > .cb-block {
+  min-width: calc(var(--text-section) * 12);
+}
+
+.cb-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+}
+/* One row is one tile-row (`cardMeta`): the cover's height, no vertical
+   padding — `.ds-list-item`'s own 4px top and bottom would make three rows
+   overrun the first board row by exactly the 24px that clips. */
+.cb-row {
+  padding-block: 0;
+}
+.cb-cover {
+  display: block;
+  /* The compact stat tile's height, so a list row and a tile row are one unit. */
+  height: calc(var(--text-section) * 2);
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.cb-meta {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.cb-row .ds-list-item-trailing {
+  gap: var(--gutter-xs);
+}
+/* The pair sits in a flex row here, not under a card's title. */
+.cb-row .ds-card-prices {
+  margin-top: 0;
+}
+
+.cb-chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  min-width: 0;
+}
+/* Two lines of the last reply, then an ellipsis — the same scoped clamp
+   `.devw-title` and the agent catalog already use; no shared utility exists. */
+.cb-chat-last {
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: 1.3;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Pick Up Where You Left Off (TH-478): a two-line row (title over a clamped
+   description), so the cover grows to the text's height, one size up the
+   same scale. The row keeps `.ds-list-item`'s own padding. */
+.cb-catchup-cover {
+  height: calc(var(--text-section) * 3);
+}

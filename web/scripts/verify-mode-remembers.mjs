@@ -45,6 +45,29 @@ const ev = async (e) => {
   return result.value;
 };
 const wait = async (e, ms = 45000) => { const u = Date.now() + ms; while (Date.now() < u) { if (await ev(`!!(${e})`)) return true; await sleep(300); } return false; };
+/**
+ * Navigate and come back when the NEW document has mounted.
+ *
+ * The `sleep(800)` this replaces was not idle padding — it was there because
+ * `wait()` polls the page that is loaded right now, and for a moment after
+ * `Page.navigate` that is still the OLD one, whose root is already populated.
+ * Waiting for the load event instead removes both the race and the 800ms
+ * (TH-449).
+ */
+const load = async (url) => {
+  const loaded = new Promise((resolve) => {
+    const onMsg = (raw) => {
+      const m = JSON.parse(raw.toString());
+      if (m.method === 'Page.loadEventFired') { ws.off('message', onMsg); resolve(); }
+    };
+    ws.on('message', onMsg);
+  });
+  await send('Page.navigate', { url });
+  // Bounded: a load event can be coalesced under contention, and a suite that
+  // waits forever is worse than one that reports.
+  await Promise.race([loaded, sleep(8000)]);
+  await wait(`document.getElementById('root')?.children.length`);
+};
 await send('Page.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1100, deviceScaleFactor: 2, mobile: false });
 
@@ -65,12 +88,11 @@ const ROWS = `(() => {
 
 /** Load, then set the route, then land on the Settings tab. */
 const openSettingsTab = async (seed) => {
-  await send('Page.navigate', { url: `http://localhost:${PORT}/?v=${Date.now()}` });
-  await sleep(800);
-  await wait(`document.getElementById('root')?.children.length`);
-  if (seed) { await ev(seed); await send('Page.navigate', { url: `http://localhost:${PORT}/?v=${Date.now()}` }); await sleep(800); await wait(`document.getElementById('root')?.children.length`); }
+  await load(`http://localhost:${PORT}/?v=${Date.now()}`);
+  if (seed) { await ev(seed); await load(`http://localhost:${PORT}/?v=${Date.now()}`); }
   await ev(`location.hash='#/?sku=treehouse-32&tab=utilities'`);
-  await sleep(1500);
+  // No sleep before the wait: a hash change does not reload, and `.mp-sec`
+  // cannot be left over from the home route we just landed on.
   return wait(`document.querySelector('.mp-sec')`);
 };
 
@@ -78,12 +100,9 @@ const openSettingsTab = async (seed) => {
  *  The hash has to be set AFTER a load here too — a tab that has never been
  *  visited is not mounted, so probing it without the reload finds nothing. */
 const openDisplayTab = async (seed) => {
-  await send('Page.navigate', { url: `http://localhost:${PORT}/?v=${Date.now()}` });
-  await sleep(800);
-  await wait(`document.getElementById('root')?.children.length`);
-  if (seed) { await ev(seed); await send('Page.navigate', { url: `http://localhost:${PORT}/?v=${Date.now()}` }); await sleep(800); await wait(`document.getElementById('root')?.children.length`); }
+  await load(`http://localhost:${PORT}/?v=${Date.now()}`);
+  if (seed) { await ev(seed); await load(`http://localhost:${PORT}/?v=${Date.now()}`); }
   await ev(`location.hash='#/?sku=treehouse-32&tab=display'`);
-  await sleep(1800);
   return wait(CONTRAST);
 };
 /** The Contrast row's printed number — the one thing a mode switch must move. */

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import './device-canvas.css';
 import './keyboard-canvas.css';
 import {
@@ -17,8 +17,12 @@ import { type ResolvedSku, deviceImageUrl, heroImageFile } from './skus';
 import { deviceTabs } from './deviceTabs';
 import { ProfileBar, ProfileActions, ProfileScopeBody, useDeviceProfileBar, useProfileValue, type ProfileBarState } from './ProfileBar';
 import { KeyboardHero } from './KeyboardHero';
+import { KeyboardPhoto, KeyboardRenderHero } from './KeyboardPhoto';
+import { keyboardRenderFor } from './keyboardRenders';
+import { presetColorAt, type LightPreset } from './lightingData';
 import { LightingTab } from './LightingTab';
 import { KeysTab } from './KeysTab';
+import { DeviceSettingsCard } from './DeviceSettingsCard';
 import { useSettings } from '../state/Settings';
 
 // Stable fallbacks: `useProfileValue` keys its setter on the fallback, so a
@@ -58,23 +62,20 @@ function SettingsTab({
   profile: ProfileBarState;
 }) {
   const [controlMode, setControlMode] = useProfileValue(profile, 'settings.controlMode', 'software');
+  // The card is DeviceSettingsCard like every other canvas's. This tab predates
+  // it and hand-rolled the same thing — name, firmware line, the two buttons —
+  // which is why its firmware was a literal in the markup rather than SKU data.
+  const support = (sku.features.support && typeof sku.features.support === 'object' ? sku.features.support : {}) as Record<string, unknown>;
+  const firmware = typeof sku.features.firmware === 'string' ? sku.features.firmware : null;
   return (
     <Ng3Grid className="pdm-settings">
       <Ng3Col className="pdm-settings-col">
-        <Ng3Section>
-          <Ng3Label strong>{sku.name}</Ng3Label>
-          <p className="pdm-settings-fw">Firmware Version 2.1.4</p>
-          <div className="pdm-settings-btns">
-            <button type="button" className="ds-btn">
-              <Icon name="screen-mirror" size={16} />
-              Device Manager
-            </button>
-            <button type="button" className="ds-btn">
-              <Icon name="question" size={16} />
-              Get Support
-            </button>
-          </div>
-        </Ng3Section>
+        <DeviceSettingsCard
+          name={sku.name}
+          firmware={firmware}
+          deviceManager={support.deviceManager !== false}
+          getSupport={support.getSupport !== false}
+        />
         <Ng3Section>
           <Ng3Label strong>Polling Rate</Ng3Label>
           <Dropdown
@@ -122,6 +123,9 @@ export function KeyboardCanvas({
   );
   const active = TABS.find((t) => t.id === tabId) ?? TABS[0];
   const heroSrc = deviceImageUrl(heroImageFile(sku));
+  // The photo board is the default hero wherever the SKU has a top-down
+  // render and key geometry; any other keyboard keeps the drawn board.
+  const render = useMemo(() => keyboardRenderFor(sku.id), [sku.id]);
 
   // ── Shared keyboard state (drives the hero; read/written by the panels) ──
   // Lighting master power lives here so its toggle can sit in the panel header
@@ -150,6 +154,8 @@ export function KeyboardCanvas({
   const heroGlow = keyColors.size ? (lightPresets.find((p) => p.id === presetId)?.glow ?? null) : null;
   // The marquee tool: armed until dismissed, so several boxes can be drawn.
   const [marquee, setMarquee] = useState(false);
+  // Stable, so the board's Escape listener isn't re-bound every render.
+  const toggleMarquee = useCallback(() => setMarquee((m) => !m), []);
   const [bindsRec, setBindsRec] = useProfileValue<Record<string, KeyBinds>>(profile, 'keys.binds', NO_BINDS);
   const binds = useMemo(() => new Map(Object.entries(bindsRec)), [bindsRec]);
   const [armed, setArmed] = useState<string | null>(null);
@@ -223,7 +229,7 @@ export function KeyboardCanvas({
       return;
     }
     setActiveQs(id);
-    setLitSel(new Set(id === 'all' ? ALL_CODES : KB_QS_GROUPS[id] ?? []));
+    setLitSel(new Set(id === 'all' ? (render ? render.keys.map((k) => k.code) : ALL_CODES) : KB_QS_GROUPS[id] ?? []));
   };
 
   // A dragged box replaces the selection, the way picking a preset does; Shift
@@ -239,9 +245,23 @@ export function KeyboardCanvas({
   };
 
   // Apply a preset — paint every key + set the hero glow, clear the selection.
-  const applyPresetAll = (glow: string) => {
-    const color = `rgb(${glow})`;
-    setKeyColorsRec(Object.fromEntries(ALL_CODES.map((c) => [c, color])));
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const applyPresetAll = (glow: string, preset?: LightPreset) => {
+    // Each key takes the preset's color at its place left to right, measured
+    // on the keyboard as drawn (the nav cluster and numpad sit to the right).
+    const keys = [...(canvasRef.current?.querySelectorAll<HTMLElement>('[data-code]') ?? [])];
+    const mid = new Map(keys.map((el) => { const r = el.getBoundingClientRect(); return [el.dataset.code!, r.left + r.width / 2]; }));
+    const xs = [...mid.values()];
+    const lo = Math.min(...xs);
+    const span = Math.max(...xs) - lo || 1;
+    setKeyColorsRec(
+      Object.fromEntries(
+        ALL_CODES.map((c) => [
+          c,
+          preset && mid.has(c) ? presetColorAt(preset, (mid.get(c)! - lo) / span) : `rgb(${glow})`,
+        ]),
+      ),
+    );
     setLitSel(new Set());
     setActiveQs('');
   };
@@ -258,7 +278,7 @@ export function KeyboardCanvas({
   };
 
   return (
-    <div className="dc-canvas kbd-canvas" role="dialog" aria-label={sku.name}>
+    <div ref={canvasRef} className="dc-canvas kbd-canvas" role="dialog" aria-label={sku.name}>
       {/* Connection status chip — live against the device simulator */}
       <div className="dc-status">
         <div className="dc-chip">
@@ -274,7 +294,12 @@ export function KeyboardCanvas({
       {/* Hero — interactive keyboard (Lighting/Keys) or device photo (Settings) */}
       <div className="dc-hero kbd-hero">
         {active.id === 'settings' ? (
-          heroSrc && <img className="kbd-hero-img" src={heroSrc} alt={sku.name} />
+          heroSrc &&
+          (render ? (
+            <KeyboardRenderHero render={render} src={heroSrc} alt={sku.name} />
+          ) : (
+            <img className="kbd-hero-img" src={heroSrc} alt={sku.name} />
+          ))
         ) : (
           <>
             {lightsOn && heroGlow && (
@@ -284,21 +309,49 @@ export function KeyboardCanvas({
                 aria-hidden="true"
               />
             )}
-            <KeyboardHero
-              mode={mode}
-              layer={layer}
-              onLayer={setLayer}
-              selected={selected}
-              litSel={litSel}
-              keyColors={lightsOn ? keyColors : UNLIT}
-              binds={binds}
-              activeQs={activeQs}
-              marquee={marquee}
-              onMarquee={() => setMarquee((m) => !m)}
-              onMarqueeSelect={onMarqueeSelect}
-              onKey={onKey}
-              onQuickSelect={onQuickSelect}
-            />
+            {render && mode === 'keys' ? (
+              <KeyboardPhoto
+                mode="keys"
+                render={render}
+                layer={layer}
+                onLayer={setLayer}
+                selected={selected}
+                binds={binds}
+                onKey={onKey}
+                onDrop={assign}
+              />
+            ) : render ? (
+              <KeyboardPhoto
+                mode="lights"
+                render={render}
+                preset={lightsOn && keyColors.size ? (lightPresets.find((p) => p.id === presetId) ?? null) : null}
+                keyColors={lightsOn ? keyColors : UNLIT}
+                brightness={profile.value('lighting.brightness', 100)}
+                litSel={litSel}
+                activeQs={activeQs}
+                marquee={marquee}
+                onMarquee={toggleMarquee}
+                onMarqueeSelect={onMarqueeSelect}
+                onKey={onKey}
+                onQuickSelect={onQuickSelect}
+              />
+            ) : (
+              <KeyboardHero
+                mode={mode}
+                layer={layer}
+                onLayer={setLayer}
+                selected={selected}
+                litSel={litSel}
+                keyColors={lightsOn ? keyColors : UNLIT}
+                binds={binds}
+                activeQs={activeQs}
+                marquee={marquee}
+                onMarquee={toggleMarquee}
+                onMarqueeSelect={onMarqueeSelect}
+                onKey={onKey}
+                onQuickSelect={onQuickSelect}
+              />
+            )}
           </>
         )}
       </div>
@@ -359,6 +412,7 @@ export function KeyboardCanvas({
               onArm={armPalette}
               onClearBinding={clearBinding}
               onResetLayer={resetLayer}
+              renderKeys={render?.keys}
             />
           )}
           </ProfileScopeBody>

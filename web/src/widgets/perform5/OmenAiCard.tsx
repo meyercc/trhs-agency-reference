@@ -11,9 +11,11 @@ export interface OmenAiCardProps {
   gameRunning: boolean; // the trigger — per-game optimization applies at launch
   onConfigure: () => void;
   tracked?: number;
+  /** The receipt: the game OMEN AI last optimized, and when, from the page's record of changes. */
+  lastOptimized?: string;
 }
 
-export function OmenAiCard({ on, gameRunning, onConfigure, tracked = 5 }: OmenAiCardProps) {
+export function OmenAiCard({ on, gameRunning, onConfigure, tracked = 5, lastOptimized = 'Cyberpunk 2077 · 2h ago' }: OmenAiCardProps) {
   const optimizing = on && gameRunning;
   return (
     <div className="ds-feature-card pv5-omen-card">
@@ -46,7 +48,7 @@ export function OmenAiCard({ on, gameRunning, onConfigure, tracked = 5 }: OmenAi
               ]
             : [
                 { label: 'Games tracked', value: String(tracked) },
-                { label: 'Last optimized', value: 'Cyberpunk 2077 · 2h ago' },
+                { label: 'Last optimized', value: lastOptimized },
               ]
         }
       />

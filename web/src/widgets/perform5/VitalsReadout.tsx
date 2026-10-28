@@ -1,6 +1,7 @@
 import { useSettings } from '../../state/Settings';
 import { toUnit } from '../../state/units';
 import { Gauge } from '../Gauge';
+import { VITALS } from './vitalsData';
 import '../vitals.css';
 
 // ── System Vitals readout (PerformV5, V5-local) ──
@@ -44,9 +45,9 @@ export interface VitalsReadoutProps {
 export function VitalsReadout({ onOpenTab }: VitalsReadoutProps) {
   return (
     <div className="pv5-vitals-grid">
-      <GaugeCard load={44} label="CPU" tempC={58} onOpen={() => onOpenTab?.('cpu')} />
-      <GaugeCard load={37} label="GPU" tempC={60} onOpen={() => onOpenTab?.('gpu')} />
-      <GaugeCard load={54} label="RAM" badge="18.7 GB" onOpen={() => onOpenTab?.('ram')} />
+      <GaugeCard load={VITALS.cpu.load} label="CPU" tempC={VITALS.cpu.tempC} onOpen={() => onOpenTab?.('cpu')} />
+      <GaugeCard load={VITALS.gpu.load} label="GPU" tempC={VITALS.gpu.tempC} onOpen={() => onOpenTab?.('gpu')} />
+      <GaugeCard load={VITALS.ram.load} label="RAM" badge={VITALS.ram.label} onOpen={() => onOpenTab?.('ram')} />
     </div>
   );
 }

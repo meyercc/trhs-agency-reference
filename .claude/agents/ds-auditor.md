@@ -20,11 +20,19 @@ From `trhs/`:
 node .claude/skills/token-audit/scripts/audit-compliance.mjs --fix-hints
 ```
 
-Flags: `--file <path>` to scope to one file (use this when the caller names a file),
-`--json` for structured output. `--fix-hints` appends the suggested `→ var(--token)` for
-each hardcoded value — always pass it.
+Flags: `--file <path>` to scope to one file, `--json` for structured output, `--summary`
+for counts only. `--fix-hints` appends the suggested `→ var(--token)` for each hardcoded
+value — always pass it.
 
-**Do not use `npm run audit:tokens`.** That script is dead.
+**Scope it.** Since 2026-10-20 the whole tree reports ~940 raw values that predate any
+given change. Run it with `--file` on each file under audit (or filter the `--json`
+output to them), and judge only those — never call a change clean or dirty from the
+repo-wide total.
+
+Each finding has a **kind**: `match` (a token already holds the value — the fix is a
+swap) or `untokened` (no token holds it — report it, and say whether it should become a
+token or a scoped `--component-*` property). A `match` is a hint, not a verdict: a
+`line-height: 19px` matching `--type-overline-lh` is not thereby an Overline.
 
 ## Then close the three gaps the script has
 
@@ -40,17 +48,19 @@ each hardcoded value — always pass it.
    `--font-display/-cond/-mono`. An unresolved token is a silent visual failure, so report
    it at the top of your findings.
 
-3. **It only flags a px value that exactly matches a token.** A `border-radius: 6px`,
-   `margin: 12px` or `font-size: 13px` that sits *between* tokens is invisible to it — and
-   an off-scale value is the worse defect, not a lesser one. So additionally grep the
-   files under audit for `border-radius`, `margin`/`padding`/`gap` and `font-size` with a
-   raw px value, and report every one that is not a token, suggesting the nearest token.
+3. **For spacing and radius it only flags a px value that exactly matches a token.**
+   Typography (`font-size`, `line-height`, `font-weight`, px `letter-spacing`) and colour
+   (hex, `rgb[a]`, `hsl[a]`) are reported in full since 2026-10-20. But a
+   `border-radius: 6px` or `margin: 12px` that sits *between* tokens is still invisible
+   to it — and an off-scale value is the worse defect, not a lesser one. So additionally
+   grep the files under audit for `border-radius` and `margin`/`padding`/`gap` with a raw
+   px value, and report every one that is not a token, suggesting the nearest token.
 
 ## Scope — what to ignore
 
-The vanilla era is retired. **Ignore all hits inside `prototype.html`, `prototype.css`,
-`design-system.html`, and `js/`** — they are not maintained and will flood the report.
-Audit `shared/*.css` and `web/src/**` only, unless the caller names a file.
+Audit `shared/*.css` and `web/src/**` only, unless the caller names a file. The root
+`index.html` (project hub) and `configurator/*.html` (SKU editor) are standalone pages
+outside the system — skip them unless named.
 
 ## What you return
 

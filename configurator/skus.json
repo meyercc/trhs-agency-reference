@@ -175,6 +175,7 @@
     },
     "notes": "Flagship symmetric mouse. Per-zone RGB, hot-swappable side buttons, 8K polling on wired tether.",
     "features": {
+      "firmware": "1.0.4",
       "buttons": {
         "callouts": [
           {
@@ -922,6 +923,7 @@
     },
     "notes": "65% wired mechanical, per-key RGB, hardware/software dual-mode. This is the modal's default render today, so a no-op spec is a useful baseline.",
     "features": {
+      "firmware": "2.1.4",
       "keys": {
         "layout": "65"
       }
@@ -2068,6 +2070,19 @@
   },
   {
     "$schema": 1,
+    "id": "forge-45l-cooler-cap",
+    "name": "HyperX OMEN MAX 45L — Cooler Cap",
+    "type": "desktop-cooler-cap",
+    "status": "shipping",
+    "partOf": "forge-45l",
+    "notes": "Round LCD on the Cryo Chamber's pump cap. Assumed on this model because the CPU cooler LCD is in the MVP scope (Jira GSW-583); no hardware record names the cap for it yet. Boots to the HyperX logo, as HyperX desktops do (OpenGSW lcd-diy.35).",
+    "features": {
+      "shape": "round",
+      "defaultArt": "hyperx"
+    }
+  },
+  {
+    "$schema": 1,
     "id": "forge-45l-lighting",
     "name": "HyperX OMEN MAX 45L — Hub Pro",
     "codenames": [
@@ -2718,6 +2733,66 @@
   },
   {
     "$schema": 1,
+    "id": "hx-omen-16-valorant",
+    "name": "HyperX OMEN 16 VALORANT Edition",
+    "codenames": [
+      "OMEN16-VLR"
+    ],
+    "type": "notebook",
+    "status": "shipping",
+    "notes": "16\" gaming notebook, VALORANT Limited Edition (model 16-ap1931nr / DD6P8UA#ABA). RIOT blue chassis with a warm red cover logo and VALORANT keyboard branding. Four-zone RGB keyboard — NOT per-key; the Lights tab paints zones, not individual caps. No vapor chamber and no manual overclocking on this configuration. The cover logo is ASSUMED lit (lighting.coverLogo) for the 2026-10-22 PC review, where JW asked where a laptop's back light is set; no hardware record says it lights. Four dedicated macro keys (P1–P4) are ASSUMED for the same review, so the PC page can show the Macro tab (OpenGSW keys-macros.7); the 16-ap1931nr spec lists none.",
+    "features": {
+      "lighting": { "coverLogo": true },
+      "firmware": "1.0.3",
+      "overclocking": false,
+      "vaporChamber": false,
+      "tobiiEyeTracking": false,
+      "display": {
+        "size": "16\"",
+        "resolution": "2.5K (2560 x 1600)",
+        "refreshRate": 240,
+        "panel": "IPS, anti-glare, Low Blue Light",
+        "brightnessNits": 500,
+        "colorGamut": "100% sRGB",
+        "responseMs": 3,
+        "hdr": false
+      },
+      "cpu": "AMD Ryzen 9 9955HX3D (16C/32T, up to 5.4 GHz, 128 MB L3)",
+      "gpu": "NVIDIA GeForce RTX 5070 (8 GB GDDR7)",
+      "memory": "32 GB DDR5-5600 (2 x 16 GB)",
+      "storage": "1 TB PCIe Gen4 NVMe M.2 SSD",
+      "keyboard": {
+        "perKeyRGB": false,
+        "rgbZones": 4,
+        "macroKeys": 4,
+        "numpad": true,
+        "rollover": "26-key anti-ghosting",
+        "finish": "Pantone Black C"
+      },
+      "audio": {
+        "speakers": 2,
+        "brand": "HP Audio Boost, HyperX",
+        "spatial": "DTS:X Ultra"
+      },
+      "battery": {
+        "capacityWh": 83,
+        "cells": 6,
+        "fastCharge": true
+      },
+      "wireless": "Wi-Fi 7 (MediaTek MT7925) + Bluetooth 6.0",
+      "weightLb": 5.47,
+      "io": [
+        "HDMI 2.1",
+        "USB-C (10Gbps, DP 1.4, PD 3.0)",
+        "USB-A (10Gbps)",
+        "USB-A x2 (5Gbps)",
+        "3.5mm combo",
+        "RJ-45"
+      ]
+    }
+  },
+  {
+    "$schema": 1,
     "id": "omen-max-16",
     "name": "OMEN Max 16",
     "codenames": [
@@ -2730,6 +2805,15 @@
     },
     "notes": "Flagship 16\" gaming notebook. Vapor chamber cooling, OLED display, per-key RGB keyboard, manual overclocking via OMEN Gaming Hub.",
     "features": {
+      "lighting": {
+        "keyboard": "four",
+        "bar": "u",
+        "logo": "four"
+      },
+      "keyboard": {
+        "perKeyRGB": true,
+        "numpad": true
+      },
       "overclocking": true,
       "vaporChamber": true,
       "tobiiEyeTracking": false,

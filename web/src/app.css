@@ -1,3 +1,10 @@
+/* Interface size (tokens.css, INTERFACE SIZE): the whole document scales as
+   one, portals included — the drag overlay and the card menus are children of
+   <body>, so a zoom on .shell alone would leave them at 1× beside a 1.5×
+   board. */
+html {
+  zoom: var(--ui-zoom);
+}
 body {
   margin: 0;
   background:

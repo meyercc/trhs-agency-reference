@@ -153,17 +153,17 @@
    them naturally; only the stand COLUMN shows, fading with Transparency.
    Do NOT shrink to fit the whole monitor in. Changes need Cindy approval
    (design-craft-guard hard-block). */
-.xr-img{position:absolute;left:50%;transform:translateX(-50%);height:165vh;width:auto;max-width:none;top:-20vh;}
+.xr-img{position:absolute;left:50%;transform:translateX(-50%);height:calc(165 * var(--vh));width:auto;max-width:none;top:calc(-20 * var(--vh));}
 /* layer 1.5: same image, port BLOCK only, clipped + fixed (pixel-identical → no double image).
    The block (recess with labels + apertures) spans 64.1–70.1% of image height
    → 85.8–95.7vh on screen at the sizing above; the band starts higher so the
    lens can grow upward on approach (Cindy 2026-09-23: margin above the labels,
    the old 88vh band cut right at them). What is visible is set by the lens
    clip below, not by this band. */
-.xray-fix{position:absolute;left:0;right:0;top:82vh;height:18vh;overflow:hidden;z-index:4;}
-.xray-fix .xr-img{top:-102vh;}
+.xray-fix{position:absolute;left:0;right:0;top:calc(82 * var(--vh));height:calc(18 * var(--vh));overflow:hidden;z-index:4;}
+.xray-fix .xr-img{top:calc(-102 * var(--vh));}
 /* hotspot layer: image coordinate space (%) — congruent with .xr-img (aspect 4096/3259) */
-.xhots{position:absolute;left:50%;transform:translateX(-50%);width:207.4vh;height:165vh;top:-20vh;z-index:5;pointer-events:none;}
+.xhots{position:absolute;left:50%;transform:translateX(-50%);width:calc(207.4 * var(--vh));height:calc(165 * var(--vh));top:calc(-20 * var(--vh));z-index:5;pointer-events:none;}
 /* LOCKED-END */
 /* Depth at rest (2026-09-23, Jaewoo 1:1 → Cindy picked the recommended
    preview in design-assets/xray-depth-2026-09-23): the panel sits BEHIND the
@@ -200,8 +200,8 @@
 /* Approach / release speeds (Cindy 2026-09-24: "too fast"): the lens layer
    answers in --xray-in and lets go in --xray-out; the port layer stays on the
    library's fast/normal so a port still feels immediate under the pointer. */
-.xray-ov{--lens-top:84.4vh;--lens-l:26.7vh;--lens-r:27.3vh;--xray-in:700ms;--xray-out:1000ms;}
-.xray-fix{clip-path:inset(calc(var(--lens-top) - 82vh) calc(50vw - var(--lens-r)) 0 calc(50vw - var(--lens-l)) round var(--radius-card) var(--radius-card) 0 0);opacity:.4;transition:opacity var(--xray-out) var(--ease-default);}
+.xray-ov{--lens-top:calc(84.4 * var(--vh));--lens-l:calc(26.7 * var(--vh));--lens-r:calc(27.3 * var(--vh));--xray-in:700ms;--xray-out:1000ms;}
+.xray-fix{clip-path:inset(calc(var(--lens-top) - calc(82 * var(--vh))) calc(calc(50 * var(--vw)) - var(--lens-r)) 0 calc(calc(50 * var(--vw)) - var(--lens-l)) round var(--radius-card) var(--radius-card) 0 0);opacity:.4;transition:opacity var(--xray-out) var(--ease-default);}
 /* Two copies of the same pixels, both with a STATIC filter, cross-faded by
    opacity (2026-09-24): animating `filter: blur()` re-renders a ~1900px image
    every frame and stutters on a weak GPU; opacity is composited for free.
@@ -225,11 +225,11 @@
 .xhot.plug:focus-visible .pmp-glow{display:block;}
 /* edge = a hairline, neutral. Approach brightens it and lets a faint glow out;
    no accent line (Cindy 09-24: the blue ring was too loud). */
-.xray-lens{position:absolute;z-index:4;pointer-events:none;top:var(--lens-top);left:calc(50vw - var(--lens-l));right:calc(50vw - var(--lens-r));bottom:0;border-radius:var(--radius-card) var(--radius-card) 0 0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);transition:box-shadow var(--xray-out) var(--ease-default);}
+.xray-lens{position:absolute;z-index:4;pointer-events:none;top:var(--lens-top);left:calc(calc(50 * var(--vw)) - var(--lens-l));right:calc(calc(50 * var(--vw)) - var(--lens-r));bottom:0;border-radius:var(--radius-card) var(--radius-card) 0 0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);transition:box-shadow var(--xray-out) var(--ease-default);}
 .xray-ov:is(:has(.xray-zone:hover),:has(.xhot:hover),:has(.xhot:focus-visible)) .xray-lens{box-shadow:inset 0 0 0 1px rgba(255,255,255,.26),0 0 32px rgba(255,255,255,.05),0 0 48px color-mix(in srgb,var(--accent-color) 8%,transparent);;transition-duration:var(--xray-in)}
 /* zone = "near the ports": a wider, taller invisible area around the lens.
    Sits under the hotspots so a port still wins the pointer. */
-.xray-zone{position:absolute;z-index:4;top:76vh;bottom:0;left:calc(50vw - var(--lens-l) - 8vw);right:calc(50vw - var(--lens-r) - 8vw);}
+.xray-zone{position:absolute;z-index:4;top:calc(76 * var(--vh));bottom:0;left:calc(calc(50 * var(--vw)) - var(--lens-l) - calc(8 * var(--vw)));right:calc(calc(50 * var(--vw)) - var(--lens-r) - calc(8 * var(--vw)));}
 /* Entry reveal (replaces the scan line, Cindy 09-24: the line read as crude).
    The panel appears top-to-bottom through a SOFT edge — no drawn line, the
    picture itself arrives as if the screen were being seen through. The mask is

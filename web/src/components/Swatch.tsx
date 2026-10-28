@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 
 /** The Hadouken rainbow gradient, built from the accent palette tokens. */
 export const RAINBOW =
-  'linear-gradient(90deg, var(--accent-red) 0%, var(--accent-orange) 17%, var(--accent-yellow) 33%, var(--accent-green) 50%, var(--accent-cyan) 67%, var(--accent-indigo) 83%, var(--accent-purple) 100%)';
+  'linear-gradient(90deg, var(--accent-red) 0%, var(--accent-orange) 17%, var(--accent-yellow) 33%, var(--accent-green) 50%, var(--accent-blue) 67%, var(--accent-indigo) 83%, var(--accent-purple) 100%)';
 
 export interface SwatchProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'color'> {
   /** A single fill color. */

@@ -1,0 +1,162 @@
+/* Appearance panel — layout glue for Settings › App › Appearance.
+   Thumbs and swatches reuse .wp-thumb / .wg-swatch (widgets.css). Token-only. */
+
+.appearance-panel {
+  display: flex;
+  flex-direction: column;
+}
+.appearance-panel .stx-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-sm) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* Looks — five wallpaper cards, each with its accent dot. */
+.ap-looks {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--gutter-xs);
+}
+@media (max-width: 900px) {
+  .ap-looks {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.ap-look-dot {
+  position: absolute;
+  top: var(--gutter-xs);
+  right: var(--gutter-xs);
+  width: var(--gutter-sm);
+  height: var(--gutter-sm);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--ksg-w80);
+  box-shadow: var(--shadow-lv-1);
+}
+
+.ap-undo,
+.ap-offer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.ap-offer {
+  border-color: var(--accent-dim);
+  background: var(--accent-dimmest);
+}
+.ap-offer > span:not(.ds-swatch) {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Accent rows: label column + controls, one control height each, a real gap
+   between rows so presets, wallpaper matches and HEX read as three choices. */
+.ap-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  margin-top: var(--gutter-xs);
+}
+.ap-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+.ap-row-label {
+  flex: 0 0 calc(var(--gutter) * 6);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+.ap-row-controls {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .ap-inline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gutter-xs);
+  }
+  .ap-row-label {
+    flex-basis: auto;
+  }
+}
+.ap-hex {
+  width: calc(var(--control-height) * 4);
+}
+
+/* Upload tile sits in the wallpaper thumb grid. */
+.ap-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xxs);
+  border-style: dashed;
+  color: var(--text-dim);
+  font-size: var(--text-caption);
+}
+.ap-upload:hover,
+.ap-upload:focus-visible {
+  color: var(--text-primary);
+  border-color: var(--accent-dim);
+}
+.ap-upload:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+/* Focal point picker: click the image, the dot marks what stays in view. */
+.ap-focus {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--gutter-sm);
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .ap-focus {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.ap-focus-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-med);
+  background: center / cover no-repeat var(--surface);
+  cursor: crosshair;
+}
+.ap-focus-stage:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+.ap-focus-dot {
+  position: absolute;
+  width: var(--gutter);
+  height: var(--gutter);
+  transform: translate(-50%, -50%);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--ksg-n100);
+  box-shadow: var(--shadow-lv-2);
+  background: var(--accent-dim);
+  pointer-events: none;
+}
+.ap-focus-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+}

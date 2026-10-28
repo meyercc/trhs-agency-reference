@@ -13,6 +13,14 @@ import './app.css';
 import { SettingsProvider } from './state/Settings';
 import { ProfilesProvider } from './state/Profiles';
 import { ModulesProvider } from './state/Modules';
+import { AgentsProvider } from './state/Agents';
+import { CollectionsProvider } from './state/Collections';
+import { AutocastProvider } from './state/Autocast';
+import { GalleryProvider } from './state/Gallery';
+import { GameOptimizeProvider } from './state/gameOptimize';
+import { PlaytimeProvider } from './state/Playtime';
+import { ToastsProvider } from './state/Toasts';
+import { NovaProvider } from './state/Nova';
 import { DeviceProfilesProvider } from './state/DeviceProfiles';
 import { DeviceSimProvider } from './state/DeviceSim';
 import { ModuleGate } from './modules/ModuleGate';
@@ -30,6 +38,7 @@ import { PerformV7 } from './pages/PerformV7';
 import { Personalize } from './pages/Personalize';
 import { PersonalizeV2 } from './pages/PersonalizeV2';
 import { Shop } from './pages/Shop';
+import { Nova } from './pages/Nova';
 import { CardLab } from './pages/CardLab';
 import { ModalLab } from './pages/ModalLab';
 import { JYWork } from './pages/JYWork';
@@ -46,6 +55,19 @@ createRoot(document.getElementById('root')!).render(
     <ProfilesProvider>
     <SettingsProvider>
       <ModulesProvider>
+      <AgentsProvider>
+      {/* Collections and per-game optimize (TH-504): leaves too — the library,
+          the tile menu and the game panel read one list and one state. */}
+      <CollectionsProvider>
+      {/* Autocast's session and your own captures (TH-509): leaves, above Nova so its routing reads the phase. */}
+      <AutocastProvider>
+      <GalleryProvider>
+      <GameOptimizeProvider>
+      {/* Playtime and Toasts are leaves (TH-484): no app imports, so anything
+          under them — the widget catalog included — can read them. */}
+      <PlaytimeProvider>
+      <ToastsProvider>
+      <NovaProvider>
       <DeviceProfilesProvider>
       <DeviceSimProvider>
       <HashRouter>
@@ -91,6 +113,16 @@ createRoot(document.getElementById('root')!).render(
                 </ModuleGate>
               }
             />
+            {/* Nova — body still being designed; the module wiring is real.
+                The gate matters: hiding the tab alone would not stop #/nova. */}
+            <Route
+              path="nova"
+              element={
+                <ModuleGate module="nova">
+                  <Nova />
+                </ModuleGate>
+              }
+            />
             {/* Living specimens of docs/card-modal-scalability-report.md. */}
             <Route path="card-lab" element={<CardLab />} />
             {/* Living specimens of docs/modal-registry.md — the modal side. */}
@@ -108,6 +140,14 @@ createRoot(document.getElementById('root')!).render(
       </HashRouter>
       </DeviceSimProvider>
       </DeviceProfilesProvider>
+      </NovaProvider>
+      </ToastsProvider>
+      </PlaytimeProvider>
+      </GameOptimizeProvider>
+      </GalleryProvider>
+      </AutocastProvider>
+      </CollectionsProvider>
+      </AgentsProvider>
       </ModulesProvider>
     </SettingsProvider>
     </ProfilesProvider>

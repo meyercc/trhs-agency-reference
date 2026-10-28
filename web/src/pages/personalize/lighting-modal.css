@@ -1,5 +1,6 @@
 /* Personalize › Lighting window — glue over System Vitals' .vm-* layout.
-   What the Modes window left behind, trimmed to the pieces Light Studio uses. */
+   What the Modes window left behind, trimmed to the status row; under it, the
+   list of devices with lights (2026-10-21), each row a door to its own window. */
 .mm-mode-icon {
   display: inline-flex;
   align-items: center;
@@ -110,8 +111,34 @@
   align-items: center;
   column-gap: var(--gutter-xs);
 }
-.lm-panel > .ls,
-.lm-panel > .mm-loading {
-  flex: 1;
-  min-height: calc(var(--control-height) * 14);
+.lm-lead {
+  margin-bottom: var(--gutter-xs);
+}
+.lm-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+}
+.lm-row {
+  cursor: pointer;
+}
+.lm-row-img {
+  display: block;
+  width: calc(var(--control-height) * 1.5);
+  height: calc(var(--control-height) * 1.5);
+  border-radius: var(--radius);
+  background: var(--surface) center / contain no-repeat;
+  border: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+.lm-row-swatch {
+  display: block;
+  width: calc(var(--control-height) * 1.5);
+  height: calc(var(--control-height) * 1.5);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+.lm-row-sub {
+  color: var(--text-muted);
 }

@@ -16,6 +16,14 @@
 // Report → ~/Treehouse-monitor/design-loop/reports/<date>-walk-all.md (carries the
 // HEAD it walked, which is how a later turn can tell the sweep is stale).
 import { spawn, execSync } from 'node:child_process';
+
+/** What actually went wrong in a walker that threw. Its last line is always the
+    Node version banner, so reporting that said nothing at all (2026-10-13). */
+function crashLine(out) {
+  const lines = out.trim().split('\n');
+  const err = lines.find((l) => /(?:^|\s)(?:[A-Za-z]*Error|Error):/.test(l));
+  return (err || lines[lines.length - 1] || '').trim();
+}
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -54,7 +62,7 @@ const run = (r) => new Promise((resolve) => {
     const orange = out.split('\n').filter((l) => /^🟠 /.test(l)).length;
     const total = out.split('\n').reverse().find((l) => /→ .*\.md$/.test(l)) || '';
     const broke = code !== 0 && !reds.length; // crashed or never rendered — not a finding, a blind spot
-    resolve({ ...r, code, reds, orange, total: total.replace(/ → .*$/, ''), report: (total.match(/→ (.*\.md)$/) || [])[1], secs: Math.round((Date.now() - t0) / 1000), broke, tail: out.trim().split('\n').slice(-1)[0] });
+    resolve({ ...r, code, reds, orange, total: total.replace(/ → .*$/, ''), report: (total.match(/→ (.*\.md)$/) || [])[1], secs: Math.round((Date.now() - t0) / 1000), broke, tail: crashLine(out) });
   });
 });
 

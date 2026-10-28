@@ -8,6 +8,11 @@ import { CardDoor, Facts, FeatStatus, Level, Metric } from './CardKit';
 // (health bar, neutral fill) — with Facts kept as the receipt baseline.
 // (Identity icon tiles were tried and removed — 2026-07-23.)
 
+/** The fan cleaner's standing as the card reads it — simulated, the prototype
+ *  has no fan sensor (fan-cleaner#open:1). The PC page's Performance tab
+ *  repeats these, so the two can never disagree. */
+export const FAN_CLEANER = { word: 'good' as const, label: 'Good', lastCleaned: '45 days ago' };
+
 export interface CleanerCardProps {
   kind: 'system' | 'fan';
   onClean: () => void;
@@ -47,9 +52,9 @@ export function CleanerCard({ kind, onClean, onSchedule }: CleanerCardProps) {
   return (
     <div className="ds-feature-card pv5-cleaner-card">
       {header}
-      <FeatStatus word="good" />
+      <FeatStatus word={FAN_CLEANER.word} />
       <Level pct={82} label="fan health · est." />
-      <Facts items={[{ label: 'Last cleaned', value: '45 days ago' }]} />
+      <Facts items={[{ label: 'Last cleaned', value: FAN_CLEANER.lastCleaned }]} />
       {footer}
     </div>
   );

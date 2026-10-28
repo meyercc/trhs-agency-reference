@@ -3,11 +3,12 @@
 // 680:176027). Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
 
-const OUT = process.argv[2] || '/tmp';
+const OUT = process.argv[2] || tmpdir();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
@@ -73,7 +74,9 @@ const PANEL = `(() => {
     headerToggle: !!c.querySelector('.ds-ng3-header .ds-toggle'),
     headerActionBtns: c.querySelectorAll('.ds-ng3-actions button').length,
     oldHead: !!c.querySelector('.pdm-lights-head'),
-    litKeys: c.querySelectorAll('.kbd-key.lit').length,
+    // Drawn board: .kbd-key.lit. Photo board (origins-65): the backlight is a
+    // canvas, so a key the board shows paint on carries data-paint.
+    litKeys: c.querySelectorAll('.kbd-key.lit, .kbp-board [data-paint]').length,
     heroGlow: !!c.querySelector('.kbd-hero-glow'),
     bodyOpacity: c.querySelector('.pdm-lights-body') ? getComputedStyle(c.querySelector('.pdm-lights-body')).opacity : null,
   };
@@ -198,6 +201,7 @@ async function main() {
     return {
       narrow: p.classList.contains('narrow'),
       pct: Math.round((pb.width / avail) * 100),
+      w: Math.round(pb.width),
       centred: Math.abs(left - right) <= 1,
       tabCentred: tb ? Math.abs((tb.left + tb.right) / 2 - (pb.left + pb.right) / 2) <= 1 : null,
     };
@@ -210,9 +214,25 @@ async function main() {
   check('the headset Settings tab holds in to 65%, centred',
     m?.narrow === true && m?.pct === 65 && m?.centred === true && m?.tabCentred === true,
     `${m?.pct}% centred=${m?.centred} tab=${m?.tabCentred}`);
+  // The negative case has to be a tab that genuinely does not ask for narrow.
+  // It was `origins-65` Settings until that tab took the narrow step with every
+  // other device's Settings (TH-457) — Lights on the SAME device is the better
+  // witness anyway: it proves the measure is per-tab, not per-device.
+  await open(send, 'origins-65', 'lighting');
+  m = await evalJs(send, MEASURE);
+  check('a tab on the same device that does not ask for it is untouched', m?.narrow === false && m?.pct === 100, `${m?.pct}%`);
   await open(send, 'origins-65', 'settings');
   m = await evalJs(send, MEASURE);
-  check('a tab that does not ask for it is untouched', m?.narrow === false && m?.pct === 100, `${m?.pct}%`);
+  check('the keyboard Settings tab holds in like the headset\u2019s',
+    m?.narrow === true && m?.pct === 65 && m?.centred === true,
+    `${m?.pct}% centred=${m?.centred}`);
+  // The mouse re-points the narrow step to the Figma frame's measure rather
+  // than taking the 65% one, so it is asserted as the number it is pinned to.
+  await open(send, 'saga-pro', 'settings');
+  m = await evalJs(send, MEASURE);
+  check('the mouse Settings tab takes its own 640px measure',
+    m?.narrow === true && m?.w === 640 && m?.centred === true,
+    `${m?.w}px centred=${m?.centred}`);
 
   // ── A panel is a filled frame: every column bottoms out on the same line ──
   // `.ds-ng3-col > .ds-ng3-section:last-child { flex-grow: 1 }` is a pure

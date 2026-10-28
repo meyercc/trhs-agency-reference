@@ -5,3 +5,12 @@ Assets/
 *.min.js
 *.min.css
 .skills/
+
+# The handoff and its archive are moved VERBATIM between files, and
+# `git blame -C -C` can only follow a block that stays byte-identical.
+# `npm run format` globs **/*.md, so without these three lines one format
+# run reflows the archive and throws away the attribution for six months
+# of sessions. The gotchas file is listed for the same reason.
+HANDOFF.md
+docs/handoff-archive/
+docs/gotchas.md

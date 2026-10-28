@@ -29,7 +29,7 @@ import { ProfileBar, ProfileActions, ProfileScopeBody, useDeviceProfileBar, useP
 import { LightingTab } from './LightingTab';
 import { DeviceSettingsCard } from './DeviceSettingsCard';
 import { LIGHT_PRESETS } from './lightingData';
-import { INPUT_EQ_LABEL, MIC_EFFECT_LABEL, MIC_PRESET_LABEL } from './audioLabels';
+import { INPUT_EQ_LABEL, MIC_EFFECT_LABEL, MIC_PRESET_LABEL, PATTERN_LABEL, LIGHT_EFFECT_LABEL } from './audioLabels';
 
 /**
  * Full-canvas microphone modal on the Ng3Panel canvas — the last device type
@@ -50,12 +50,6 @@ import { INPUT_EQ_LABEL, MIC_EFFECT_LABEL, MIC_PRESET_LABEL } from './audioLabel
 type Features = Record<string, any>;
 
 // Pickup-pattern ids map 1:1 to sprite icons of the same name.
-const PATTERN_LABEL: Record<string, string> = {
-  cardioid: 'Cardioid',
-  omnidirectional: 'Omnidirectional',
-  bidirectional: 'Bidirectional',
-  stereo: 'Stereo',
-};
 
 const EFFECT_ROWS: { key: string; label: string; defaultOn: boolean }[] = [
   { key: 'noiseReduction', label: 'Noise Reduction', defaultOn: true },
@@ -64,12 +58,6 @@ const EFFECT_ROWS: { key: string; label: string; defaultOn: boolean }[] = [
   { key: 'gate', label: 'Noise Gate', defaultOn: false },
 ];
 
-const LIGHT_EFFECT_LABEL: Record<string, string> = {
-  solid: 'Solid',
-  wave: 'Wave',
-  rainbow: 'Rainbow',
-  breathing: 'Breathing',
-};
 const MOUNT_LABEL: Record<string, string> = {
   'shock-mount': 'Shock mount',
   'boom-arm': 'Boom arm',
@@ -96,14 +84,15 @@ const RING_LIGHTS: { x: number; w: number; y: number }[] = [
 const RING_PICK_H = 4.45;
 /** A press that moves less than this is a click on a light, not a marquee. */
 const DRAG_THRESHOLD = 4;
-const RING_IDS = RING_LIGHTS.map((_, i) => String(i));
+/** The ring lights by id ("0"…"8") — also how Personalize repaints the ring. */
+export const RING_IDS = RING_LIGHTS.map((_, i) => String(i));
 /** How long a Microphone Test listens before it stops itself. */
 const MIC_TEST_MS = 5000;
 // Stable fallback: `useProfileValue` keys its setter on the fallback object.
 const NO_RING_COLORS: Record<string, string> = {};
 
 /** Average of the lit colors ("rgb(r, g, b)" strings) as "r,g,b", for the bloom. */
-function averageRgb(colors: string[]): string | null {
+export function averageRgb(colors: string[]): string | null {
   const parsed = colors
     .map((c) => (c.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number))
     .filter((v) => v.length === 3);

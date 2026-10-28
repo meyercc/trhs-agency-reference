@@ -3,11 +3,12 @@
 // and reports WCAG failures. Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222). Run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
 
-const OUT = process.argv[2] || '/tmp';
+const OUT = process.argv[2] || tmpdir();
 const THEME = process.argv[3] || 'light';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
@@ -187,7 +188,7 @@ const ROUTES = [
     await send('Page.navigate', { url: `http://localhost:${APP_PORT}/` + hash });
     await sleep(300);
     // force light theme + a known accent, then re-navigate so the app boots into it
-    await evalJs(send, `localStorage.setItem('theme','${THEME}'); localStorage.setItem('accent','cyan'); 1`);
+    await evalJs(send, `localStorage.setItem('theme','${THEME}'); localStorage.setItem('accent','blue'); 1`);
     // Page.navigate to an identical URL is a no-op under HashRouter, so the app
     // would never re-boot with the new theme. Reload for real.
     await send('Page.reload', { ignoreCache: true });

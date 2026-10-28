@@ -27,6 +27,10 @@ export interface TileProps extends Omit<React.HTMLAttributes<HTMLElement>, 'titl
   /** Show the reason as an icon with a tooltip instead of a text line. The icon
    *  names the kind of reason — the owning mode, a live signal, your change. */
   reasonIcon?: IconName;
+  /** `false`: the reason icon is a plain marker (its `reason` only names it for
+   *  assistive tech) — no tooltip, not a tab stop. For an icon that needs no
+   *  explaining, like the device a control belongs to. */
+  reasonTooltip?: boolean;
   /** Footer-right slot — `TileLink`s (Expand, Undo, Open…). */
   actions?: React.ReactNode;
   /** Compact one-line layout (catalog links). Title + value + actions sit in a row. */
@@ -70,6 +74,7 @@ export function Tile({
   value,
   reason,
   reasonIcon,
+  reasonTooltip = true,
   actions,
   row = false,
   selected = false,
@@ -98,7 +103,11 @@ export function Tile({
 
   // The reason as an icon whose tooltip holds the words (and names it for AT).
   const reasonTip =
-    reasonIcon && reason != null ? (
+    reasonIcon && reason != null && !reasonTooltip ? (
+      <span className="ds-quick-tile-reason-icon plain" role="img" aria-label={typeof reason === 'string' ? reason : undefined}>
+        <Icon name={reasonIcon} size="sm" />
+      </span>
+    ) : reasonIcon && reason != null ? (
       <Tooltip content={reason} placement={row ? 'bottom' : 'right'}>
         <span
           className="ds-quick-tile-reason-icon"

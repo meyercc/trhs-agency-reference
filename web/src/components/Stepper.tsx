@@ -19,6 +19,8 @@ export interface StepperProps {
   /** Decimal places a stepped or typed value is rounded to. */
   precision?: number;
   disabled?: boolean;
+  /** `sm` — a short field for a three-digit value (Figma Degree Input). */
+  size?: 'md' | 'sm';
   className?: string;
   'aria-label': string;
 }
@@ -43,6 +45,7 @@ export function Stepper({
   parse,
   precision = 2,
   disabled,
+  size = 'md',
   className,
   'aria-label': label,
 }: StepperProps) {
@@ -63,7 +66,7 @@ export function Stepper({
     setText(null);
   };
 
-  const classes = ['ds-stepper', disabled ? 'disabled' : '', className].filter(Boolean).join(' ');
+  const classes = ['ds-stepper', size === 'sm' ? 'sm' : '', disabled ? 'disabled' : '', className].filter(Boolean).join(' ');
   return (
     <div className={classes}>
       <input

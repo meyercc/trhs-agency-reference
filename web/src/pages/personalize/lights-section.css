@@ -1,0 +1,157 @@
+/* Personalize › Lighting, the 3D overview (LightsSection.tsx). Tokens only;
+   the desk itself is light-studio.css. */
+
+/* ── Swatches ─────────────────────────────────────────────────────────────── */
+.lx-swatch {
+  flex: none;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+}
+.lx-swatch-md {
+  width: 14px;
+  height: 14px;
+}
+.lx-swatch-sm {
+  width: 10px;
+  height: 10px;
+}
+/* Off reads as an empty ring with a slash, never as black. */
+.lx-swatch.off {
+  background: linear-gradient(135deg, transparent 45%, var(--text-dim) 45% 55%, transparent 55%);
+}
+
+/* ── The 3D overview ──────────────────────────────────────────────────────── */
+.lx-desk {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  margin-top: var(--gutter-sm);
+  border-radius: var(--radius);
+}
+.lx-desk > .ls.compact,
+.lx-desk > .qc-desk-fallback {
+  flex: 1;
+}
+.lx-desk .ls.compact .ls-viewport {
+  min-height: calc(var(--control-height) * 12);
+}
+
+/* A label sits just above its point, centred on it. */
+.lx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  transform: translate(-50%, calc(-100% - var(--gutter-xs)));
+  padding: var(--gutter-xxs) var(--gutter-sm) var(--gutter-xxs) var(--gutter-xs);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background: color-mix(in srgb, var(--bg-base) 82%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-default), background var(--dur-fast) var(--ease-default);
+}
+.lx-chip:hover,
+.lx-chip:focus-visible {
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--bg-base) 92%, transparent);
+}
+.lx-chip.here {
+  border-color: var(--accent-color);
+}
+.lx-chip-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+}
+.lx-chip-title {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.lx-chip-look {
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+}
+
+/* On one device: a card in the desk's top-left corner. */
+.lx-here {
+  position: absolute;
+  top: var(--gutter-sm);
+  left: var(--gutter-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gutter-xs);
+  width: min(260px, calc(100% - 2 * var(--gutter-sm)));
+  padding: var(--gutter-sm);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+  background: color-mix(in srgb, var(--bg-base) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+.lx-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+.lx-back:hover {
+  color: var(--text-primary);
+}
+.lx-here-name {
+  font-size: var(--text-sm-title);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.lx-parts {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lx-part {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  width: 100%;
+  padding: var(--gutter-xxs) var(--gutter-xs);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+button.lx-part:hover {
+  background: var(--surface-hover);
+}
+.lx-part.static {
+  cursor: default;
+}
+.lx-part-name {
+  flex: 1;
+}
+.lx-part-look {
+  color: var(--text-dim);
+}
+.lx-hint {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.lx-tile .qc-desk-bottom {
+  align-items: center;
+}

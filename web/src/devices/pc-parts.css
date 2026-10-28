@@ -1,0 +1,193 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   The PC's own parts: the cooler cap and the OMEN power supply.
+   The window chrome comes from device-canvas.css; this file holds only what
+   these two windows draw themselves.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── The cap preview ──────────────────────────────────────────────────────
+   The cap is a real round screen, dark like artwork in both themes, so its
+   face and text keep the on-image colours in light theme too. */
+.pcp-cap {
+  position: relative;
+  height: min(100%, 280px);
+  min-height: 120px;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--ksg-b90);
+  /* The bezel: the cap's metal ring around the glass. */
+  border: 6px solid var(--ksg-w10);
+  outline: 1px solid var(--border-med);
+  box-shadow: 0 24px 40px var(--ksg-b55);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-on-image);
+}
+.pcp-cap-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform var(--dur-slow) var(--ease-default),
+    opacity var(--dur-normal) var(--ease-default);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pcp-cap-face {
+    transition: none;
+  }
+}
+/* The screen fills the glass edge to edge. Scoped under .dc-hero to outrank
+   `.dc-hero img`, which sizes a product photo (contain, 60%, drop shadow). */
+.dc-hero .pcp-cap-img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  filter: none;
+}
+.pcp-cap-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  text-align: center;
+}
+.pcp-cap-big {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.pcp-cap-small {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-on-image-dim);
+  text-transform: uppercase;
+}
+.pcp-cap-analog {
+  width: 72%;
+  height: 72%;
+}
+.pcp-cap-dial {
+  fill: none;
+  stroke: var(--text-on-image-dim);
+  stroke-width: 2;
+}
+.pcp-cap-hand {
+  stroke: var(--text-on-image);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.pcp-cap-hand.thin {
+  stroke-width: 2;
+}
+
+/* ── Rows inside the tabs ───────────────────────────────────────────────── */
+.pcp-checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+}
+.pcp-status,
+.pcp-action {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gutter-xs);
+}
+/* Why a control is off, or what is driving it, said in words beside it. */
+.pcp-reason {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+/* ── The power supply's editor ──────────────────────────────────────────── */
+.pcp-editor,
+.pcp-status-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  min-width: 0;
+}
+.pcp-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+.pcp-summary .pcp-reason {
+  flex: 1;
+  min-width: 0;
+}
+/* Four readings to a row, each a section card with its last minute. */
+.pcp-readings {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gutter-xs);
+}
+.pcp-reading {
+  position: relative;
+  min-width: 0;
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.pcp-reading .ds-spark-lbl {
+  padding-right: 24px;
+}
+/* Over its warning level: the number and its line turn red, and carry a ⚠. */
+.pcp-reading.is-over .ds-spark-val,
+.pcp-warn {
+  color: var(--red, var(--text-primary));
+}
+.pcp-reading.is-over .ds-spark-line {
+  stroke: var(--red, currentColor);
+}
+.pcp-menu {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 2;
+}
+.pcp-menu-pop {
+  position: absolute;
+  z-index: 50;
+  bottom: calc(100% + var(--gutter-xxs));
+  right: 0;
+  min-width: 200px;
+}
+.pcp-menu-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xs) var(--gutter-sm) var(--gutter-sm);
+}
+/* The refused-clean dialog: one short question on ModalShell's narrow width. */
+.pcp-dialog.modal-shell {
+  height: auto;
+  max-height: none;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+}
+.pcp-dialog .modal-body {
+  grid-template-columns: 1fr;
+}
+.pcp-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  color: var(--text-dim);
+}
+.pcp-dialog-body p {
+  margin: 0;
+}
+.pcp-dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+}

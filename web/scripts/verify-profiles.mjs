@@ -10,6 +10,7 @@ import { build } from 'esbuild';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const dir = mkdtempSync(join(tmpdir(), 'trhs-profiles-'));
 const outfile = join(dir, 'profileModel.mjs');
@@ -21,7 +22,9 @@ await build({
   bundle: true,
   logLevel: 'silent',
 });
-const M = await import(outfile);
+// Windows: an absolute path is not a valid ESM specifier (c:... is read as a
+// protocol), so the bundle is imported as a file:// URL.
+const M = await import(pathToFileURL(outfile).href);
 rmSync(dir, { recursive: true, force: true });
 
 const results = [];
@@ -72,6 +75,10 @@ check('wrapped window: Friday 23:00 is inside', M.scheduleMatches(night, new Dat
 check('wrapped window: Saturday 00:30 is inside (Friday tail)', M.scheduleMatches(night, new Date(2026, 8, 19, 0, 30)));
 check('wrapped window: Friday 00:30 is outside (Thursday tail)', !M.scheduleMatches(night, new Date(2026, 8, 18, 0, 30)));
 check('wrapped window: Saturday 23:00 is outside', !M.scheduleMatches(night, new Date(2026, 8, 19, 23, 0)));
+// TH-439: the hours between the end and the next start are outside. Before the
+// fix, every hour before 22:00 on a Saturday counted as Friday's tail.
+check('wrapped window: Saturday 18:30 is outside (after the tail, before a start)', !M.scheduleMatches(night, new Date(2026, 8, 19, 18, 30)));
+check('wrapped window: Friday 18:30 is outside (before its own start)', !M.scheduleMatches(night, new Date(2026, 8, 18, 18, 30)));
 
 // ── Lookups ─────────────────────────────────────────────────────────────────
 check('linkedProfile finds the claiming profile', M.linkedProfile(PROFILES, 'apex')?.id === 'gaming');

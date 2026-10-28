@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { Reorder, useDragControls } from 'framer-motion';
 import './reorderable-sections.css';
 
@@ -13,7 +13,24 @@ export interface ReorderableSectionData {
   id: string;
   /** Header row (e.g. <SectionHeader …/>). */
   header?: ReactNode;
+  /**
+   * The header lives INSIDE `children` (the Play library: its count is its own
+   * state). The grip is handed down instead of drawn on a row of its own above
+   * the content — it was floating a header's height over "My Games" — and the
+   * first `SectionHeader` inside claims it (`useSectionGrip`).
+   */
+  headerInChildren?: boolean;
   children: ReactNode;
+}
+
+/**
+ * The grip of a section whose header is drawn by its content. A header that
+ * reads it renders the grip in its own row (`.rs-head`), level with its label.
+ * Null outside such a section.
+ */
+const SectionGripContext = createContext<ReactNode>(null);
+export function useSectionGrip(): ReactNode {
+  return useContext(SectionGripContext);
 }
 
 export interface ReorderableSectionsProps {
@@ -58,13 +75,20 @@ const Grip = () => (
   </svg>
 );
 
-function Section({ id, header, children, draggable }: ReorderableSectionData & { draggable: boolean }) {
+function Section({ id, header, headerInChildren, children, draggable }: ReorderableSectionData & { draggable: boolean }) {
   const controls = useDragControls();
+  const grip = draggable ? (
+    <button type="button" className="rs-grip" aria-label="Drag to reorder section" onPointerDown={(e) => controls.start(e)}>
+      <Grip />
+    </button>
+  ) : null;
   return (
     <Reorder.Item
       as="section"
       value={id}
       className="rs-section"
+      // Addressable by `?section=<id>` (app/useSectionParam).
+      data-section={id}
       dragListener={false}
       dragControls={controls}
       whileDrag={{ scale: 1.01, zIndex: 5 }}
@@ -74,15 +98,17 @@ function Section({ id, header, children, draggable }: ReorderableSectionData & {
           gutter, so it joins the header row at its right end rather than
           sitting on the label. No grip with a single section — nothing to
           reorder against. */}
-      <div className={'rs-head' + (header ? '' : ' bare')}>
-        {header}
-        {draggable && (
-          <button type="button" className="rs-grip" aria-label="Drag to reorder section" onPointerDown={(e) => controls.start(e)}>
-            <Grip />
-          </button>
-        )}
-      </div>
-      {children}
+      {headerInChildren ? (
+        <SectionGripContext.Provider value={grip}>{children}</SectionGripContext.Provider>
+      ) : (
+        <>
+          <div className={'rs-head' + (header ? '' : ' bare')}>
+            {header}
+            {grip}
+          </div>
+          {children}
+        </>
+      )}
     </Reorder.Item>
   );
 }
@@ -118,7 +144,7 @@ export function ReorderableSections({ sections, storageKey }: ReorderableSection
   return (
     <Reorder.Group as="div" axis="y" values={order} onReorder={onReorder} className="rs-group">
       {ordered.map((s) => (
-        <Section key={s.id} id={s.id} header={s.header} draggable={ordered.length > 1}>
+        <Section key={s.id} id={s.id} header={s.header} headerInChildren={s.headerInChildren} draggable={ordered.length > 1}>
           {s.children}
         </Section>
       ))}

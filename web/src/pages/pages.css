@@ -57,9 +57,9 @@
   display: grid;
   gap: var(--gutter);
   grid-template-columns: 1fr 1fr;
-  align-items: start;
+  align-items: stretch; /* the card rule (CLAUDE.md): both cards end on one line */
 }
-@media (max-width: 640px) {
+@container page (--bp-compact) {
   .pg-pair {
     grid-template-columns: 1fr;
   }
@@ -97,7 +97,7 @@
   height: auto;
   min-height: var(--dov-need, var(--dov-vref));
 }
-@media (max-width: 900px) {
+@container page (--bp-medium-down) {
   .pg-rail {
     grid-template-columns: 1fr;
   }
@@ -141,6 +141,11 @@
 .home-carousel .ds-carousel-aura {
   height: 740px;
 }
+/* Its height is the board cell's two rows (board.css `.wb-hero`, 2026-10-21);
+   it was a fixed 420px when it sat above the grid. Border-box: `.ds-carousel`
+   carries a 1px border, and content-box 100% overran the cell by 2px, so the
+   cards beside it ended 2px short of its bottom line (measured). */
 .home-carousel .ds-carousel {
-  height: 420px;
+  box-sizing: border-box;
+  height: 100%;
 }

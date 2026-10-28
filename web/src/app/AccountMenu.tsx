@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Avatar, ContextMenu, ContextMenuLabel, ListItem, Separator, ToggleButtonGroup, Icon } from '../components';
+import { ContextMenu, ContextMenuLabel, ListItem, Separator, Toggle, ToggleButtonGroup, Icon } from '../components';
 import { useSettings, type Theme } from '../state/Settings';
-// Stand-in profile photo (custom avatar variant). Figma's asset URLs expire.
-import profilePhoto from '../../../Assets/wallpapers/purple-dark.webp';
+import { UserAvatar } from './UserAvatar';
 
 const AdminGlyph = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -20,12 +19,11 @@ const SignOutGlyph = () => (
  * Account avatar + dropdown in the top-right of the nav (ports vanilla `user-menu`).
  *
  * Named Account, not Profile: everything in it is about the signed-in ACCOUNT
- * (identity, sign out, admin). The app's *profiles* — Gaming, Work, Music — are
- * a different concept entirely, and they now sit in their own switcher to the
- * left of this one, so the two must not share a word.
+ * (identity, sign out, admin). The app's *profiles* live in their own switcher
+ * to the left of this one, so the two must not share a word.
  */
 export function AccountMenu() {
-  const { theme, setTheme } = useSettings();
+  const { setTheme, useSystemTheme, setUseSystemTheme, themeChoice, displayName, showSimulator, setShowSimulator } = useSettings();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   // Admin submenu (hover/focus flyout off the "Admin Panel" row).
@@ -33,13 +31,16 @@ export function AccountMenu() {
   const [params, setParams] = useSearchParams();
   const wrap = useRef<HTMLDivElement>(null);
 
-  const openModal = (id: string) => {
+  const openModal = (id: string, tab?: string) => {
     setOpen(false);
     const p = new URLSearchParams(params);
     p.set('modal', id);
+    if (tab) p.set('tab', tab);
+    else p.delete('tab');
     setParams(p);
   };
-  const openSettings = () => openModal('settings');
+  // One Settings modal: the header opens Account › Profile, "Settings" the App side.
+  const openSettings = () => openModal('settings', 'appearance');
 
   // Admin submenu actions: close the whole dropdown, then act.
   const goAdmin = (fn: () => void) => {
@@ -77,18 +78,18 @@ export function AccountMenu() {
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        <Avatar variant="custom" src={profilePhoto} alt="" size={30} />
+        <UserAvatar size={30} />
       </button>
 
       {open && (
         <ContextMenu className="account-menu">
-          <div className="am-header">
-            <Avatar variant="custom" src={profilePhoto} alt="" size={36} />
+          <button type="button" className="am-header" onClick={() => openModal('settings', 'profile')}>
+            <UserAvatar size={36} />
             <div>
-              <div className="am-name">UserName</div>
-              <div className="am-email">arcanerider@xyz.com</div>
+              <div className="am-name">{displayName}</div>
+              <div className="am-email">View profile</div>
             </div>
-          </div>
+          </button>
 
           <ListItem
             label="Settings"
@@ -96,19 +97,29 @@ export function AccountMenu() {
             onClick={openSettings}
           />
 
+          <Separator />
+          {/* Two questions, asked in order: follow the OS, or — if not — which
+              of the two. The Dark/Light group is hidden while the system is
+              answering, and comes back on the user's last pick. */}
           <ContextMenuLabel>Appearance</ContextMenuLabel>
-          <div className="am-appearance">
-            <ToggleButtonGroup
-              aria-label="Theme"
-              value={theme}
-              onChange={(v) => setTheme(v as Theme)}
-              options={[
-                { label: 'Dark', value: 'dark' },
-                { label: 'Light', value: 'light' },
-                { label: 'System', value: 'system' },
-              ]}
-            />
-          </div>
+          <ListItem
+            label="Use system theme"
+            trailing={<Toggle checked={useSystemTheme} onChange={setUseSystemTheme} aria-label="Use system theme" />}
+            onClick={() => setUseSystemTheme(!useSystemTheme)}
+          />
+          {!useSystemTheme && (
+            <div className="am-appearance">
+              <ToggleButtonGroup
+                aria-label="Theme"
+                value={themeChoice}
+                onChange={(v) => setTheme(v as Theme)}
+                options={[
+                  { label: 'Dark', value: 'dark' },
+                  { label: 'Light', value: 'light' },
+                ]}
+              />
+            </div>
+          )}
 
           <Separator />
           <div
@@ -159,10 +170,17 @@ export function AccountMenu() {
                   leading={<Icon name="devices" size={14} />}
                   onClick={() => goAdmin(() => navigate('/registry'))}
                 />
+                {/* The review's switches (Machine, Scope, OMEN AI, Session):
+                    off until someone asks, so a first look is the product. */}
+                <ListItem
+                  label="Simulator"
+                  leading={<Icon name="eq" size={14} />}
+                  trailing={<Toggle checked={showSimulator} onChange={setShowSimulator} aria-label="Show the Simulator" />}
+                  onClick={() => setShowSimulator(!showSimulator)}
+                />
               </ContextMenu>
             )}
           </div>
-
           <Separator />
           <ListItem
             className="am-danger"

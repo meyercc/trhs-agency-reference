@@ -294,46 +294,9 @@
   font-weight: 600;
   color: var(--cyan);
 }
-.ut-fc-plot {
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--bg-base);
-}
-.ut-fc-svg {
-  display: block;
-  width: 100%;
-  cursor: crosshair;
-  touch-action: none;
-}
-.ut-fc-grid {
-  stroke: rgba(255, 255, 255, 0.05);
-  stroke-width: 0.5;
-}
-.ut-fc-tick {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  fill: var(--text-muted);
-}
-.ut-fc-axis {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  fill: var(--text-muted);
-}
-.ut-fc-area {
-  fill: rgba(0, 200, 215, 0.07);
-}
-.ut-fc-line {
-  fill: none;
-  stroke: var(--cyan);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-.ut-fc-point {
-  fill: var(--bg-elevated);
-  stroke: var(--cyan);
-  stroke-width: 2;
-}
+/* The plot itself is the system's .ds-fan-curve (shared/components.css) since
+   TH-436; the .ut-fc-plot/svg/grid/tick/axis/area/line/point rules that drew
+   it here moved there, tokenised. */
 .ut-fc-foot {
   display: flex;
   align-items: center;

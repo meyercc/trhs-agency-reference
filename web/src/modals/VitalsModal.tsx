@@ -83,7 +83,7 @@ function OverviewPanel({ snap, hist, onTab, unit }: PanelProps & { onTab: (t: Vi
           </Badge>
         </div>
         <div className="vm-card-gauge-row">
-          <Gauge value={snap.cpu.usage} className="vm-gauge" />
+          <Gauge value={snap.cpu.usage} size="sm" />
           <div className="vm-card-spark">
             <VitalsChart variant="spark" series={[{ label: 'CPU', color: C_CPU, data: hist.cpu }]} yMin={0} />
           </div>
@@ -99,7 +99,7 @@ function OverviewPanel({ snap, hist, onTab, unit }: PanelProps & { onTab: (t: Vi
           </Badge>
         </div>
         <div className="vm-card-gauge-row">
-          <Gauge value={snap.gpu.usage} className="vm-gauge" />
+          <Gauge value={snap.gpu.usage} size="sm" />
           <div className="vm-card-spark">
             <VitalsChart variant="spark" series={[{ label: 'GPU', color: C_GPU, data: hist.gpu }]} yMin={0} />
           </div>
@@ -115,7 +115,7 @@ function OverviewPanel({ snap, hist, onTab, unit }: PanelProps & { onTab: (t: Vi
           </Badge>
         </div>
         <div className="vm-card-gauge-row">
-          <Gauge value={snap.ram.percent} className="vm-gauge" />
+          <Gauge value={snap.ram.percent} size="sm" />
           <div className="vm-card-spark">
             <VitalsChart variant="spark" series={[{ label: 'RAM', color: C_RAM, data: hist.ram }]} yMin={0} />
           </div>
@@ -152,7 +152,7 @@ function CpuPanel({ snap, hist, unit }: PanelProps) {
   return (
     <>
       <div className="vm-detail-header">
-        <Gauge value={snap.cpu.usage} className="vm-gauge-lg" />
+        <Gauge value={snap.cpu.usage} size="lg" />
         <div className="vm-detail-info">
           <div className="vm-detail-name">{snap.cpu.model}</div>
           <div className="vm-detail-stats">
@@ -192,7 +192,7 @@ function GpuPanel({ snap, hist, unit }: PanelProps) {
   return (
     <>
       <div className="vm-detail-header">
-        <Gauge value={snap.gpu.usage} className="vm-gauge-lg" />
+        <Gauge value={snap.gpu.usage} size="lg" />
         <div className="vm-detail-info">
           <div className="vm-detail-name">{snap.gpu.model}</div>
           <div className="vm-detail-stats">
@@ -230,7 +230,7 @@ function RamPanel({ snap, hist }: PanelProps) {
   return (
     <>
       <div className="vm-detail-header">
-        <Gauge value={snap.ram.percent} className="vm-gauge-lg" />
+        <Gauge value={snap.ram.percent} size="lg" />
         <div className="vm-detail-info">
           <div className="vm-detail-name">System Memory</div>
           <div className="vm-detail-stats">

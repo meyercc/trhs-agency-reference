@@ -18,6 +18,8 @@ export interface Point {
 }
 
 export interface VitalsSnapshot {
+  /** Frames per second of whatever is in the foreground — for the overlays (TH-438). Simulated like the rest. */
+  fps: number;
   cpu: {
     model: string;
     cores: number;
@@ -111,6 +113,7 @@ function walk(prev: number, center: number, step: number, lo: number, hi: number
 // ── State the ticker mutates between frames ──────────────────────────────────
 
 interface WalkState {
+  fps: number;
   cpu: number;
   gpu: number;
   ram: number;
@@ -121,6 +124,7 @@ interface WalkState {
 
 function initWalk(): WalkState {
   return {
+    fps: 142,
     cpu: 42,
     gpu: 34,
     ram: 58,
@@ -133,6 +137,7 @@ function initWalk(): WalkState {
 function stepWalk(s: WalkState): WalkState {
   const cpu = walk(s.cpu, 45, 6, 3, 98);
   return {
+    fps: walk(s.fps, 142, 5, 40, 240),
     cpu,
     gpu: walk(s.gpu, 38, 7, 2, 99),
     ram: walk(s.ram, 58, 2, 30, 92),
@@ -153,6 +158,7 @@ function buildSnapshot(w: WalkState, txTotal: number, rxTotal: number): VitalsSn
   const ramUsed = (w.ram / 100) * RAM_TOTAL;
   const gpuMemUsed = Math.round((w.gpu / 100) * 0.7 * GPU_VRAM + 0.15 * GPU_VRAM);
   return {
+    fps: Math.round(w.fps),
     cpu: {
       model: 'AMD Ryzen 9 7940HS',
       cores: CPU_CORES,

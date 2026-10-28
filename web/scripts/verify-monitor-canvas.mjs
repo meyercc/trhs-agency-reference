@@ -51,12 +51,13 @@
 // Run from web/:  node scripts/verify-monitor-canvas.mjs [outDir]
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 // Both spellings: `APP_PORT`/`CDP_PORT` is Chris's (upstream), `PORT`/`CDP` is
 // what the other verify-* suites here take. Neither invocation is broken.
 const PORT = process.env.PORT || process.env.APP_PORT || '5175';
 const CDP = process.env.CDP || process.env.CDP_PORT || '9222';
-const OUT = process.argv[2] || '/tmp';
+const OUT = process.argv[2] || tmpdir();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let msgId = 0;

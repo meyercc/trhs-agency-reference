@@ -15,6 +15,6 @@ figma.connect(
     props: {
       selected: figma.enum('Selected', { Yes: true, No: false }),
     },
-    example: ({ selected }) => <Swatch color="var(--accent-cyan)" selected={selected} label="Cyan" />,
+    example: ({ selected }) => <Swatch color="var(--accent-blue)" selected={selected} label="Blue" />,
   },
 );

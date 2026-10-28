@@ -159,7 +159,7 @@
   box-shadow: var(--shadow-lv-3);
 }
 
-@media (max-width: 1024px) {
+@container page (--bp-medium-down) {
   .cfg-cols {
     grid-template-columns: 1fr;
   }

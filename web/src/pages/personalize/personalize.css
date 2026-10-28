@@ -50,46 +50,21 @@
   margin-top: auto;
 }
 
-/* Context strip — cover art wash on the left, signals with their icons in the
-   middle, the auto-switch result, then the Auto / Manual choice. */
-/* Two classes so it wins over the DS row tile's own tighter spacing. */
-.ds-quick-tile.qc-strip {
-  gap: var(--gutter);
+/* The profile band — the active profile, why it is on, and the way back.
+   Replaces the context strip (same place, same row tile) and the Profiles
+   card grid. Two classes so it wins over the DS row tile's tighter spacing. */
+.ds-quick-tile.qc-band {
+  flex-wrap: wrap;
+  gap: var(--gutter-sm) var(--gutter);
   padding: var(--gutter-sm) var(--gutter);
 }
-/* Bigger art so the strip reads as the page's context, not a toolbar. */
-.qc-strip .ds-quick-tile-media {
-  width: calc(var(--control-height) * 2);
-  height: calc(var(--control-height) * 2);
+/* The profile's photo (or the game's art), sized to the name and its one line. */
+.qc-band .ds-quick-tile-media {
+  width: calc(var(--control-height) * 1.5);
+  height: calc(var(--control-height) * 1.5);
 }
-/* No cover art: the context's icon exactly as Perform's feature cards draw
-   theirs (.ds-feature-card-icon) — a faint accent tint on the dark card, a
-   hairline border, the icon in the accent color at half the box. */
-.qc-strip-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius);
-  background: var(--accent-dimmest);
-  /* One step stronger than Perform's 28px chip: at this size the hairline
-     reads fainter, and the media box clips anything outside it. */
-  border: 1px solid var(--border-med);
-  color: var(--accent-color);
-}
-.qc-strip-icon .ds-icon {
-  width: 50%;
-  height: 50%;
-}
-.qc-strip .ds-quick-tile-media:has(> .qc-strip-icon) {
-  background: none;
-}
-.qc-strip .ds-quick-tile-text {
-  gap: var(--gutter-xxs);
-}
-.qc-strip.has-art::after {
+/* The same picture, washed in behind the left of the band. */
+.qc-band::after {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
@@ -102,27 +77,105 @@
   mask-image: linear-gradient(to right, black, transparent);
   pointer-events: none;
 }
-.qc-strip .ds-quick-tile-title {
+.qc-band .ds-quick-tile-text {
+  gap: var(--gutter-xxs);
+}
+.qc-band .ds-quick-tile-title {
   font-size: var(--text-section-lg);
 }
-.qc-strip .ds-quick-tile-reason {
-  font-size: var(--text-caption);
-}
-.qc-strip-effect {
+/* The name, then — only when something else switched it — why, quieter. */
+.qc-band .ds-quick-tile-title > span {
   display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--gutter-xs);
+}
+/* One line under the name: when it turns on by itself. */
+.qc-band .ds-quick-tile-reason {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+  font-size: var(--text-caption);
+  /* Both lines wrap when the band is narrow; the DS reason line is one
+     ellipsized line, which cut "Turns on for Valorant, Apex +1" on a phone. */
+  white-space: normal;
+}
+.qc-band-why {
+  color: var(--text-dim);
+  font-size: var(--text-body);
+  font-weight: var(--font-regular);
+}
+.qc-band-why::before {
+  content: '·';
+  margin-right: var(--gutter-xs);
+}
+.qc-band.asking .qc-band-why {
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+.qc-band-when {
+  color: var(--text-dim);
+}
+/* The Undo or the answers sit right after the words they answer. */
+.qc-band .ds-quick-tile-row-body {
+  flex: 1 1 auto;
+}
+.qc-band-answer {
+  display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--gutter-xs);
-  margin-left: auto;
-  padding: var(--gutter-xxs) var(--gutter-xs);
-  border-radius: var(--radius-full);
-  background: var(--accent-dimmest);
-  font-size: var(--text-caption);
-  color: var(--text-primary);
-  white-space: nowrap;
 }
-.qc-strip-effect > .ds-icon {
-  color: var(--accent-color);
+/* Stacked on a phone: the button starts where the text starts, not pushed to
+   the far edge of a row they have to themselves. */
+@media (max-width: 600px) {
+  /* Three classes: the DS pushes row actions right with
+     `.ds-quick-tile.row .ds-quick-tile-actions`. */
+  .ds-quick-tile.qc-band .ds-quick-tile-actions {
+    margin-left: 0;
+  }
+  /* The name and its two lines stay beside the photo and wrap there, rather
+     than dropping below it and leaving the photo alone on a row. */
+  .qc-band .ds-quick-tile-text {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }
+
+/* ── Quick Controls: positions are yours (2026-10-06) ──
+   The tile being dragged leaves a dashed placeholder where it will land
+   (the Home board's look, .wb-cell.dragging); the tile itself floats in
+   .wb-drag-overlay. Two classes to beat the DS tile's own border. */
+.ds-quick-tile.qc-dragging {
+  border: 2px dashed var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color), transparent 92%);
+  box-shadow: none;
+}
+.ds-quick-tile.qc-dragging > * {
+  visibility: hidden;
+}
+/* A tile in the front can be picked up from anywhere that is not one of its
+   controls (the Home board's drag). */
+.ds-quick-tile.qc-movable {
+  cursor: grab;
+  touch-action: none;
+}
+.ds-quick-tile.qc-movable :is(button, a, input, select, textarea, label, [role="slider"], [role="switch"]) {
+  touch-action: auto;
+}
+/* A saved control says so in its header for a moment, then goes quiet. */
+.qc-saved {
+  display: inline-flex;
+  animation: qc-saved-in var(--dur-fast) var(--ease-default);
+}
+@keyframes qc-saved-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qc-saved { animation: none; }
+}
+
 
 /* Suggestions — slim rows under the context strip. */
 /* A level control: the slider and the number it is at. The number sits with
@@ -330,4 +383,21 @@
   border-radius: var(--radius);
   border: 1px solid var(--border);
   color: var(--text-muted);
+}
+
+/* ── Device cards: the controls they carry (Option A, 2026-10-12) ── */
+/* A device's light, as swatches named by their label. */
+.pg-card-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-sm);
+  /* The selected swatch's halo reaches past its edge, so the row keeps a step
+     more room under its label than a dropdown or slider does. */
+  margin-top: var(--gutter-xxs);
+}
+/* Something the card reports rather than sets (a monitor's input). */
+.pg-card-readout {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-variant-numeric: tabular-nums;
 }

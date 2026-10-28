@@ -11,7 +11,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--gutter-xs);
-  width: min(340px, calc(100vw - var(--gutter) * 2));
+  width: min(340px, calc(var(--viewport-w) - var(--gutter) * 2));
   padding: var(--gutter-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);

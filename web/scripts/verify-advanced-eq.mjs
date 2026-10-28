@@ -8,6 +8,7 @@ import { build } from 'esbuild';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
@@ -27,7 +28,9 @@ const check = (name, ok, detail = '') => {
 const dir = mkdtempSync(join(tmpdir(), 'trhs-aeq-'));
 const outfile = join(dir, 'eqParametric.mjs');
 await build({ entryPoints: ['src/devices/eqParametric.ts'], outfile, format: 'esm', platform: 'node', bundle: true, logLevel: 'silent' });
-const M = await import(outfile);
+// pathToFileURL, not the bare path: Windows reads `c:…` as a URL scheme and
+// throws ERR_UNSUPPORTED_ESM_URL_SCHEME. Same fix as verify-profiles.mjs.
+const M = await import(pathToFileURL(outfile).href);
 rmSync(dir, { recursive: true, force: true });
 
 const flat = M.defaultBands();

@@ -1,0 +1,132 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   The DIY fan kit's window. Chrome comes from device-canvas.css; this file
+   holds only what the kit draws itself. --fk-tone is a group's colour, set
+   inline from the group's place in the list; the group's name always sits
+   beside it.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Hero: the kit as wired ─────────────────────────────────────────────── */
+.fk-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+  max-width: 100%;
+  overflow-x: auto;
+}
+.fk-chain {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gutter-sm);
+}
+.fk-port,
+.fk-empty {
+  flex-shrink: 0;
+  width: 72px;
+  padding-top: 18px;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.fk-empty {
+  width: auto;
+  text-transform: none;
+  font-family: inherit;
+  font-size: var(--text-caption);
+}
+.fk-fan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  width: 72px;
+}
+.fk-fan-disc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  border: 3px solid var(--fk-tone);
+  background: var(--ksg-b20);
+  color: var(--text-primary);
+  transition: box-shadow var(--dur-fast) var(--ease-default);
+}
+.fk-fan-name {
+  max-width: 100%;
+  font-size: var(--text-caption);
+  color: var(--text-secondary, var(--text-primary));
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Identify: the fan's lights flash in the case; the hero flashes with them. */
+.fk-fan.lit .fk-fan-disc {
+  animation: fk-flash 0.6s steps(2, jump-none) infinite;
+  box-shadow: 0 0 16px var(--fk-tone);
+}
+@keyframes fk-flash {
+  from { background: var(--fk-tone); }
+  to { background: var(--ksg-b20); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fk-fan.lit .fk-fan-disc {
+    animation: none;
+    background: var(--fk-tone);
+  }
+}
+
+/* ── Panel ──────────────────────────────────────────────────────────────── */
+.fk-group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.fk-group-head .ds-input-group,
+.fk-group-head > :nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.fk-swatch {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: var(--fk-tone);
+}
+.fk-rpm {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+.fk-fan-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 150px auto;
+  gap: var(--gutter-xs);
+}
+.fk-pos {
+  width: 20px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+.fk-sim {
+  border-top: 1px dashed var(--border);
+  padding-top: var(--gutter-xs);
+}
+
+/* Groups wrap into columns and the tab scrolls as one; a group keeps its
+   whole height. */
+.fk-canvas .dc-panel-wrap .fk-groups {
+  flex-wrap: wrap;
+  align-content: flex-start;
+  overflow-y: auto;
+}
+.fk-canvas .dc-panel-wrap .fk-groups > .ds-ng3-section {
+  flex: 1 1 280px;
+  overflow: visible;
+}

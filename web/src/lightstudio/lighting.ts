@@ -6,11 +6,24 @@ import type { CameraView } from './scene';
 
 export const DEVICE_IDS = ['tower', 'monitor', 'keyboard', 'mouse', 'headset', 'mic'] as const;
 export type DeviceId = (typeof DEVICE_IDS)[number];
+/**
+ * The devices that have lights of their own (2026-10-01, Kristy): the Cloud III
+ * and the OMEN OLED 27 have no RGB, so the desk does not light them and Light
+ * Studio does not offer them. They stay on the desk, and a host that opens a
+ * device on a pick (Personalize) can still pick them.
+ *
+ * Listed in desk order, left to right as the Front view shows them (2026-10-06,
+ * Kristy), so Light Studio's device row reads the way the desk does.
+ */
+export const LIT_DEVICE_IDS: DeviceId[] = ['mic', 'keyboard', 'mouse', 'tower'];
+export const isLit = (id: DeviceId) => LIT_DEVICE_IDS.includes(id);
+// Full product names, the same ones the device cards show (cards drop only the
+// "HyperX" prefix), so a device is called one thing everywhere.
 export const LABELS: Record<DeviceId, string> = {
   tower: 'OMEN MAX 45L',
-  monitor: 'OMEN Monitor',
-  keyboard: 'Origins 65',
-  mouse: 'Pulsefire',
+  monitor: 'OMEN OLED 27',
+  keyboard: 'Alloy Origins 65',
+  mouse: 'Pulsefire Saga Pro',
   headset: 'Cloud III',
   mic: 'SoloCast 2 Pro',
 };

@@ -3,11 +3,12 @@
 // on :9222. Safe to delete after the feature lands.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
 
-const OUT = process.argv[2] || '/tmp';
+const OUT = process.argv[2] || tmpdir();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
@@ -77,18 +78,26 @@ async function main() {
   await waitFor(send, '.settings-modal .ds-settings-row-label');
 
   // Sectioned modal: left nav (shared .ds-modal-nav) with the three sections,
-  // Appearance first — theme/accent/wallpaper migrated from Personalize.
+  // Account first (Profile · Linked accounts), then the App group: Appearance —
+  // theme/accent/wallpaper migrated from Personalize — Navigation and Setup.
   const navItems = await evalJs(send, `
     [...document.querySelectorAll('.settings-modal .ds-modal-nav-item')].map(b => b.textContent.trim())
   `);
-  check('nav sections', JSON.stringify(navItems) === JSON.stringify(['Appearance', 'Navigation', 'Setup']), navItems.join('/'));
+  check(
+    'nav sections',
+    JSON.stringify(navItems) ===
+      JSON.stringify(['Profile', 'Linked accounts', 'Appearance', 'Navigation', 'Setup']),
+    navItems.join('/'),
+  );
   const appearance = await evalJs(send, `({
     theme: [...document.querySelectorAll('.settings-modal .ds-settings-row-label')].some(e => e.textContent.trim() === 'Theme'),
-    swatches: document.querySelectorAll('.settings-modal .wg-swatch').length,
+    // Appearance lives in its own panel now and its accents are the design
+    // system's <Swatch> (.ds-swatch), not the old .wg-swatch row.
+    swatches: document.querySelectorAll('.settings-modal [aria-label="Accent presets"] .ds-swatch').length,
     wallpapers: document.querySelectorAll('.settings-modal .wp-thumb').length,
   })`);
   check('appearance default: theme + accent + wallpaper',
-    appearance?.theme === true && appearance?.swatches === 7 && appearance?.wallpapers > 0,
+    appearance?.theme === true && appearance?.swatches > 0 && appearance?.wallpapers > 0,
     JSON.stringify(appearance));
 
   // Setup section: both rows

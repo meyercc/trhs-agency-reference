@@ -1,7 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { GameTile, Dropdown, ContextMenu, ContextMenuLabel, ListItem, Separator, Toggle, Slider, ToggleButtonGroup, Checkbox, Chip } from '../components';
 import { SectionHeader } from './SectionHeader';
-import { GameTileMenu, type OptimizeState, type GamePlatform } from './GameTileMenu';
+import { GameTileMenu, type GamePlatform } from './GameTileMenu';
+import { useOpenGame } from '../app/gamePanelRequest';
+import { FAVORITES_ID, useCollections } from '../state/Collections';
+import { useGameOptimize } from '../state/gameOptimize';
+import { useLaunchGame } from '../state/launchGame';
+import { useAgents } from '../state/Agents';
+import { useNovaAsk } from '../state/novaAsk';
+import { useSettings } from '../state/Settings';
+import { CREDITS_BY_ID } from '../data/credits';
+import { WHO_MADE_THIS_AGENT } from '../nova/whoMadeThis';
 import { INSTALLED, type Game } from '../data/games';
 
 // ── "My Games" library ──────────────────────────────────────────────────────
@@ -50,7 +60,8 @@ function passesFilters(g: Game, filters: Filters): boolean {
 // ── Library views (chips): built-in quick views + saved custom views ──
 const QUICK_VIEWS: { id: string; name: string; test: (g: Game) => boolean }[] = [
   { id: 'all', name: 'All', test: () => true },
-  { id: 'favorites', name: 'Favorites', test: (g) => !!g.favorite },
+  // Favorites is a collection (state/Collections, TH-504); `quickTest` reads it live.
+  { id: 'favorites', name: 'Favorites', test: () => true },
   { id: 'omenai', name: 'OMEN AI', test: (g) => !!g.omenAi },
 ];
 
@@ -253,31 +264,59 @@ export function PlayLibrary() {
   const [labels, setLabels] = useState(false); // no labels by default
   const [tileSize, setTileSize] = useState(140);
   const [perPage, setPerPage] = useState('all');
-  const [quick, setQuick] = useState('all'); // built-in view (All/Favorites/OMEN AI)
+  // The chip row's view: a built-in (All / Favorites / OMEN AI) or a collection (`col:<id>`, TH-505).
+  const [quick, setQuick] = useState('all');
   const [views, setViews] = useState<SavedView[]>(loadViews);
   useEffect(() => saveViews(views), [views]);
 
-  // Per-tile ••• menu state (presentational — resets on reload).
-  const [favorites, setFavorites] = useState<Set<string>>(() => new Set(INSTALLED.filter((g) => g.favorite).map((g) => g.id)));
+  // Favorites and the per-game optimize flags are persisted stores (TH-504),
+  // shared with the game detail panel; Remove and the platform stay
+  // presentational and reset on reload.
+  const collections = useCollections();
+  const optimize = useGameOptimize();
   const [removed, setRemoved] = useState<Set<string>>(() => new Set());
-  const [optimize, setOptimize] = useState<Record<string, OptimizeState>>({});
   const [platform, setPlatform] = useState<Record<string, GamePlatform>>({});
   const [menu, setMenu] = useState<{ game: Game; anchor: DOMRect } | null>(null);
-  const optOf = (g: Game): OptimizeState => optimize[g.id] ?? { booster: true, omenAi: g.omenAi ?? true };
   const platOf = (g: Game): GamePlatform => platform[g.id] ?? 'steam';
-  const toggleFavorite = (id: string) =>
-    setFavorites((s) => {
-      const n = new Set(s);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
+  // A tile opens the game's detail panel; its ▶ and Play in its menu launch (TH-504).
+  const launch = useLaunchGame();
+  const openGame = useOpenGame();
+  // The tile menu's "Who made this?" (docs/who-made-this-demo-plan.md): Nova
+  // opens beside the page and is asked, for games with credits — while the
+  // agent is added from Forge.
+  const ask = useNovaAsk();
+  const { setNovaPinned } = useSettings();
+  const { has: added } = useAgents();
+  const toggleFavorite = (id: string) => collections.toggle(FAVORITES_ID, id);
 
   const onToggleFilter = (facet: Facet, value: string) =>
     setFilters((f) => ({ ...f, [facet]: f[facet].includes(value) ? f[facet].filter((v) => v !== value) : [...f[facet], value] }));
 
-  // The Favorites quick view reads the live favorites set (so ••• → toggle updates it).
+  // The Favorites quick view and the collection chips read the live store (so ••• → toggle updates them).
   const quickTest = (g: Game): boolean =>
-    quick === 'favorites' ? favorites.has(g.id) : (QUICK_VIEWS.find((q) => q.id === quick)?.test(g) ?? true);
+    quick === 'favorites'
+      ? collections.has(FAVORITES_ID, g.id)
+      : quick.startsWith('col:')
+        ? collections.has(quick.slice(4), g.id)
+        : (QUICK_VIEWS.find((q) => q.id === quick)?.test(g) ?? true);
+  // The collections after Favorites (which is a quick view) — one chip each.
+  const collectionChips = collections.collections.filter((c) => c.id !== FAVORITES_ID);
+
+  // `?collection=<id>` — a game panel's collection pill (TH-505): the library
+  // shows that collection, scrolls into view, and the param goes (a reload
+  // keeps the page, not a filter the person did not choose again).
+  const [params, setParams] = useSearchParams();
+  const wantCollection = params.get('collection');
+  useEffect(() => {
+    if (!wantCollection) return;
+    if (wantCollection === FAVORITES_ID) applyQuick('favorites');
+    else if (collections.collections.some((c) => c.id === wantCollection)) applyQuick(`col:${wantCollection}`);
+    const p = new URLSearchParams(params);
+    p.delete('collection');
+    setParams(p, { replace: true });
+    requestAnimationFrame(() => document.getElementById('my-games')?.scrollIntoView({ block: 'start' }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantCollection]);
   const filtered = INSTALLED.filter((g) => !removed.has(g.id) && quickTest(g) && passesFilters(g, filters));
   const sorted = sortGames(filtered, sort);
   const limit = perPage === 'all' ? sorted.length : Number(perPage);
@@ -314,6 +353,11 @@ export function PlayLibrary() {
           {QUICK_VIEWS.map((q) => (
             <Chip key={q.id} selected={!activeCustom && quick === q.id} onClick={() => applyQuick(q.id)}>
               {q.name}
+            </Chip>
+          ))}
+          {collectionChips.map((c) => (
+            <Chip key={c.id} selected={!activeCustom && quick === `col:${c.id}`} onClick={() => applyQuick(`col:${c.id}`)} data-collection={c.id}>
+              {c.name}
             </Chip>
           ))}
           {views.map((v) => (
@@ -357,6 +401,8 @@ export function PlayLibrary() {
             name={labels ? g.title : undefined}
             aria-label={g.title}
             glow
+            onClick={() => openGame(g.id)}
+            onPlay={() => launch(g.id)}
             onMenu={(e) => setMenu({ game: g, anchor: e.currentTarget.getBoundingClientRect() })}
             menuOpen={menu?.game.id === g.id}
           />
@@ -367,15 +413,26 @@ export function PlayLibrary() {
         <GameTileMenu
           game={menu.game}
           anchor={menu.anchor}
-          favorite={favorites.has(menu.game.id)}
-          optimize={optOf(menu.game)}
+          favorite={collections.has(FAVORITES_ID, menu.game.id)}
+          optimize={optimize.of(menu.game)}
           platform={platOf(menu.game)}
           onClose={() => setMenu(null)}
+          onPlay={() => launch(menu.game.id)}
+          onDetails={() => openGame(menu.game.id)}
+          collections={collectionChips.map((c) => ({ id: c.id, name: c.name, checked: c.gameIds.includes(menu.game.id) }))}
+          onToggleCollection={(id) => collections.toggle(id, menu.game.id)}
+          onNewCollection={(name) => collections.add(name, [menu.game.id])}
+          onWhoMade={
+            ask && added(WHO_MADE_THIS_AGENT) && CREDITS_BY_ID[menu.game.id]
+              ? () => {
+                  setNovaPinned(true);
+                  ask(`Who made ${menu.game.title}?`);
+                }
+              : undefined
+          }
           onToggleFavorite={() => toggleFavorite(menu.game.id)}
           onRemove={() => setRemoved((s) => new Set(s).add(menu.game.id))}
-          onSetOptimize={(key, value) =>
-            setOptimize((m) => ({ ...m, [menu.game.id]: { ...optOf(menu.game), [key]: value } }))
-          }
+          onSetOptimize={(key, value) => optimize.set(menu.game.id, key, value, optimize.of(menu.game))}
           onSetPlatform={(value) => setPlatform((m) => ({ ...m, [menu.game.id]: value }))}
         />
       )}

@@ -9,7 +9,7 @@ const meta: Meta<typeof Avatar> = {
   component: Avatar,
   args: { variant: 'empty', size: 24 },
   argTypes: {
-    variant: { control: 'inline-radio', options: ['empty', 'wallpaper', 'app', 'custom'] },
+    variant: { control: 'inline-radio', options: ['empty', 'wallpaper', 'app', 'custom', 'initials'] },
     size: { control: { type: 'range', min: 16, max: 96, step: 4 } },
     src: { control: false },
   },
@@ -30,7 +30,13 @@ export const App: Story = { args: { variant: 'app', src: appIcon, alt: 'App' } }
 /** Custom photo, cover-filling the circle. */
 export const Custom: Story = { args: { variant: 'custom', src: wallpaper, alt: 'Profile' } };
 
-/** All four content variants at the default 24px size. */
+/**
+ * A monogram for a person with no photo — Who Made This's cast rows. The
+ * letters are decorative; the name stands beside the avatar.
+ */
+export const Initials: Story = { args: { variant: 'initials', initials: 'KR', size: 32 } };
+
+/** All five content variants at the default 24px size. */
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
@@ -38,6 +44,7 @@ export const AllVariants: Story = {
       <Avatar variant="wallpaper" />
       <Avatar variant="app" src={appIcon} alt="App" />
       <Avatar variant="custom" src={wallpaper} alt="Profile" />
+      <Avatar variant="initials" initials="KR" />
     </div>
   ),
 };

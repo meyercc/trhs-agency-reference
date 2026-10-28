@@ -5,12 +5,23 @@
  * Scans CSS files for hardcoded values that should use design tokens,
  * and finds tokens defined in tokens.css but never referenced anywhere.
  *
- * Usage:  node .skills/skills/token-audit/scripts/audit-compliance.mjs [--json] [--fix-hints]
+ * Usage:  node .claude/skills/token-audit/scripts/audit-compliance.mjs [--json] [--fix-hints] [--summary]
  *
  * Flags:
  *   --json        Output results as JSON (for programmatic use)
  *   --fix-hints   Include suggested var() replacements in output
+ *   --summary     Counts per file and category only, no per-line listing
  *   --file <path> Audit a single CSS file instead of all
+ *
+ * Two kinds of finding (2026-10-20):
+ *   match       a raw value that an existing token already holds — swap it.
+ *   untokened   a raw value no token holds yet — a design decision, not a typo.
+ * Until 2026-10-20 only `match` existed: a raw value was reported only when it
+ * happened to equal a token, so the Hadouken type ramp's line-heights and
+ * every rgba() passed as "clean". Typography (font-size, line-height,
+ * font-weight, px letter-spacing) and colour (hex, rgb[a], hsl[a]) now report
+ * BOTH kinds. Spacing, radius, family and duration still report `match` only:
+ * their raw dimensions are often component geometry with no token to name.
  */
 
 import { readFileSync, readdirSync, statSync } from 'fs';
@@ -24,6 +35,7 @@ const ROOT = resolve(__dirname, '../../../..');
 const args = process.argv.slice(2);
 const JSON_OUTPUT = args.includes('--json');
 const FIX_HINTS = args.includes('--fix-hints');
+const SUMMARY = args.includes('--summary');
 const SINGLE_FILE = args.includes('--file') ? args[args.indexOf('--file') + 1] : null;
 
 // ── Colors (skipped in JSON mode) ─────────────────────
@@ -75,6 +87,9 @@ function buildTokenSets(tokens) {
   const fontFamilies = new Map();// normalized family → token name
   const shadows = new Map();     // normalized shadow → token name
   const durations = new Map();   // e.g. "200ms" → token name
+  const lineHeights = new Map(); // "Npx" → token name
+  const weights = new Map();     // "700" → token name
+  const tracking = new Map();    // "0.4px" → token name
 
   for (const [name, { value }] of tokens) {
     const v = value.toLowerCase().trim();
@@ -98,9 +113,25 @@ function buildTokenSets(tokens) {
       radii.set(v, name);
     }
 
-    // Font size tokens
-    if (name.startsWith('--text-') && v.endsWith('px')) {
-      fontSizes.set(v, name);
+    // Font size tokens — the UI scale (--text-*) and the type ramp (--type-*-size).
+    // First definition wins, so a ramp value never shadows a UI-scale token.
+    if ((name.startsWith('--text-') || /^--type-.+-size$/.test(name)) && v.endsWith('px')) {
+      if (!fontSizes.has(v)) fontSizes.set(v, name);
+    }
+
+    // Line-height tokens (the type ramp)
+    if (/^--type-.+-lh$/.test(name) && v.endsWith('px')) {
+      if (!lineHeights.has(v)) lineHeights.set(v, name);
+    }
+
+    // Weight tokens: numeric --font-* (bold, semibold, medium, regular, light)
+    if (/^--font-/.test(name) && /^\d{3}$/.test(v)) {
+      weights.set(v, name);
+    }
+
+    // Tracking tokens
+    if (/^--type-tracking-/.test(name)) {
+      tracking.set(v, name);
     }
 
     // Font family tokens
@@ -121,7 +152,7 @@ function buildTokenSets(tokens) {
     }
   }
 
-  return { colors, spacing, radii, fontSizes, fontFamilies, shadows, durations };
+  return { colors, spacing, radii, fontSizes, fontFamilies, shadows, durations, lineHeights, weights, tracking };
 }
 
 // ── 3. Scan a single CSS file ─────────────────────────
@@ -133,7 +164,7 @@ function scanFile(filePath, tokenSets, valueIndex) {
   const relPath = relative(ROOT, filePath);
 
   // Skip tokens.css itself
-  if (relPath.endsWith('tokens.css')) return violations;
+  if (/tokens(\.[\w-]+)?\.css$/.test(relPath)) return violations;
 
   let inBlockComment = false;
 
@@ -160,39 +191,61 @@ function scanFile(filePath, tokenSets, valueIndex) {
     // Skip lines that are pure var() usage (no hardcoded values to find)
     // But still check lines that MIX var() with hardcoded values
 
-    // ── Check: Hex colors ──
+    // Inline comments never count: `color: x; /* was #fff */`.
+    const code = line.replace(/\/\*.*?\*\//g, '');
+    // Is the match inside a var(…) fallback, a url(…) or a data: URI?
+    const shielded = (idx) => {
+      const before = code.slice(0, idx);
+      return /var\([^)]*$/.test(before) || /url\([^)]*$/.test(before) || /data:/.test(before);
+    };
+    const push = (category, raw, map, idx) => {
+      const tokenName = map ? map.get(raw.toLowerCase()) : undefined;
+      violations.push({
+        file: relPath, line: lineNum, category, raw,
+        kind: tokenName ? 'match' : 'untokened',
+        suggestion: tokenName || null,
+        lineContent: line.trim(),
+      });
+    };
+
+    // ── Check: Colors — every hex and rgb[a]/hsl[a] ──
     const hexRE = /(?<![;\w-])#([0-9a-fA-F]{3,8})(?![0-9a-fA-F\w-])/g;
     let m;
-    while ((m = hexRE.exec(line)) !== null) {
-      const hex = m[0].toLowerCase();
-      // Skip if inside a url(), data:, or SVG fill/stroke context
-      const before = line.slice(0, m.index);
-      if (/url\([^)]*$/.test(before) || /data:/.test(before)) continue;
-      // Skip if inside a var() already
-      if (/var\([^)]*$/.test(before)) continue;
-
-      const tokenName = tokenSets.colors.get(hex);
-      if (tokenName) {
-        violations.push({
-          file: relPath, line: lineNum, category: 'color',
-          raw: hex, suggestion: tokenName,
-          lineContent: line.trim(),
-        });
-      }
+    while ((m = hexRE.exec(code)) !== null) {
+      if (shielded(m.index)) continue;
+      push('color', m[0].toLowerCase(), tokenSets.colors, m.index);
+    }
+    const fnRE = /\b(?:rgba?|hsla?)\([^)]*\)/g;
+    while ((m = fnRE.exec(code)) !== null) {
+      if (shielded(m.index)) continue;
+      // A colour function built from tokens (`rgb(from var(--x) …)`, `rgba(var(--rgb), .5)`) is not raw.
+      if (/var\(/.test(m[0])) continue;
+      push('color', m[0].replace(/\s+/g, ' '), null, m.index);
     }
 
-    // ── Check: Font sizes ──
-    const fzMatch = line.match(/font-size:\s*(\d+(?:\.\d+)?px)/);
-    if (fzMatch && !/var\(/.test(line.slice(0, line.indexOf(fzMatch[1])))) {
-      const val = fzMatch[1].toLowerCase();
-      const tokenName = tokenSets.fontSizes.get(val);
-      if (tokenName) {
-        violations.push({
-          file: relPath, line: lineNum, category: 'font-size',
-          raw: val, suggestion: tokenName,
-          lineContent: line.trim(),
-        });
-      }
+    // ── Check: Typography — raw values, token or not ──
+    const decl = (prop) => code.match(new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;]+)`));
+    const fz = decl('font-size');
+    if (fz && !/var\(/.test(fz[1])) {
+      const px = fz[1].match(/\d*\.?\d+(?:px|rem)\b/);
+      if (px) push('font-size', px[0], tokenSets.fontSizes);
+    }
+    const lh = decl('line-height');
+    // Unitless and % line-heights are relative to the font — the house idiom.
+    if (lh && !/var\(/.test(lh[1])) {
+      const px = lh[1].match(/\d*\.?\d+(?:px|rem)\b/);
+      if (px) push('line-height', px[0], tokenSets.lineHeights);
+    }
+    const fw = decl('font-weight');
+    if (fw && !/var\(/.test(fw[1])) {
+      const n = fw[1].trim().match(/^(\d{3}|bold)\b/);
+      if (n) push('font-weight', n[1] === 'bold' ? '700' : n[1], tokenSets.weights);
+    }
+    const ls = decl('letter-spacing');
+    // em tracking scales with the font (relative, like a unitless line-height); px does not.
+    if (ls && !/var\(/.test(ls[1])) {
+      const px = ls[1].match(/-?\d*\.?\d+px\b/);
+      if (px && !/^-?0px$/.test(px[0])) push('letter-spacing', px[0], tokenSets.tracking);
     }
 
     // ── Check: Border radius ──
@@ -202,7 +255,7 @@ function scanFile(filePath, tokenSets, valueIndex) {
       const tokenName = tokenSets.radii.get(val);
       if (tokenName) {
         violations.push({
-          file: relPath, line: lineNum, category: 'border-radius',
+          file: relPath, line: lineNum, category: 'border-radius', kind: 'match',
           raw: val, suggestion: tokenName,
           lineContent: line.trim(),
         });
@@ -221,7 +274,7 @@ function scanFile(filePath, tokenSets, valueIndex) {
           const tokenName = tokenSets.spacing.get(val.toLowerCase());
           if (tokenName) {
             violations.push({
-              file: relPath, line: lineNum, category: 'spacing',
+              file: relPath, line: lineNum, category: 'spacing', kind: 'match',
               raw: val, suggestion: tokenName,
               lineContent: line.trim(),
             });
@@ -241,7 +294,7 @@ function scanFile(filePath, tokenSets, valueIndex) {
         const tokenName = tokenSets.fontFamilies.get(firstFamily);
         if (tokenName) {
           violations.push({
-            file: relPath, line: lineNum, category: 'font-family',
+            file: relPath, line: lineNum, category: 'font-family', kind: 'match',
             raw: rawFamilies.split(',')[0].trim(), suggestion: tokenName,
             lineContent: line.trim(),
           });
@@ -262,7 +315,7 @@ function scanFile(filePath, tokenSets, valueIndex) {
       const tokenName = tokenSets.durations.get(val);
       if (tokenName) {
         violations.push({
-          file: relPath, line: lineNum, category: 'duration',
+          file: relPath, line: lineNum, category: 'duration', kind: 'match',
           raw: m[1], suggestion: tokenName,
           lineContent: line.trim(),
         });
@@ -321,7 +374,9 @@ function findUnusedTokens(tokens, filePaths) {
 
 function collectFiles(dir, extensions = ['.css', '.html', '.js']) {
   const results = [];
-  const skipDirs = new Set(['node_modules', '.git', 'dist', '.skills', 'game-library-service']);
+  // Build output and tooling are not source: storybook-static alone added 50
+  // findings until 2026-10-20.
+  const skipDirs = new Set(['node_modules', '.git', 'dist', 'storybook-static', '_site', '.claude', '.skills', 'game-library-service']);
 
   function walk(d) {
     for (const entry of readdirSync(d)) {
@@ -372,11 +427,15 @@ function main() {
       unused: unusedTokens,
       summary: {
         hardcoded_count: allViolations.length,
+        match_count: allViolations.filter((v) => v.kind === 'match').length,
+        untokened_count: allViolations.filter((v) => v.kind === 'untokened').length,
         unused_count: unusedTokens.length,
         files_scanned: cssFiles.length,
       },
     }, null, 2));
-    process.exit(allViolations.length + unusedTokens.length > 0 ? 1 : 0);
+    // exitCode, not exit(): exit() kills the process before a pipe drains, and
+    // `--json | …` was cut off at 64KB (found 2026-10-20).
+    process.exitCode = allViolations.length + unusedTokens.length > 0 ? 1 : 0;
     return;
   }
 
@@ -392,15 +451,23 @@ function main() {
   }
 
   if (byFile.size > 0) {
-    console.log(`${c.R}${c.B}[HARDCODED]${c.X} ${allViolations.length} value(s) should use tokens:\n`);
+    const nMatch = allViolations.filter((v) => v.kind === 'match').length;
+    console.log(`${c.R}${c.B}[HARDCODED]${c.X} ${allViolations.length} raw value(s): ${c.G}${nMatch} match${c.X} a token, ${c.Y}${allViolations.length - nMatch} untokened${c.X}\n`);
 
     for (const [file, violations] of byFile) {
       console.log(`  ${c.B}${file}${c.X} (${violations.length})`);
+      if (SUMMARY) {
+        const per = {};
+        for (const v of violations) per[`${v.category} ${v.kind}`] = (per[`${v.category} ${v.kind}`] || 0) + 1;
+        console.log(`    ${c.D}${Object.entries(per).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}: ${n}`).join(' · ')}${c.X}\n`);
+        continue;
+      }
       for (const v of violations) {
         const hint = FIX_HINTS && v.suggestion
           ? ` ${c.G}-> var(${v.suggestion})${c.X}`
           : '';
-        console.log(`    ${c.D}L${v.line}${c.X} [${v.category}] ${c.Y}${v.raw}${c.X}${hint}`);
+        const tag = v.kind === 'untokened' ? `${c.D}(no token)${c.X}` : '';
+        console.log(`    ${c.D}L${v.line}${c.X} [${v.category}] ${c.Y}${v.raw}${c.X}${hint} ${tag}`);
         if (FIX_HINTS) {
           console.log(`      ${c.D}${v.lineContent}${c.X}`);
         }
@@ -411,11 +478,12 @@ function main() {
     // Category breakdown
     const byCat = {};
     for (const v of allViolations) {
-      byCat[v.category] = (byCat[v.category] || 0) + 1;
+      byCat[v.category] ||= { match: 0, untokened: 0 };
+      byCat[v.category][v.kind]++;
     }
-    console.log(`  ${c.D}By category:${c.X}`);
-    for (const [cat, count] of Object.entries(byCat).sort((a, b) => b[1] - a[1])) {
-      console.log(`    ${cat}: ${count}`);
+    console.log(`  ${c.D}By category (match / untokened):${c.X}`);
+    for (const [cat, n] of Object.entries(byCat).sort((a, b) => b[1].match + b[1].untokened - (a[1].match + a[1].untokened))) {
+      console.log(`    ${cat}: ${n.match} / ${n.untokened}`);
     }
     console.log();
   }
@@ -447,7 +515,7 @@ function main() {
     console.log(`${c.R}${c.B}${total} issue(s)${c.X}  ${c.D}(${allViolations.length} hardcoded, ${unusedTokens.length} unused)${c.X}\n`);
   }
 
-  process.exit(total > 0 ? 1 : 0);
+  process.exitCode = total > 0 ? 1 : 0;
 }
 
 main();

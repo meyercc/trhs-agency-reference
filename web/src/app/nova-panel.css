@@ -1,0 +1,355 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Nova panel — the chat pinned to the right rail (TH-434). Built on the DS
+   .ds-panel, positioned like .device-panel, and filled with the page's own
+   chat column (.nova-center → .nova-log + .nova-compose, pages/nova.css).
+
+   This file does three things and nothing else: it places the panel, it gives
+   the borrowed Nova classes the page-local variables they expect outside
+   `.nova`, and it applies the narrow-column treatment unconditionally —
+   nova.css only reaches for that below 900px of VIEWPORT, and the panel is
+   380px wide on a 2560px screen.
+   ══════════════════════════════════════════════════════════════════════════ */
+.nova-panel {
+  position: fixed;
+  top: calc(var(--nav-full-h) + var(--gutter-xxs));
+  right: var(--gutter);
+  bottom: var(--gutter);
+  width: var(--nova-panel-w, 380px);
+  max-width: calc(var(--viewport-w) - var(--gutter) * 2);
+  z-index: 40; /* the Devices panel's layer: above content + nav (z-10), below modals (z-51) */
+
+  /* Closed, .ds-panel parks off-canvas but stays in the tab order — a composer
+     you cannot see must not be a tab stop. `visibility` carries it out and
+     back, delayed by the slide so it does not vanish mid-transition. The same
+     move the Nova rails make as drawers (nova.css). */
+  visibility: hidden;
+  transition:
+    transform var(--dur-slow) var(--ease-out),
+    visibility 0s linear var(--dur-slow);
+}
+.nova-panel.open {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+/* ── Resizing (Chris, 2026-10-20) ───────────────────────────────────────
+   The handle is the DS .ds-resize-handle on the panel's left edge; the shell
+   owns the width (--nova-panel-w). While it drags, nothing eases — the panel
+   and the page's reserved room follow the pointer, not a 0.28s curve behind
+   it — and text does not select under the pointer. */
+.shell.nova-resizing,
+.shell.nova-resizing * {
+  user-select: none;
+}
+.shell.nova-resizing .shell-scroll,
+.shell.nova-resizing .nova-panel {
+  transition: none;
+}
+/* Pulled past the widest sidebar: the release will open the full page, and
+   the panel says so over its own content. */
+.novp-snap {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xs);
+  background: color-mix(in srgb, var(--bg-base) 72%, transparent);
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  pointer-events: none;
+}
+.nova-panel.snap-full {
+  border-color: var(--accent-color);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nova-panel {
+    transition: none;
+  }
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────
+   .ds-panel-header is title | close; this one is title | a row of actions
+   ending in the close button. */
+.novp-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+}
+
+/* The conversations popover hangs from a header button and CANNOT escape the
+   panel: .ds-panel is overflow:hidden. On the page the popover aligns its
+   right edge to its trigger, which is fine in a top bar with room either
+   side; in the panel the trigger is the leftmost of four buttons, so a
+   320px panel aligned that way put its left edge 69px OUTSIDE the panel and
+   lost it to the clip (measured 2026-10-02).
+   So in the panel it anchors to the PANEL, not to the button: the wrapper
+   stops being the containing block, the header becomes it, and the popover
+   spans the header's width. It can then never be wider than what contains
+   it, whatever the header grows to hold. */
+.nova-panel .nova-pop-wrap {
+  position: static;
+}
+.nova-panel .ds-panel-header {
+  position: relative;
+}
+.nova-panel .nova-pop {
+  left: var(--gutter-sm);
+  right: var(--gutter-sm);
+  width: auto;
+}
+.novp-convos {
+  max-height: calc(60 * var(--vh));
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* ── The chat column ─────────────────────────────────────────────────────
+   On the page, `.nova-center` is a grid track that supplies its own height.
+   Here it is the panel's one flex child. */
+.nova-panel .nova-center {
+  flex: 1;
+  min-height: 0;
+}
+
+/* The narrow-column treatment, applied by width of CONTAINER rather than of
+   window: nova.css does this below 900px of viewport, which a 380px panel on
+   a wide screen never trips. Two 220px selectors do not fit side by side in
+   380px, and eleven wrapped prompt chips would eat the log. */
+.nova-panel .nova-composer-selects {
+  flex-direction: column;
+}
+.nova-panel .nova-composer-selects .ds-dropdown {
+  width: 100%;
+}
+.nova-panel .nova-prompts {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  /* A clipped chip reads as a broken chip. The right edge fades over one
+     gutter so the row says "there is more this way" the way the log's top
+     fade says "this slides under the bar" — and the fade retracts at the end
+     of the scroll, so it is a position indicator and not decoration. */
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--gutter)), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - var(--gutter)), transparent);
+}
+.nova-panel .nova-prompts:not(:hover) {
+  scrollbar-width: none;
+}
+/* Dragged wide (≥640px, NovaPanel), the panel has the room the narrow
+   treatment was saving: the two selectors sit side by side again and the
+   prompt chips wrap instead of scrolling. */
+.nova-panel.wide .nova-composer-selects {
+  flex-direction: row;
+}
+.nova-panel.wide .nova-composer-selects .ds-dropdown {
+  width: auto;
+  flex: 1;
+}
+.nova-panel.wide .nova-prompts {
+  flex-wrap: wrap;
+  overflow-x: visible;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* The log's gutter padding is page-scale; at panel width it costs the bubbles
+   their line length. */
+.nova-panel .nova-log,
+.nova-panel .nova-prompts,
+.nova-panel .nova-composer {
+  padding-left: var(--gutter-sm);
+  padding-right: var(--gutter-sm);
+}
+
+/* ── Over the page ───────────────────────────────────────────────────────
+   The page reserves the panel's DEFAULT width and no more (shell.css,
+   2026-10-20). Wider than that, or on a window too narrow for any
+   reservation (`.shell.rail-overlay`), the panel is a surface floating over
+   content, and it says so with the elevation modals use — without it the
+   overlap reads as the page having been cut off. AppShell sets `floating`
+   from the same two facts. */
+.nova-panel.floating {
+  box-shadow: var(--shadow-lv-4);
+}
+
+/* ── Compact windows: a sheet ─────────────────────────────────────────────
+   A phone has no room beside the page. The panel fills the space between the
+   top bar and the bottom nav (both stay: the top bar's chat button is this
+   panel's own toggle, the bottom nav is how you leave). No resize — there is
+   nothing to resize against. */
+@media (--bp-compact) {
+  .nova-panel {
+    top: var(--nav-full-h);
+    right: 0;
+    bottom: calc(var(--nav-bottom-h) + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    width: auto;
+    max-width: none;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+  .nova-panel .ds-resize-handle {
+    display: none;
+  }
+}
+
+/* ── The header's status (TH-507) ────────────────────────────────────────
+   "Nova" over one caption line saying what it is doing, in words: the scan
+   line below is the motion, this is the reading. */
+.novp-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.novp-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+/* An agent's word on its own story, beside Ready (TH-509). */
+.novp-agent-status {
+  margin-left: var(--gutter-xxs);
+  font-variant-numeric: tabular-nums;
+}
+.novp-status-dot {
+  width: calc(var(--gutter-xxs) + var(--gutter-xxxs));
+  height: calc(var(--gutter-xxs) + var(--gutter-xxxs));
+  border-radius: var(--radius-full);
+  background: var(--green);
+}
+.nova-panel.busy .novp-status-dot {
+  background: var(--ksg-hyperx);
+  animation: novp-blink var(--dur-xslow) var(--ease-default) infinite alternate;
+}
+@keyframes novp-blink {
+  to {
+    opacity: 0.3;
+  }
+}
+
+/* Thinking: a streak sweeps the header's bottom edge — the accent leading
+   into the HyperX red, the same pairing as the FAB's ring. */
+.nova-panel .ds-panel-header {
+  position: relative;
+}
+.nova-panel .ds-panel-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: var(--gutter-xxxs);
+  background: linear-gradient(90deg, transparent, var(--accent-color) 40%, var(--ksg-hyperx) 70%, transparent);
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity var(--dur-normal) var(--ease-default);
+  pointer-events: none;
+}
+.nova-panel.busy .ds-panel-header::after {
+  opacity: 1;
+  animation: novp-scan calc(var(--dur-xslow) * 3) var(--ease-default) infinite;
+}
+@keyframes novp-scan {
+  from {
+    background-position: -100% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* ── The window (TH-507) ─────────────────────────────────────────────────
+   What the Nova FAB opens: a chat window over the page, its bottom-right
+   corner held just above the button, grown out of that corner on a spring
+   and tucked back into it. It reserves nothing (AppShell) — it is a surface
+   over the page, so it takes the opaque panel surface and the modal
+   elevation from the start. The FAB's size and offsets come from the shell
+   (`--nova-fab-clear`, shell.css). Its width is the shell's `--nova-panel-w`
+   — resized from the left edge like the rail, remembered on its own
+   (AppShell `novaWindowW`, default 400) — and its height the shell's
+   `--nova-window-h`, resized from the top edge (`novaWindowH`, default 640),
+   both clamped to the window here as well. */
+.nova-panel.window {
+  top: auto;
+  bottom: var(--nova-fab-clear);
+  height: min(var(--nova-window-h, 640px), calc(100 * var(--vh) - var(--nav-full-h) - var(--nova-fab-clear) - var(--gutter)));
+  background: var(--ksg-panel-surface);
+  box-shadow: var(--shadow-lv-4);
+  /* Grown from the button's centre: it sits half its size in from this edge. */
+  transform-origin: calc(100% - var(--nova-fab-size) / 2) 100%;
+  /* Closed: shrunk toward the button and faded — never the rail's slide. */
+  opacity: 0;
+  transform: translateY(var(--gutter-sm)) scale(0.6);
+  transition:
+    transform var(--dur-slow) var(--ease-in),
+    opacity var(--dur-normal) var(--ease-in),
+    visibility 0s linear var(--dur-slow);
+}
+.nova-panel.window.open {
+  opacity: 1;
+  transform: none;
+  transition:
+    transform var(--dur-slow) var(--ease-spring),
+    opacity var(--dur-fast) var(--ease-out),
+    visibility 0s;
+}
+/* The conversation rises in a beat after the window, so the open reads as
+   the window arriving and then filling, not as one block popping. */
+.nova-panel.window.open .nova-center {
+  animation: novp-rise var(--dur-slow) var(--ease-out) var(--dur-fast) backwards;
+}
+@keyframes novp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--gutter-xs));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nova-panel.window,
+  .nova-panel.window.open {
+    transform: none;
+    transition:
+      opacity var(--dur-fast) linear,
+      visibility 0s linear var(--dur-fast);
+  }
+  .nova-panel.window.open {
+    transition: opacity var(--dur-fast) linear;
+  }
+  .nova-panel.window.open .nova-center,
+  .nova-panel.busy .ds-panel-header::after,
+  .nova-panel.busy .novp-status-dot {
+    animation: none;
+  }
+}
+
+/* A phone: the window is the same sheet the rail becomes, between the top
+   bar and the bottom nav; the FAB stands down while it is open (AppShell). */
+@media (--bp-compact) {
+  .nova-panel.window {
+    top: var(--nav-full-h);
+    bottom: calc(var(--nav-bottom-h) + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    height: auto;
+    transform-origin: 100% 100%;
+  }
+}
+
+/* ── The FAB's place (TH-507) ────────────────────────────────────────────
+   The host's half of `.ds-fab`: fixed in the corner, on the panels' layer,
+   above the bottom nav on a phone. On the Tooltip's wrap, not the button, so
+   the tooltip travels with it; the extra class out-ranks the wrap's own
+   `position: relative`. */
+.ds-tooltip-wrap.nova-fab {
+  display: inline-flex;
+  position: fixed;
+  right: var(--gutter);
+  bottom: calc(var(--gutter) + var(--nova-fab-lift));
+  z-index: 41; /* one above the Nova window (40), so the ring is never under its shadow */
+}

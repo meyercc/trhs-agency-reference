@@ -18,6 +18,7 @@ import {
 } from '../components';
 import { type ResolvedSku, type Features, deviceImageUrl, heroImageFile, getSku } from './skus';
 import { useDeviceProfileBar, type ProfileBarState } from './ProfileBar';
+import { ProfileLightsPower, ProfileLightsTab } from './ProfileLights';
 import {
   TYPE_LABEL,
   TYPE_ICON,
@@ -34,6 +35,7 @@ import {
   type SpecTabDef,
 } from './specSchema';
 import { deviceTabs } from './deviceTabs';
+import { useSettings } from '../state/Settings';
 
 /**
  * The generic spec-sheet device canvas — one NG3 canvas for every long-tail
@@ -243,7 +245,8 @@ export function SpecCanvas({
   // These devices have no onboard slots, so no bar renders — but the hook is
   // still how a software setting reaches the active profile.
   const profile = useDeviceProfileBar(sku);
-  const tabs = deviceTabs(sku) as SpecTabDef[];
+  const { mvpScope } = useSettings();
+  const tabs = deviceTabs(sku, mvpScope) as SpecTabDef[];
   const usingFallback = tabs.length === 0;
   const shown = usingFallback ? [FALLBACK_TAB] : tabs;
 
@@ -293,6 +296,7 @@ export function SpecCanvas({
         <Ng3Panel
           width={active.width}
           header={active.title}
+          headerExtra={active.id === 'lighting' && !active.sections ? <ProfileLightsPower profile={profile} /> : undefined}
           tools={shown.map((t) => (
             <Ng3Tool
               key={t.id}
@@ -311,6 +315,10 @@ export function SpecCanvas({
         >
           {usingFallback ? (
             <FallbackTab features={f} />
+          ) : active.id === 'lighting' && !active.sections ? (
+            // The tower's Lights tab is not a spec schema tab (deviceTabs adds
+            // it): the shared preset library, like every lit device.
+            <ProfileLightsTab key={profile.revision} profile={profile} />
           ) : (
             <SpecTabBody
               key={`${active.id}:${profile.revision}`}

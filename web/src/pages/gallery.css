@@ -1,5 +1,14 @@
 /* Play → Gallery (gated by the `gallery` module). A responsive screenshot/clip
    grid with a hover-reveal caption. Token-only. */
+/* One game's page of the gallery (TH-505): what it shows, and the way back. */
+.gal-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  margin-bottom: var(--gutter-sm);
+  color: var(--text-dim);
+}
 .gal-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -19,6 +28,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  background: var(--surface) center / cover no-repeat;
   display: block;
   transition: transform 0.3s var(--ease-default, ease);
 }

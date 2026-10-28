@@ -1,0 +1,186 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   LAPTOP CANVAS — the OMEN 16 modal's own layer over the shared keyboard
+   canvas. Everything structural (`.dc-*`, `.kbd-*`) comes from
+   device-canvas.css + keyboard-canvas.css; this file holds only what a
+   notebook has and a standalone keyboard does not: a product photo where the
+   board would be, and the Performance tab's two columns.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.lc-canvas {
+  --lc-hero-max: 720px;
+  /* A notebook render is wide and short, and the Performance tab's panel is
+     content-heavy. Give the hero a taller floor than the peripheral default
+     (160px, device-canvas.css) so the product still reads as the hero. */
+  --dc-hero-min-h: 280px;
+}
+/* …but not at the cost of the fold. Measured at 1440 wide: with the 280px floor
+   the Performance tab overflowed at 800px tall while the keyboard and headset
+   canvases still fit, so this device was ~100px worse than its siblings on a
+   short laptop screen. Below 900px the floor returns to the shared default and
+   the laptop fits wherever they do (TH-424). */
+@media (max-height: 900px) {
+  .lc-canvas {
+    --dc-hero-min-h: 180px;
+  }
+}
+
+/* ── Hero photo (Performance + Settings tabs) ──────────────────────────────
+   `.dc-hero img` caps every canvas photo at 60% / 560px, which is right for a
+   mouse and wrong for a 16" notebook — the laptop reads as a speck at that
+   width. Two classes beat that one-class-one-element rule without !important.
+   ──────────────────────────────────────────────────────────────────────── */
+.lc-hero .lc-hero-img {
+  max-width: min(86%, var(--lc-hero-max));
+  max-height: 100%;
+  object-fit: contain;
+  /* The render ships on white; the same accent pool every device photo sits in
+     (device-card.css) keeps it from floating on the dark canvas. */
+  filter: drop-shadow(0 var(--gutter-xs) var(--gutter) color-mix(in srgb, var(--accent-color), transparent 80%));
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── Performance tab ──────────────────────────────────────────────────────
+   Two columns: the glance (wider — it carries three gauges side by side) and
+   the hand-off. The gauges must stay on ONE row; stacked, they made the panel
+   taller than the viewport and pushed the spec list off the bottom.
+   ──────────────────────────────────────────────────────────────────────── */
+.lc-perf > .ds-ng3-col {
+  flex: 1.5;
+}
+.lc-perf-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lc-vitals {
+  display: flex;
+  gap: var(--gutter-sm);
+  flex-wrap: nowrap;
+  justify-content: space-around;
+}
+.lc-vital {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  min-width: 0;
+}
+
+/* The named silicon under the gauges — a definition list, so the pairing is in
+   the markup and not only in the columns. The rows `display: contents` so the
+   label/value pairs land on the parent grid's two tracks. */
+.lc-spec {
+  margin: var(--gutter-sm) 0 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--gutter-xxs) var(--gutter-sm);
+  align-items: baseline;
+}
+.lc-spec-row {
+  display: contents;
+}
+.lc-spec-row dt {
+  color: var(--text-dim);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+.lc-spec-row dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+}
+
+.lc-perf-desc {
+  margin: var(--gutter-xs) 0 0;
+  color: var(--text-dim);
+  font-size: var(--text-caption);
+  /* No line-height token exists; this is the ratio the sibling description
+     paragraphs use (device-settings.css, headset-canvas.css). */
+  line-height: 1.45;
+}
+
+/* Doors to the Performance page's cards: the list row the app uses for doors
+   in modals (ListItem), reading under the label, a chevron at the end. */
+.lc-doors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+  margin-top: var(--gutter-sm);
+}
+.lc-perf-lead {
+  margin-top: 0;
+}
+.lc-perf-lead + .lc-doors {
+  margin-top: var(--gutter-xs);
+}
+.lc-door {
+  cursor: pointer;
+}
+/* The System Vitals door, on the label's line at the column's right edge. */
+.lc-perf-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+}
+.lc-door-inline {
+  width: auto;
+}
+
+/* ── The PC's page, both machines (.pc-canvas) ──────────────────
+   Every tab's panel is one height, so switching tabs moves nothing but the
+   camera: the panel takes the tallest tab's height, a short tab leaves room
+   below its content, a long one scrolls inside. On a short viewport the
+   panel gives way before the hero does (the hero's floor is above). The
+   value is canvas geometry, like --dc-hero-min-h: the tallest tab (Chassis
+   lighting on Custom, the Macro tab with its library) measured at 1440×900. */
+.pc-canvas {
+  --pc-panel-h: 440px;
+}
+.pc-canvas .dc-panel-wrap {
+  flex: 0 1 var(--pc-panel-h);
+}
+.pc-canvas .dc-panel-wrap .ds-ng3-panel {
+  flex: 1;
+}
+/* The tab body is the panel body's own child (`bare`), or the profile scope's
+   (display: contents). Whatever it is, it takes the room and scrolls. */
+.pc-canvas .dc-panel-wrap .ds-ng3-body > :not(.ds-ng3-header),
+.pc-canvas .dc-panel-wrap .pb-scope-body > * {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ── Macro tab ──────────────────────────────────────────────────────────── */
+.lc-macro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  min-height: 0;
+}
+/* The one thing to see first: how many keys take a macro. */
+.lc-macro-note {
+  flex: none;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xs) var(--gutter-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: var(--text-caption);
+}
+.lc-macro-note b {
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
+}
+.lc-macro > .mp {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+

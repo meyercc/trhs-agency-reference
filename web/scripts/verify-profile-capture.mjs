@@ -237,7 +237,8 @@ const kbdBag = () => evalJs(`(() => {
   const p = s.profiles.find(x => x.id === s.activeId) || {};
   return (p.devices || {})['origins-65'] || {};
 })()`);
-const painted = () => evalJs(`[...document.querySelectorAll('.kbd-key')].filter(k => k.style.getPropertyValue('--key-rgb')).length`);
+// The photo board (origins-65) draws paint on a canvas; a key it shows paint on carries data-paint.
+const painted = () => evalJs(`document.querySelectorAll('.kbp-board [data-paint]').length`);
 const activePresetIndex = () => evalJs(`[...document.querySelectorAll('.pdm-preset')].findIndex(p => p.classList.contains('active'))`);
 
 await evalJs(`['trhs-profiles','lightPresets'].forEach(k => localStorage.removeItem(k))`);
@@ -262,6 +263,28 @@ const storedPresets = () => evalJs(`(JSON.parse(localStorage.getItem('lightPrese
 const factoryCount = await presetCount();
 await evalJs(`document.querySelector('.pdm-preset-fab')?.click()`);
 await sleep(200);
+// The editor takes the list's place with the macro editor's head: one title in
+// the panel (its LIGHTS), "‹ Presets" back, the state right, the name a field.
+const editorShape = await evalJs(`JSON.stringify({
+  editor: !!document.querySelector('.pdm-editor'),
+  list: !!document.querySelector('.pdm-presets-grid'),
+  overlay: !!document.querySelector('.pdm-lights .ds-overlay-panel'),
+  back: document.querySelector('.pdm-editor-back')?.textContent.trim(),
+  state: document.querySelector('.pdm-editor-state')?.textContent,
+  name: document.querySelector('.pdm-editor input[aria-label="Preset name"]')?.value,
+})`);
+const shape = JSON.parse(editorShape || '{}');
+check('the preset editor replaces the list, with no second title',
+  shape.editor && !shape.list && !shape.overlay, editorShape);
+check('its head is "‹ Presets" back and the state; the name is a field',
+  shape.back === 'Presets' && shape.state === 'New' && shape.name === 'New Preset', editorShape);
+await evalJs(`document.querySelector('.pdm-editor-back')?.click()`);
+await sleep(200);
+check('"‹ Presets" goes back to the list without saving',
+  (await presetCount()) === factoryCount && !(await evalJs(`!!document.querySelector('.pdm-editor')`)),
+  `${await presetCount()} presets`);
+await evalJs(`document.querySelector('.pdm-preset-fab')?.click()`);
+await sleep(200);
 await evalJs(`document.querySelector('.pdm-editor .ds-btn.accent')?.click()`);
 await sleep(300);
 check('saving in the preset editor adds a preset at the front',
@@ -284,12 +307,12 @@ await open('origins-65', 'keys');
 await evalJs(`document.querySelector('.pdm-cat')?.click()`);
 await sleep(200);
 await evalJs(`document.querySelector('.pdm-keycap')?.click()`);
-await evalJs(`document.querySelector('.kbd-key[aria-label="Q"]')?.click()`);
+await evalJs(`document.querySelector('.kbp-board [data-code="q"]')?.click()`);
 await sleep(500);
 kb = await kbdBag();
 check('assigning a key captures the binding', Object.keys(kb['keys.binds'] || {}).length === 1, JSON.stringify(kb['keys.binds'] || null));
 await open('origins-65', 'keys');
-const qKind = await evalJs(`document.querySelector('.kbd-key[aria-label="Q"]')?.dataset.kind`);
+const qKind = await evalJs(`document.querySelector('.kbp-board [data-code="q"]')?.dataset.kind`);
 check('the assignment is still on the key after a reload', qKind === 'custom', `data-kind=${qKind}`);
 
 // Leave the app as we found it — other suites read this state.

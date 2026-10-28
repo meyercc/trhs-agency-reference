@@ -265,6 +265,88 @@ html.light .kbd-qs-icon.active {
   touch-action: none;
 }
 
+/* One panel height for every tab, so the hero above it — and the keyboard in
+   it — keep one size as the tabs switch (NGENUITY's --ng-tab-h-keyboard). The
+   height is the Lights tab's body at its natural size, the tallest of the
+   three; a basis, not a height, so a short window still shrinks the panel.
+   The standalone keyboard only — the laptop canvas shares these classes. */
+.kbd-canvas {
+  --kbd-tab-h: 396px;
+}
+.kbd-canvas:not(.lc-canvas) .kbd-panel-wrap .ds-ng3-body {
+  box-sizing: border-box;
+  flex: 0 1 var(--kbd-tab-h);
+}
+
+/* ── Photo board (.kbp-*) ─────────────────────────────── */
+/* The keyboard's top-down render with a Keycap over every cap
+   (`KeyboardPhoto`), for a SKU in `keyboardRenders.ts`. The board is the
+   render's own box (--kbp-w × --kbp-h, unitless, set from the registry);
+   keys are placed in its percentages. As wide as the hero allows, never
+   past the render's native width (1:1), never taller than what the layer
+   toggle or rail leaves. */
+.kbp-stage {
+  width: 100%;
+  height: 100%;
+}
+.kbp-board {
+  position: relative;
+  flex: none;
+  width: min(
+    var(--kbp-w) * 1px,
+    100%,
+    (100cqh - var(--control-height) - var(--gutter)) * var(--kbp-w) / var(--kbp-h)
+  );
+  aspect-ratio: var(--kbp-w) / var(--kbp-h);
+}
+.kbp-board[data-marquee] {
+  cursor: crosshair;
+  user-select: none;
+  touch-action: none;
+}
+/* `.dc-hero img` sizes the product photo for the Settings tab; the board's
+   render is the board's own box instead. */
+.dc-hero .kbp-photo {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  filter: none;
+  user-select: none;
+  pointer-events: none;
+}
+.kbp-board > .ds-keycap {
+  position: absolute;
+}
+/* Settings (`KeyboardRenderHero`): the product render on the board's box.
+   The spacer stands in for the layer toggle / rail, so the board sits where
+   it does on Lights and Keys; the render overflows the box by its
+   transparent margin (--kbp-bleed) so its keyboard lands on the box. */
+.kbp-spacer {
+  flex: none;
+  height: var(--control-height);
+}
+.dc-hero .kbp-hero {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(100% * var(--kbp-bleed));
+  max-width: none;
+  max-height: none;
+  transform: translate(-50%, -50%);
+}
+/* The backlight sits under the render and fills its box; the light shows
+   through the gaps between caps and the legends. */
+.kbp-backlight {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 /* ── Settings tab ─────────────────────────────────────── */
 /* Sections/labels/gaps come from the shared .ds-ng3-* primitives —
    only keyboard-specific layout lives below. */
@@ -279,21 +361,6 @@ html.light .kbd-qs-icon.active {
 }
 .pdm-settings-mode {
   flex: 1;
-}
-.pdm-settings-fw {
-  font-size: var(--text-body);
-  color: var(--text-dim);
-}
-.pdm-settings-btns {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter-sm);
-}
-.pdm-settings-btns .ds-btn {
-  width: 100%;
-  justify-content: center;
-  padding: 7px;
-  font-size: var(--text-body);
 }
 .pdm-settings .ds-dropdown {
   width: 100%;
@@ -532,7 +599,7 @@ html.light .kbd-qs-icon.active {
   padding: var(--gutter-xs) var(--gutter-xxxs);
   background: var(--surface-active);
   border: 1px solid var(--border-med);
-  border-radius: 6px;
+  border-radius: var(--radius-key);
   box-shadow: var(--shadow-lv-1);
   color: var(--text-primary);
   font-family: var(--font-display);
@@ -557,6 +624,13 @@ html.light .kbd-qs-icon.active {
 .pdm-keycap.active {
   background: var(--accent-dim);
   border-color: var(--accent-color);
+}
+/* On a photo board a palette keycap can be dragged onto a key. */
+.pdm-keycap[draggable='true'] {
+  cursor: grab;
+}
+.pdm-keycap[draggable='true']:active {
+  cursor: grabbing;
 }
 .pdm-keys-empty {
   padding: var(--gutter) var(--gutter-sm);

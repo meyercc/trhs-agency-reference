@@ -118,6 +118,9 @@ const GROUPS: Group[] = [
   },
 ];
 
+/** What the pack applies at a game launch: the items ticked by default (OGH's 3 essentials). */
+export const DEFAULT_PACK: string[] = GROUPS.flatMap((g) => g.items).filter((i) => i.on).map((i) => i.name);
+
 export interface BoosterModalProps {
   armed: boolean;
   onArmed: (on: boolean) => void;

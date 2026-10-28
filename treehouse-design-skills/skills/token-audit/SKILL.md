@@ -28,11 +28,9 @@ It checks two things:
 2. **Unused tokens** — tokens defined in `tokens.css` but referenced nowhere (cleanup
    candidates).
 
-> **Scope note.** The vanilla `prototype.html`, `prototype.css`, and `design-system.html`
-> are **retired**. Ignore violations the scanner reports inside them — don't "fix" retired
-> files. The living surfaces are `shared/*.css` and `web/` (React + Storybook). The old
-> `npm run audit:tokens` doc-drift check compared tokens to `design-system.html` and is
-> **dead** — do not run it.
+> **Scope note.** The living surfaces are `shared/*.css` and `web/` (React + Storybook).
+> The root `index.html` (project hub) and `configurator/*.html` (SKU editor) are
+> standalone pages outside the system — the scanner reports hits in them; ignore those.
 
 ## When to run this
 
@@ -53,7 +51,8 @@ node .claude/skills/token-audit/scripts/audit-compliance.mjs --fix-hints
 
 `--fix-hints` appends the suggested `→ var(--token-name)` for each hardcoded value.
 
-**Scope the scan to what's live** — the whole-tree walk includes retired vanilla files.
+**Scope the scan to what's live** — the whole-tree walk includes the standalone hub and
+configurator pages.
 When you're checking your own change, target the file you touched:
 
 ```bash
@@ -89,7 +88,7 @@ component) over an inline style whenever one already exists.
 - `tokens.css` itself is excluded (that's where tokens are defined).
 - Custom-property *definitions* (`--my-prop: 16px`) are excluded — those *are* tokens.
 - `1px` / `2px` are allowlisted (too granular to tokenize).
-- **Retired vanilla files** (`prototype*.css`, `design-system.html`) — ignore entirely.
+- **Standalone pages** (root `index.html`, `configurator/*.html`) — outside the system; ignore.
 - **Unused tokens** — a token referenced nowhere in `shared/`, `web/`, or JS
   (`getComputedStyle`/`setProperty`) is a removal candidate — but confirm it isn't used
   dynamically before deleting.

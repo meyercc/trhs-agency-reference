@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Badge, Button, Toggle, Slider, Tooltip } from '../components';
+import { Badge, Button, FanCurve, Toggle, Slider, Tooltip } from '../components';
 import { useSettings } from '../state/Settings';
 import { useModules } from '../state/Modules';
 import { toUnit } from '../state/units';
@@ -66,7 +66,7 @@ export interface PowerThermalProps {
 }
 
 export function PowerThermal({ onOpenFan, onOpenUndervolt, onOpenOverclock }: PowerThermalProps) {
-  const { tempUnit, persona } = useSettings();
+  const { tempUnit, persona, fanCurve } = useSettings();
   const { has } = useModules();
 
   // Persona sets the posture: learner leads with OMEN AI automation, minimalist
@@ -133,14 +133,10 @@ export function PowerThermal({ onOpenFan, onOpenUndervolt, onOpenOverclock }: Po
         <div className="ds-feature-card-title">
           Fan Control <InfoTip content="Maps CPU temperature to fan RPM. Custom curves let you balance cooling and noise." />
         </div>
-        <svg className="fan-curve-svg" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true">
-          <line x1="0" y1="22" x2="200" y2="22" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-          <line x1="0" y1="11" x2="200" y2="11" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-          <line x1="0" y1="33" x2="200" y2="33" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-          <path d="M0,40 C20,38 40,34 60,28 C80,22 100,16 130,10 C155,6 175,4 200,3 L200,44 L0,44 Z" fill="rgba(0,200,215,0.07)" />
-          <path d="M0,40 C20,38 40,34 60,28 C80,22 100,16 130,10 C155,6 175,4 200,3" fill="none" stroke="var(--cyan)" strokeWidth="1.5" strokeLinecap="round" />
-          <circle cx="80" cy="22" r="3" fill="var(--cyan)" opacity="0.8" />
-        </svg>
+        {/* The real curve, compact — the same eight points the OMEN AI modal
+            edits (TH-436). Until then this was a hand-authored path that could
+            not disagree with anything because it was bound to nothing. */}
+        <FanCurve compact points={fanCurve} liveTemp={43} className="fan-curve-mini" aria-label="Current fan curve" />
         <div className="fan-rpm-row">
           <div>
             <span className="fan-rpm-val">2,840</span>

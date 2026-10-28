@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../components';
 
 // ── Clean progress Dialog (PerformV5) ──
@@ -12,11 +12,19 @@ export interface CleanProgressDialogProps {
   title: string;
   result?: string;
   onClose?: () => void;
+  /** Called once, when the clean has run to the end (not on Cancel). */
+  onDone?: () => void;
 }
 
-export function CleanProgressDialog({ title, result = 'Done', onClose }: CleanProgressDialogProps) {
+export function CleanProgressDialog({ title, result = 'Done', onClose, onDone }: CleanProgressDialogProps) {
   const [step, setStep] = useState(0);
   const done = step >= STEPS.length - 1;
+  const reported = useRef(false);
+  useEffect(() => {
+    if (!done || reported.current) return;
+    reported.current = true;
+    onDone?.();
+  }, [done, onDone]);
 
   useEffect(() => {
     if (done) return;

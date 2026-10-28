@@ -15,6 +15,23 @@ export interface CalloutProps extends Omit<React.ButtonHTMLAttributes<HTMLButton
   assigned?: boolean;
   /** The physical control is switched off. Visual only — stays clickable. */
   off?: boolean;
+  /**
+   * `default` — dot + leader + frosted label, anchored at its dot.
+   * `overlay` — the Figma "Button Overlay": a fixed 120 × 40 box with no dot
+   * or motion, placed in a positioned parent at the design's px; pair it with
+   * a `CalloutLeader`. `title` and `status` are not drawn; `armed` hides the
+   * label (give the button an `aria-label`).
+   */
+  variant?: CalloutVariant;
+  /** A drag is over it — the drop target lifts to 80%. */
+  dropTarget?: boolean;
+}
+
+export type CalloutVariant = 'default' | 'overlay';
+
+/** Shared by `Callout` and `CalloutLeader`, so a pair always agrees. */
+function stateClasses({ armed, assigned, off, dropTarget }: Pick<CalloutProps, 'armed' | 'assigned' | 'off' | 'dropTarget'>) {
+  return [armed && 'armed', assigned && 'assigned', off && 'disabled', dropTarget && 'drop'];
 }
 
 /**
@@ -39,19 +56,27 @@ export function Callout({
   armed,
   assigned,
   off,
+  variant = 'default',
+  dropTarget,
   className,
   ...rest
 }: CalloutProps) {
   const classes = [
     'ds-callout',
-    flip ? 'flip' : '',
-    armed ? 'armed' : '',
-    assigned ? 'assigned' : '',
-    off ? 'disabled' : '',
+    variant === 'overlay' && 'overlay',
+    flip && 'flip',
+    ...stateClasses({ armed, assigned, off, dropTarget }),
     className,
   ]
     .filter(Boolean)
     .join(' ');
+  if (variant === 'overlay') {
+    return (
+      <button type="button" className={classes} {...rest}>
+        {!armed && <span className="ds-text-subheadline caps ds-callout-overlay-label">{value}</span>}
+      </button>
+    );
+  }
   return (
     <button type="button" className={classes} {...rest}>
       <span className="ds-callout-dot" aria-hidden="true" />
@@ -62,5 +87,46 @@ export function Callout({
         {status && <span className={['ds-callout-status', status.tone].filter(Boolean).join(' ')}>{status.label}</span>}
       </span>
     </button>
+  );
+}
+
+export interface CalloutLeaderProps extends Omit<React.SVGAttributes<SVGGElement>, 'end'> {
+  /** Where the line leaves the callout — its inner edge, mid-height. */
+  start: [number, number];
+  /** The horizontal run before the corner, in the same units. */
+  run: number;
+  /** The dot on the button. */
+  end: [number, number];
+  armed?: boolean;
+  assigned?: boolean;
+  off?: boolean;
+  dropTarget?: boolean;
+}
+
+/**
+ * The Figma "Connecting Line" from an overlay `Callout` to its button: a
+ * horizontal run, Figma's own corner curve (mirrored toward the dot), then
+ * a straight diagonal to a dot. Renders an SVG `<g>` — place it inside an
+ * `<svg>` whose viewBox is the stage, in the same units as the callouts.
+ * Pass the same state flags as its callout so the two agree.
+ *
+ * Avalonia: a Path with a two-pen style (halo + stroke) and an Ellipse,
+ * in the same adorner layer as the callout.
+ */
+export function CalloutLeader({ start, run, end, armed, assigned, off, dropTarget, className, ...rest }: CalloutLeaderProps) {
+  const sx = Math.sign(end[0] - start[0]);
+  const sy = Math.sign(end[1] - start[1]);
+  const d =
+    `M ${start[0]} ${start[1]} l ${run * sx} 0 ` +
+    `c ${2.1217 * sx} 0 ${4.1566 * sx} ${0.8429 * sy} ${5.6569 * sx} ${2.3431 * sy} ` +
+    `L ${end[0]} ${end[1]}`;
+  const classes = ['ds-callout-leader', ...stateClasses({ armed, assigned, off, dropTarget }), className].filter(Boolean).join(' ');
+  return (
+    <g className={classes} aria-hidden="true" {...rest}>
+      <path className="ds-callout-leader-halo" d={d} />
+      <circle className="ds-callout-leader-halo" cx={end[0]} cy={end[1]} r={1.5} />
+      <path className="ds-callout-leader-stroke" d={d} />
+      <circle className="ds-callout-leader-dot" cx={end[0]} cy={end[1]} r={2.5} />
+    </g>
   );
 }

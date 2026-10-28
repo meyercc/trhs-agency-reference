@@ -1,8 +1,15 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { PSU_MAKERS, setPsuLab, usePsuLab } from '../devices/pcParts';
 import { Badge, Button, Slider, Toggle, ToggleButtonGroup } from '../components';
+import { MacroPanel } from '../devices/MacroPanel';
+import '../devices/macro-panel.css';
+import { PcLightingLab } from '../devices/PcLightingLab';
 import '../widgets/widgets.css';
 import './card-lab.css';
 import './modal-lab.css';
+import { CoolerCapLabPlate } from './CoolerCapLabPlate';
+import { ChassisLightingPlate } from './ChassisLightingPlate';
 
 // ── Modal Lab — the modal side, rendered live ───────────────────────────────
 // Plates visualize docs/modal-registry.md + report Part II (§7–§10) and the
@@ -287,6 +294,77 @@ function RegistryPlate() {
   );
 }
 
+/* M6 — the OMEN power supply's window, on its own. Its facts are the machine's;
+   the toggles stand in for the machine (lcd-diy.14–16, .38; fan-cleaner.33). */
+function PsuPlate() {
+  const [params, setParams] = useSearchParams();
+  const lab = usePsuLab();
+  const open = () => {
+    const p = new URLSearchParams(params);
+    p.set('sku', 'forge-45l-psu');
+    setParams(p);
+  };
+  return (
+    <section className="clab-plate">
+      <h2>M6 · Power supply window <span className="clab-ref">lcd-diy</span></h2>
+      <p className="clab-cap">
+        <b>One window, opened here on its own.</b> It is the same window the PC's entry opens. Set what the machine
+        is, then open it.
+      </p>
+      <div className="mlab-facts">
+        <label><Toggle checked={lab.usb} onChange={(v) => setPsuLab({ usb: v })} aria-label="Has a USB link" /> has a USB link</label>
+        <label><Toggle checked={lab.amd} onChange={(v) => setPsuLab({ amd: v })} aria-label="AMD host" /> AMD host → no automatic clean</label>
+        <label>
+          <Toggle
+            checked={lab.maker === PSU_MAKERS[1]}
+            onChange={(v) => setPsuLab({ maker: PSU_MAKERS[v ? 1 : 0] })}
+            aria-label="Second maker"
+          />{' '}
+          second maker
+        </label>
+        <label>
+          <Toggle checked={lab.force === 'temp'} onChange={(v) => setPsuLab({ force: v ? 'temp' : 'none' })} aria-label="Force high temperature" /> hot
+        </label>
+        <label>
+          <Toggle checked={lab.force === 'current'} onChange={(v) => setPsuLab({ force: v ? 'current' : 'none' })} aria-label="Force high current" /> high current
+        </label>
+      </div>
+      <Button size="sm" variant="accent" onClick={open}>
+        Open power supply window
+      </Button>
+    </section>
+  );
+}
+
+/* M6 — the macro editor on its own: the same component the keyboard's Keys & Macros tab shows. */
+function MacroPlate() {
+  return (
+    <section className="clab-plate" id="macro-editor">
+      <h2>M7 · Macro keys <span className="clab-ref">keys-macros</span></h2>
+      <p className="clab-cap">
+        <b>One editor, opened on its own.</b> P1–P4 each take a macro from the library; Create new
+        records one and tries it in a test area. Keys & Macros › Macro opens this same component
+        (keys-macros.22).
+      </p>
+      <MacroPanel />
+    </section>
+  );
+}
+
+/* M6 — a laptop's lighting editor on its own: keyboard by type, light bar, logo. */
+function LaptopLightingPlate() {
+  return (
+    <section className="clab-plate" id="laptop-lighting">
+      <h2>M8 · Laptop lighting <span className="clab-ref">lighting.6 · .16 · .24 · lighting-family.6</span></h2>
+      <p className="clab-cap">
+        <b>One editor, by what the machine has.</b> Pick the keyboard type, a light bar and a logo; the editor offers
+        only those. The notebook's device window mounts this same editor under Lights. Nothing waits for Apply.
+      </p>
+      <PcLightingLab />
+    </section>
+  );
+}
+
 export function ModalLab() {
   return (
     <div>
@@ -295,11 +373,16 @@ export function ModalLab() {
         The modal side, rendered live — anatomy, the left-panel trial, console row grammar, stacking,
         and the registry. Sources: docs/modal-registry.md · scalability report Part II (§7–§10).
       </p>
+      <ChassisLightingPlate />
       <AnatomyPlate />
       <PanelPlate />
       <RowGrammarPlate />
       <StackPlate />
       <RegistryPlate />
+      <CoolerCapLabPlate />
+      <PsuPlate />
+      <MacroPlate />
+      <LaptopLightingPlate />
     </div>
   );
 }

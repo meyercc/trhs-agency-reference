@@ -34,6 +34,15 @@ export default meta;
 
 type Story = StoryObj<typeof GameTile>;
 
+/**
+ * With `onPlay` the hover ▶ is a real button that launches, apart from the
+ * tile's own press (which opens the game's detail panel, TH-504). Tab into the
+ * tile and once more to reach Play.
+ */
+export const PlayButton: Story = {
+  args: { onPlay: () => alert('Launch'), onClick: () => alert('Open details') },
+};
+
 // Constrain single-tile (args-based) stories to a realistic tile width.
 const w150: Decorator[] = [
   (Story) => (

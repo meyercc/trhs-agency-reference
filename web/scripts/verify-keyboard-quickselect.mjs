@@ -14,11 +14,12 @@
 // Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
 
-const OUT = process.argv[2] || '/tmp';
+const OUT = process.argv[2] || tmpdir();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
@@ -100,9 +101,10 @@ const SNAP = `(() => {
     iconLabel: icon?.getAttribute('aria-label') ?? null,
     // Which preset is lit, and what the board thinks is selected.
     activePresets: [...rail.querySelectorAll('.kbd-qs-btn.active')].map(b => b.textContent.trim() || 'icon'),
-    lit: [...document.querySelectorAll('.kbd-key.lit-sel')].map(k => k.getAttribute('aria-label')),
+    // The photo board (origins-65 has a render): a picked key is a Keycap hit area with .picked.
+    lit: [...document.querySelectorAll('.kbp-board .ds-keycap.picked')].map(k => k.getAttribute('aria-label')),
     marqueeBox: !!document.querySelector('.kbd-marquee'),
-    boardCursor: getComputedStyle(document.querySelector('.kbd')).cursor,
+    boardCursor: getComputedStyle(document.querySelector('.kbp-board')).cursor,
     modalOpen: !!document.querySelector('.dc-canvas'),
   };
 })()`;
@@ -111,7 +113,7 @@ let loadN = 0;
 async function open(send, tab = 'lighting') {
   await send('Page.navigate', { url: `http://localhost:${APP_PORT}/?r=${++loadN}#/?sku=origins-65&tab=${tab}` });
   await waitFor(send, `document.readyState === 'complete' && document.querySelector('#root')?.firstElementChild`);
-  await waitFor(send, `document.querySelector('.kbd-key')`);
+  await waitFor(send, `document.querySelector('.kbp-board .ds-keycap')`);
   await sleep(300);
   return evalJs(send, SNAP);
 }
@@ -169,13 +171,17 @@ async function main() {
   await send('Page.enable');
   await send('Runtime.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 1600, height: 1000, deviceScaleFactor: 2, mobile: false });
+  // localStorage is denied on the runner's blank starting page: load the app first.
+  await send('Page.navigate', { url: `http://localhost:${APP_PORT}/` });
+  await waitFor(send, `document.readyState === 'complete'`);
   await evalJs(send, `localStorage.removeItem('theme')`);
 
   // ── The rail as designed ─────────────────────────────────────────────────
   let s = await open(send);
   check('the rail exists in lighting mode', s?.hasRail === true);
+  // The Origins 65 is a 65%: no F-row, so no Functions group (keyboardRenders.ts).
   check('order matches the design: tool, Reset, divider, then the preset groups',
-    JSON.stringify(s?.order) === JSON.stringify(['icon', 'Reset', '|', 'All', 'WASD', 'QWER', 'Numbers', 'Arrows', 'Functions']),
+    JSON.stringify(s?.order) === JSON.stringify(['icon', 'Reset', '|', 'All', 'WASD', 'QWER', 'Numbers', 'Arrows']),
     JSON.stringify(s?.order));
   check('the designed 32 is the whole control, borders included', s?.height === 32, `${s?.height}px`);
   check('radius is the 16 step, not the 8 of --radius-card', s?.radius === '16px', s?.radius);
@@ -263,7 +269,7 @@ async function main() {
     s?.lit.includes('Z') && s?.lit.length === litBefore + 1, `${litBefore} → ${s?.lit.length}`);
 
   // ── Escape belongs to the tool, not to the modal ─────────────────────────
-  await evalJs(send, `document.querySelector('.kbd').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
+  await evalJs(send, `document.querySelector('.kbp-board').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
   await sleep(300);
   s = await evalJs(send, SNAP);
   check('Escape disarms the tool and leaves the device modal open',

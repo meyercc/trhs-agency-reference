@@ -2,8 +2,12 @@
    The React port of the vanilla `.w-devcard`, on the DS `.w` surface. The card
    is a size container, so its layout adapts to its OWN aspect ratio (set by the
    board/Metro footprint) — the design team owns each size:
-     • wider than tall  → device photo in the right half (the reference design)
-     • square or taller → device photo centered, text below
+     • clearly wider than tall (past 5:4) → device photo in the right half (the
+       reference design; a 3×2 board card, ~1.56)
+     • up to 5:4, square or taller → device photo centered on top, text below
+       (a 2×2 board card is 351×344, ~1.02 — one px on the wide side of 1:1, so
+       it used to flip layouts as the page narrowed; Chris, 2026-10-21: keep the
+       centered one, it has the room and it is the better layout)
    `.dev-battery` / `.dev-shortcuts` come from the shared DS (shared/components.css). */
 .ds-devcard {
   container: devcard / size;
@@ -97,9 +101,32 @@
 .ds-devcard[data-kind='mouse'] {
   --dev-photo-scale: 0.75;
 }
+/* Personalize's Devices row is the exception, on purpose (Kristy, 2026-09-22):
+   there the six cards are one desk, so the big things are allowed to be big and
+   run off the card's RIGHT edge — never left into the name. Scoped to
+   `.pg-devices` so the dashboard's wide card keeps the scale-down-only rule
+   above and the keyboard keeps its right end there. */
+.pg-devices .ds-devcard[data-kind='desktop'] .devw-photo,
+.pg-devices .ds-devcard[data-kind='keyboard'] .devw-photo,
+.pg-devices .ds-devcard[data-kind='headset'] .devw-photo {
+  transform-origin: bottom left;
+}
+.pg-devices .ds-devcard[data-kind='keyboard'] {
+  --dev-photo-scale: 1.45;
+}
+.pg-devices .ds-devcard[data-kind='headset'] {
+  --dev-photo-scale: 1.35;
+}
+.pg-devices .ds-devcard[data-kind='desktop'] {
+  --dev-photo-scale: 1.25;
+}
 
-/* ── Centered photo: square/taller-than-wide, OR the compact ~1×1 size ── */
-@container devcard (max-aspect-ratio: 1 / 1) or ((max-width: 260px) and (max-height: 230px)) {
+/* ── Centered photo: up to 5:4 (the 2×2 card and anything squarer), OR the
+   compact ~1×1 size. 5:4, not 1:1, for the same reason the rich card below
+   splits there: a 2×2 cell is ~1.02 and a 3×2 is ~1.56, and 1.25 divides them
+   cleanly, so the 2×2 card keeps the centered layout at every page width
+   instead of flipping at ~1148 of window (Chris, 2026-10-21). ── */
+@container devcard (max-aspect-ratio: 5 / 4) or ((max-width: 260px) and (max-height: 230px)) {
   .ds-devcard .devw-body {
     flex-direction: column;
   }
@@ -115,11 +142,21 @@
   .ds-devcard[data-kind] .devw-photo {
     transform-origin: bottom center;
   }
+  /* The battery is absolute inside .devw-main, whose `position: relative` makes
+     it the containing block. In the landscape card main is the full-height left
+     column, so "top-left of main" is the card's corner. Here main is a short
+     block at the BOTTOM, and the badge landed on the subtitle ("Wir 84% ouse" —
+     first seen in TH-440's slot beside the carousel; any portrait cell does
+     it). Un-position main so the badge anchors
+     to the card; the text keeps its own stacking so a grown photo stays under it. */
   .ds-devcard .devw-main {
     flex: 0 0 auto;
+    position: static;
   }
   .ds-devcard .devw-textblock {
     margin-top: 0;
+    position: relative;
+    z-index: 1;
   }
 }
 
@@ -367,7 +404,7 @@ html:root .ds-slider.is-managed input[type='range']::-moz-range-thumb {
    one lamp instead of two guesses. Fade reaches 100% when the strip is off,
    which is what hides it — no separate off rule to keep in sync. */
 .ds-devcard.rich.has-underglow .devw-photo {
-  filter: drop-shadow(0 16px 30px color-mix(in srgb, var(--ug-color, var(--orange)), transparent var(--ug-fade, 84%)));
+  filter: drop-shadow(0 4px 18px color-mix(in srgb, var(--accent-color), transparent 80%));
   transition: filter var(--dur-mid, 240ms) ease;
 }
 
@@ -524,55 +561,190 @@ html:root .ds-slider.is-managed input[type='range']::-moz-range-thumb {
   }
 }
 
-/* ── Card face chooser (scope 1.0) ──────────────────────────────────────────
-   `Customize →` sits at the right-hand end of the card's title row — the slot
-   `Manage →` uses on every WidgetShell card — so it reads as a control over the
-   card rather than a fourth row of content. `margin-left: auto` pushes it past
-   the title and the mode chip without either of them needing a width.
-   It follows the rich panel's own visibility: hidden at Compact, where no rows
-   are drawn and so there is nothing to choose. */
-.ds-devcard.rich {
-  position: relative;
-}
-.ds-devcard.rich .devw-face-link {
-  display: none;
-  position: absolute;
-  top: var(--gutter);
-  right: var(--gutter);
-  z-index: 2;
-  white-space: nowrap;
-}
-.devr-face-note {
-  margin: 0 0 var(--gutter) 0;
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-.devr-face-list {
+/* ── Card chooser: ⋮ (Cindy, 2026-10) ──────────────────────────────────────
+   Top-right of the card, a menu of switches for what the card shows. It
+   replaced the "Customize →" link and its modal: the choice is about this
+   card, so it opens on this card. A rich monitor shows it only at the tiers
+   that draw its rows (Compact draws none, so there is nothing to choose); a
+   card with controls always shows it. */
+/* The Customize panel. `CardMenu` places and sizes the popover it sits in
+   (`.card-menu-pop`), so this brings the surface and nothing else — it was
+   absolutely placed under Kristy's own ⋮ button, which the menu replaced. */
+.devw-face-menu {
+  width: 100%;
   display: flex;
   flex-direction: column;
+  gap: var(--gutter-xxxs);
+  padding: var(--gutter-xs);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-med);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lv-3);
+  cursor: default;
 }
-.devr-face-row {
+.devw-face-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--gutter);
-  padding: var(--gutter-sm) 0;
-  border-bottom: 1px solid var(--border-light);
+  min-height: var(--control-height);
+  padding: 0 var(--gutter-xs);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--text-body);
 }
-.devr-face-row:last-child {
-  border-bottom: none;
+.devw-face-row:hover {
+  background: var(--surface-hover);
 }
-
-/* Shown at the two tiers that draw the rich panel. Kept here, after the base
-   rule above, because both selectors have the same specificity — source order
-   is what decides, and an earlier `display: inline-flex` would simply lose. */
+/* "Show on Home" leads, set apart from the card's own rows. */
+.devw-face-home > span {
+  font-weight: var(--font-semibold);
+}
+.devw-face-rule {
+  height: 1px;
+  margin: var(--gutter-xxs) var(--gutter-xs);
+  background: var(--border-light);
+}
 @container devcard (min-height: 280px) {
-  .ds-devcard.rich .devw-face-link {
-    display: inline-flex;
+  .ds-devcard.rich .devw-face {
+    display: block;
   }
 }
 @container devcard (min-width: 640px) and (min-height: 440px) {
-  .ds-devcard.rich .devw-face-link {
-    display: inline-flex;
+  .ds-devcard.rich .devw-face {
+    display: block;
   }
 }
+
+/* ── Controls on the card (Personalize, 2026-10-12) ─────────────────────────
+   The device is where you change it: its most-used settings sit on its card,
+   under the name and photo. Such a card is sized by its content (a board cell
+   does not hold it), so it measures its width only; the identity row keeps the
+   standard card's height above the controls. */
+/* Sizing is the SURFACE's, not the controls' (Chris, 2026-10-13): only
+   Personalize's card grows to its content. On a board cell the card fills the
+   rows it was given and the photo scales with it, like every other widget.
+   It holds with every control switched off (Kristy, 2026-10-13): the identity
+   row stays at the top, level with the cards beside it, and the card's lower
+   part is simply empty rather than the name sliding to the bottom. */
+.ds-devcard.fit-content {
+  container-type: inline-size;
+  min-height: 0;
+  /* Its dropdowns and the ⋮ menu open past the card (2026-10-12: the Color
+     list was cut at the card's edge), so the card no longer clips… */
+  overflow: visible;
+}
+.ds-devcard.fit-content .devw-body {
+  flex: none;
+  min-height: calc(var(--control-height) * 4.5);
+  /* …and the photo is clipped here instead, out to the card's own edge
+     (the card's padding), so a big device still runs off the card, never past it. */
+  overflow: clip;
+  overflow-clip-margin: var(--gutter);
+}
+/* The same card in a Home board cell: the cell sets its size again, and the
+   controls scroll inside what is left under the name and photo. */
+.ds-devcard.fit-content.in-cell {
+  container-type: size;
+}
+.ds-devcard.fit-content.in-cell .devw-body {
+  /* Its own content height (name, type, status, never under the battery), and
+     never so short the photo shrinks to a thumbnail. */
+  min-height: calc(var(--control-height) * 4);
+  flex: none;
+}
+/* The battery joins the text column instead of floating over it (Home shows
+   battery; with controls below there is no empty top-left for it to sit in). */
+.ds-devcard.has-controls.in-cell .dev-battery {
+  position: static;
+  align-self: flex-start;
+  margin-bottom: var(--gutter-xxs);
+}
+/* The tab shortcuts give way to the controls: the card itself opens the device. */
+.ds-devcard.has-controls.in-cell .dev-shortcuts {
+  display: none;
+}
+.ds-devcard.has-controls.in-cell .devw-controls {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+/* An open dropdown sits above the cards that follow it. */
+.ds-devcard.has-controls:focus-within {
+  z-index: 4;
+}
+.devw-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  margin-top: var(--gutter-sm);
+  padding-top: var(--gutter-sm);
+  border-top: 1px solid var(--border-light);
+  cursor: default;
+}
+.devw-ctl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  min-width: 0;
+}
+.devw-ctl-label {
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+
+/* ── A device's parts (JY, 2026-10-22) ─────────────────────────────────────
+   Under the controls: one line per part with a window of its own (the
+   desktop's cooler cap), each a way into it. Always shown, not chosen in the
+   ⋮: a way in is not a setting. */
+.devw-parts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  margin-top: var(--gutter-sm);
+  padding-top: var(--gutter-xs);
+  border-top: 1px solid var(--border-light);
+}
+.devw-part {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--text-caption);
+  text-align: left;
+  cursor: pointer;
+}
+.devw-part:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+.devw-part:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+.devw-part-visual {
+  display: inline-flex;
+  flex: none;
+}
+.devw-part-label {
+  flex: none;
+}
+.devw-part-reading {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+

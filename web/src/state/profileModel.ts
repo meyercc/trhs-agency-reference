@@ -18,11 +18,13 @@ export type TriggerSource = 'manual' | 'schedule' | 'game';
  * Settings a profile may take over. Anything here must be a real Settings
  * schema key — `satisfies` fails the build if one is renamed out from under us.
  *
- * Deliberately appearance-only for now. Desk lighting is NOT here: the
- * Lighting widget holds its state in local `useState` and persists nothing, so
- * there is no baseline to override yet — it has to become a real setting first.
+ * Appearance, plus the desk itself: `deskLighting` became a real setting with
+ * a baseline (Settings SCHEMA), so a profile can own how the desk looks the
+ * same way it owns an accent. Editing the lighting while a profile is active
+ * writes that profile's override — which is what "this profile looks like this"
+ * means to anyone coming from NGENUITY.
  */
-export const OVERRIDABLE = ['accent', 'wallpaper', 'wpBlur', 'wpOpacity'] as const satisfies readonly SettingName[];
+export const OVERRIDABLE = ['accent', 'wallpaper', 'wpBlur', 'wpOpacity', 'deskLighting'] as const satisfies readonly SettingName[];
 export type OverridableName = (typeof OVERRIDABLE)[number];
 export type Overrides = Partial<Record<OverridableName, unknown>>;
 
@@ -70,11 +72,19 @@ export interface ProfileStore {
 export const EMPTY_SCHEDULE: Schedule = { enabled: false, start: 9 * 60, end: 17 * 60, days: [1, 2, 3, 4, 5] };
 export const EMPTY_GAME_LINK: GameLink = { enabled: false, gameIds: [] };
 
-/** The three profiles the app shipped with, now real records rather than labels. */
+/**
+ * The three profiles the app shipped with, now real records rather than labels.
+ *
+ * Two of them arrive with a rule already set (NGENUITY's Game Link and
+ * Schedule), so the first thing a new install shows is a profile that switched
+ * by itself and says why: Gaming follows three linked games, Silent follows
+ * quiet hours. Work has no rule — a meeting on the calendar is a guess, and
+ * guesses ask (Personalize's profile band).
+ */
 export const SEED_PROFILES: Profile[] = [
-  { id: 'gaming', name: 'Gaming', image: 'wp:red', overrides: {}, devices: {}, gameLink: EMPTY_GAME_LINK, schedule: EMPTY_SCHEDULE },
+  { id: 'gaming', name: 'Gaming', image: 'wp:red', overrides: {}, devices: {}, gameLink: { enabled: true, gameIds: ['valorant', 'apex', 'cs2'] }, schedule: EMPTY_SCHEDULE },
   { id: 'work', name: 'Work', image: 'wp:blue', overrides: {}, devices: {}, gameLink: EMPTY_GAME_LINK, schedule: EMPTY_SCHEDULE },
-  { id: 'silent', name: 'Silent', image: 'wp:purple', overrides: {}, devices: {}, gameLink: EMPTY_GAME_LINK, schedule: EMPTY_SCHEDULE },
+  { id: 'silent', name: 'Silent', image: 'wp:purple', overrides: {}, devices: {}, gameLink: EMPTY_GAME_LINK, schedule: { enabled: true, start: 23 * 60, end: 7 * 60, days: [0, 1, 2, 3, 4, 5, 6] } },
 ];
 
 export const DEFAULT_PROFILE_IMAGE = 'wp:abstractv2';
@@ -99,6 +109,10 @@ export const newProfile = (id: string, name: string, image = DEFAULT_PROFILE_IMA
   schedule: EMPTY_SCHEDULE,
 });
 
+/** The default accent was called `cyan` before it was renamed `blue`. */
+const upgradeOverrides = (ov: Profile['overrides']): Profile['overrides'] =>
+  (ov as { accent?: unknown }).accent === 'cyan' ? { ...ov, accent: 'blue' } : ov;
+
 /** Fill a parsed record out to a whole Profile, so a partial payload can't crash a consumer. */
 export function hydrate(raw: Partial<Profile>, i: number): Profile {
   return {
@@ -108,7 +122,7 @@ export function hydrate(raw: Partial<Profile>, i: number): Profile {
       raw.image ||
       COLOR_TO_WALLPAPER[(raw as { color?: string }).color ?? ''] ||
       DEFAULT_PROFILE_IMAGE,
-    overrides: raw.overrides ?? {},
+    overrides: upgradeOverrides(raw.overrides ?? {}),
     devices: raw.devices ?? {},
     gameLink: { ...EMPTY_GAME_LINK, ...(raw.gameLink ?? {}) },
     schedule: { ...EMPTY_SCHEDULE, ...(raw.schedule ?? {}) },
@@ -208,7 +222,11 @@ export function scheduleMatches(s: Schedule, now: Date): boolean {
   const day = now.getDay();
   if (s.start < s.end) return s.days.includes(day) && mins >= s.start && mins < s.end;
   if (mins >= s.start) return s.days.includes(day);
-  return s.days.includes((day + 6) % 7);
+  // The after-midnight tail, and only the tail: between the end and the next
+  // start (e.g. 18:30 in a 23:00 → 07:00 window) is outside it. Without this
+  // check every hour before the start matched (TH-439).
+  if (mins < s.end) return s.days.includes((day + 6) % 7);
+  return false;
 }
 
 /** The first profile whose schedule window covers `now`, or null. */

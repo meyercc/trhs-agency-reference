@@ -3,11 +3,12 @@
 // Dev server $APP_PORT (default 5175), headless Chrome $CDP_PORT (default 9222), run from web/.
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
 
-const OUT = process.argv[2] || '/tmp';
+const OUT = process.argv[2] || tmpdir();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const httpJson = (p) => fetch(`http://localhost:${CDP_PORT}` + p).then((r) => r.json());
 
@@ -69,6 +70,7 @@ const SNAP = `(() => {
     sliders: c.querySelectorAll('.ds-slider, .ds-rail').length,
     dropdowns: c.querySelectorAll('.ds-dropdown').length,
     heroImg: !!c.querySelector('.dc-hero img'),
+    heroAlt: c.querySelector('.dc-hero img')?.getAttribute('alt') ?? null,
     heroGlyph: !!c.querySelector('.sc-hero-glyph'),
     heroAlt: c.querySelector('.dc-hero img')?.getAttribute('alt') ?? null,
     // Nothing may overflow the viewport, and no legacy modal may render.
@@ -201,8 +203,28 @@ async function main() {
   s = await open(send, 'forge-45l-ram');
   check('ram: capacity/speed specs + XMP toggle', s?.spec['Capacity'] === '64 GB' && s?.spec['Speed'] === '7,200 MT/s' && s?.toggles.some(([l]) => l === 'XMP Profile'), JSON.stringify(s?.spec));
 
+  // The OMEN power supply has a window of its own under the full scope
+  // (PsuCanvas); its spec sheet lives on there in the Settings card, drawn by the
+  // same schema. Under June 2027 (set explicitly; full is the default) it is that
+  // spec sheet alone. A stored 27c2 still reads as full.
+  await evalJs(send, `localStorage.setItem('mvpScope', 'june27')`);
   s = await open(send, 'forge-45l-psu');
-  check('psu: single Overview tab, wattage + cap-formatted modular', JSON.stringify(s?.tabs) === JSON.stringify(['Overview']) && s?.spec['Wattage'] === '1,200 W' && s?.spec['Modular'] === 'Fully', JSON.stringify(s?.spec));
+  check('psu (June 2027): the plain spec sheet — one Overview tab, wattage + cap-formatted modular',
+    JSON.stringify(s?.tabs) === JSON.stringify(['Overview']) && s?.spec['Wattage'] === '1,200 W' && s?.spec['Modular'] === 'Fully', `${s?.tabs.join('/')} ${JSON.stringify(s?.spec)}`);
+  await evalJs(send, `localStorage.removeItem('mvpScope')`);
+  s = await open(send, 'forge-45l-psu');
+  check('psu (full, the default): Status, Fan and Settings tabs', JSON.stringify(s?.tabs) === JSON.stringify(['Status', 'Fan', 'Settings']), s?.tabs.join('/'));
+  await evalJs(send, `localStorage.setItem('mvpScope', '27c2')`);
+  s = await open(send, 'forge-45l-psu');
+  check('psu (stored 27c2 reads as full): Status, Fan and Settings tabs', JSON.stringify(s?.tabs) === JSON.stringify(['Status', 'Fan', 'Settings']), s?.tabs.join('/'));
+  await evalJs(send, `localStorage.setItem('mvpScope', 'full')`);
+  s = await open(send, 'forge-45l-psu');
+  check('psu (full): Status, Fan and Settings tabs', JSON.stringify(s?.tabs) === JSON.stringify(['Status', 'Fan', 'Settings']), s?.tabs.join('/'));
+  await clickTab(send, 'Settings');
+  await sleep(300);
+  s = await evalJs(send, SNAP);
+  check('psu settings (full): the device card keeps the sheet — wattage + cap-formatted modular', s?.spec['Wattage'] === '1,200 W' && s?.spec['Modular'] === 'Fully', JSON.stringify(s?.spec));
+  await evalJs(send, `localStorage.removeItem('mvpScope')`);
 
   s = await open(send, 'forge-45l-lighting');
   check('lighting controller: effect dropdown + channel specs', s?.dropdowns === 1 && s?.spec['ARGB zones'] === '12' && s?.spec['Ecosystem'] === 'OMEN Light Studio', JSON.stringify(s?.spec));
@@ -224,7 +246,8 @@ async function main() {
   check('unknown sku: nothing renders', s === null);
 
   s = await open(send, 'forge-45l');
-  check('desktop: Power + Connectivity tabs', JSON.stringify(s?.tabs) === JSON.stringify(['Power', 'Connectivity']), s?.tabs.join('/'));
+  // TH-444 (2026-10-01): a desktop with lights gets a Lights tab after its own.
+  check('desktop: Power + Connectivity + Lights tabs', JSON.stringify(s?.tabs) === JSON.stringify(['Power', 'Connectivity', 'Lights']), s?.tabs.join('/'));
 
   // ── deviceTabs is the single source: a board card's shortcut buttons must
   // be exactly the tabs its modal opens with (they used to come from the dead

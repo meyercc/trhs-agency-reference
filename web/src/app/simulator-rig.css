@@ -1,0 +1,15 @@
+/* The Simulator (SimulatorRig.tsx): the Performance page's rig shell
+   (.pv3-rig / .pv5-rig, perform-v3.css / perform-v5.css) on every page, above
+   the pages, the PC's modal (z 51) and the My Devices panel; bottom-right
+   where the Performance page kept it, and it drags. */
+.sim-rig {
+  z-index: 57;
+  width: min(480px, calc(100vw - 2 * var(--gutter)));
+}
+/* A page's own rows, under the Simulator's. */
+.sim-rig-page {
+  display: grid;
+  gap: var(--gutter-xs);
+  padding-top: var(--gutter-xs);
+  border-top: 1px dashed var(--border-light);
+}

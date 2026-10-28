@@ -7,7 +7,6 @@ export { Gauge, NetArrow } from './Gauge';
 export { PowerModeWidget } from './PowerModeWidget';
 export { ActiveProfileWidget } from './ActiveProfileWidget';
 export { ProfileAvatar } from './ProfileAvatar';
-export { ProfilesManager } from './ProfilesManager';
 export { LightStudioWidget } from './LightStudioWidget';
 export { DeviceWidget } from './DeviceWidget';
 export { DeviceCard, deviceCardModel } from './DeviceCard';
@@ -25,7 +24,6 @@ export { ComponentStatusCard, CpuStatusWidget, GpuStatusWidget } from './Compone
 export type { ComponentStatusCardProps, StatusTone } from './ComponentStatusWidget';
 export { OmenAiWidget } from './OmenAiWidget';
 export { BoosterWidget } from './BoosterWidget';
-export { WeatherWidget } from './WeatherWidget';
 export { AppearanceWidget } from './AppearanceWidget';
 export { LightingWidget } from './LightingWidget';
 export { AllDisplaysWidget, DisplaySummaryWidget, useHasMultipleDisplays, useMonitorCount } from './DisplayWidgets';

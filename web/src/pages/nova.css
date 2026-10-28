@@ -1,0 +1,646 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Nova — the AI workspace (TH-428+). Full window below the shell nav: AppShell
+   marks the route `page-full` and shell.css hands the height down as a flex
+   chain, so `.nova` fills what is left and owns every scroll region itself.
+   Token-only; page-local custom properties for the three widths the wireframe
+   fixes (rails, popover, composer selects), the way device-canvas.css does.
+   ══════════════════════════════════════════════════════════════════════════ */
+.nova {
+  --nv-rail-w: 300px;
+  --nv-pop-w: 340px;
+  --nv-select-w: 220px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: var(--gutter-xs);
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+}
+
+/* ── Top bar: views left, popovers right ──────────────────────────────────
+   A plain row. It must never carry a backdrop-filter: that would make it a
+   stacking context and trap the popovers beneath the columns that follow it
+   in the DOM (gotcha 4/19). `z-index` lifts its absolutely positioned
+   children over those columns. */
+.nova-topbar {
+  position: relative;
+  z-index: 3;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  padding: var(--gutter-xs) var(--gutter);
+  border-bottom: 1px solid var(--border-light);
+}
+.nova-topbar-lead,
+.nova-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+}
+/* The rail toggles show at every width (2026-10-20): a drawer's open/close
+   when narrow, the column's show/hide when wide (pages/Nova.tsx). */
+.nova-drawer-btn {
+  display: inline-flex;
+}
+.nova-pop-wrap {
+  position: relative;
+  display: inline-flex;
+}
+/* Same offsets and layer as .account-menu in shell.css. */
+.nova-pop {
+  position: absolute;
+  top: calc(100% + var(--gutter-xs));
+  right: 0;
+  width: var(--nv-pop-w);
+  z-index: 50;
+}
+.nova-pop-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xs);
+}
+.nova-pop-title {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.nova-pop-note {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.nova-pop-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  padding-top: var(--gutter-xs);
+  border-top: 1px solid var(--border-light);
+}
+.nova-pop-label {
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+/* A lone button in a row sizes to its label, like Test connection does. */
+.nova-pop-row > button {
+  align-self: flex-start;
+}
+.nova-pop-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.nova-pop-row .ds-input-wrap,
+.nova-pop-row .ds-input {
+  width: 100%;
+}
+.nova-pop-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+/* Tokenomics: three totals, then label-left / mono-value-right rows. */
+.nova-tok-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gutter-xxs);
+}
+.nova-tok-tiles .ds-stat-tile {
+  --ds-stat-tile-size: var(--text-section-lg);
+  padding: var(--gutter-xs);
+}
+.nova-tok-rows {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.nova-tok-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xxs) 0;
+  border-top: 1px solid var(--border-light);
+  font-size: var(--text-caption);
+}
+.nova-tok-row dt {
+  color: var(--text-dim);
+}
+.nova-tok-row dd {
+  margin: 0;
+  text-align: right;
+  color: var(--text-dim);
+}
+.nova-tok-num {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+.nova-pop-test {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gutter-xxs);
+}
+.nova-pop-test-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gutter-xxs);
+}
+
+/* ── Chat view: three columns, the log the only scroller ────────────────── */
+.nova-chat {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--nv-rail-w) minmax(0, 1fr) var(--nv-rail-w);
+}
+.nova-chat > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Rails — a column each side. They may scroll their own list; the page does
+   not scroll. */
+.nova-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-sm);
+  overflow-y: auto;
+  border-right: 1px solid var(--border-light);
+  background: var(--surface-light);
+}
+.nova-rail-context {
+  border-right: 0;
+  border-left: 1px solid var(--border-light);
+}
+.nova-rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+/* The mono micro uppercase label the catalogs use for group titles. */
+.nova-rail-title,
+.nova-rail-group {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.nova-rail-group {
+  margin-top: var(--gutter-xs);
+}
+.nova-convo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+}
+.nova-convo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+  width: 100%;
+  padding: var(--gutter-xs);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-default), border-color var(--dur-fast) var(--ease-default);
+}
+.nova-convo:hover {
+  background: var(--surface-hover);
+}
+.nova-convo[aria-current='true'] {
+  background: var(--accent-dimmer);
+  border-color: var(--accent-dim);
+}
+.nova-convo:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-color);
+}
+.nova-convo-title {
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nova-convo-meta {
+  display: flex;
+  gap: var(--gutter-xxs);
+  min-width: 0;
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+.nova-convo-meta > span:first-child {
+  flex: none;
+}
+/* "2h ago · The in-game overlay…" — the dot is punctuation, not content. */
+.nova-convo-meta > span:first-child::after {
+  content: ' ·';
+}
+.nova-convo-preview {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Context rail values inside the widget cards. */
+.nova-ctx-value {
+  font-size: var(--text-section);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.nova-ctx-note {
+  margin-top: var(--gutter-xxxs);
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+}
+.nova-ctx-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.nova-ctx-devices {
+  list-style: none;
+  margin: var(--gutter-xs) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+}
+.nova-ctx-devices li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+.nova-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xxs);
+}
+
+/* Center: the log, then the compose block pinned under it. */
+.nova-center {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.nova-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--gutter);
+  /* Messages read as sliding under the top bar: the log's top edge fades out
+     over one gutter. A real overlapping bar would need blur, and a blurred
+     bar cannot host the popovers (gotcha 4/19). */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black var(--gutter));
+  mask-image: linear-gradient(to bottom, transparent, black var(--gutter));
+}
+/* Bottom-anchored: a short conversation sits just above the composer. The
+   auto margin on the first turn (not justify-content:flex-end, which makes a
+   long log's top unreachable) pushes everything down. */
+.nova-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  min-height: 100%;
+}
+.nova-log-list > :first-child {
+  margin-top: auto;
+}
+.nova-log:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent-color);
+}
+.nova-log-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gutter-xs);
+  min-height: 100%;
+  padding: var(--gutter);
+  text-align: center;
+}
+.nova-log-empty-icon {
+  color: var(--accent-color);
+}
+.nova-log-empty-title {
+  margin: 0;
+  font-size: var(--text-section);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.nova-log-empty-note {
+  margin: 0;
+  font-size: var(--text-body);
+  color: var(--text-dim);
+}
+.nova-compose {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+}
+.nova-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter-xxs);
+  padding: 0 var(--gutter) var(--gutter-xs);
+}
+.nova-composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-sm) var(--gutter) var(--gutter);
+  border-top: 1px solid var(--border-light);
+  background: var(--surface-light);
+}
+.nova-composer-selects {
+  display: flex;
+  gap: var(--gutter-xs);
+}
+.nova-composer-selects .ds-dropdown {
+  width: var(--nv-select-w);
+}
+.nova-composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gutter-xs);
+}
+.nova-composer-row .ds-input-group {
+  flex: 1;
+  min-width: 0;
+}
+/* One line to start; the field grows with the draft (TH-429), never by drag. */
+.nova-composer-row textarea.ds-input {
+  min-height: var(--control-height);
+  resize: none;
+}
+
+/* ── Agents view: scrolls as a page ─────────────────────────────────────── */
+.nova-agents {
+  --nv-activity-max-h: 260px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+}
+.nova-dash {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+}
+.nova-dash-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--gutter-sm);
+}
+.nova-dash-row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--gutter-sm);
+}
+@container page (--bp-medium-down) {
+  .nova-dash-row {
+    grid-template-columns: 1fr;
+  }
+}
+.nova-dash-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  min-width: 0;
+  padding: var(--gutter-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.nova-dash-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+/* The chart: TrendGraph's plot with a row of seven cells over it. */
+.nova-chart-plot {
+  position: relative;
+}
+.nova-chart-cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.nova-chart-cells .ds-tooltip-wrap {
+  display: block;
+  min-width: 0;
+}
+.nova-chart-cell {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  transition: background var(--dur-fast) var(--ease-default);
+}
+.nova-chart-cell:hover,
+.nova-chart-cell:focus-visible {
+  background: var(--accent-dimmer);
+  outline: none;
+}
+.nova-chart-cell:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent-color);
+}
+.nova-chart-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-dim);
+  text-align: center;
+}
+.nova-activity-when {
+  font-size: var(--text-caption);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* ── Narrow widths: the rails become drawers ──────────────────────────────
+   The same rails, translated off-canvas on the side they live on, hidden
+   from the tab order while closed (visibility, delayed so the slide-out is
+   seen), and lifted over the log when open. Same slide the Devices panel
+   uses, on the motion tokens. Both below `expanded` of the PAGE (2026-10-20;
+   they used to split at 900 and 1024 of window, and a page beside the Devices
+   panel is narrower than its window): a 300px rail beside a 700px log is
+   already the log's whole width spent. */
+@container page (--bp-medium-down) {
+  .nova-chat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nova-rail-context {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    width: var(--nv-rail-w);
+    border-left: 1px solid var(--border);
+    background: var(--ksg-panel-surface);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-lv-3);
+    transform: translateX(calc(100% + var(--gutter)));
+    visibility: hidden;
+    transition:
+      transform var(--dur-slow) var(--ease-out),
+      visibility 0s linear var(--dur-slow);
+  }
+  .nova-rail-context.open {
+    transform: translateX(0);
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .nova-drawer-btn-right {
+    display: inline-flex;
+  }
+  .nova-rail:not(.nova-rail-context) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 2;
+    width: var(--nv-rail-w);
+    border-right: 1px solid var(--border);
+    background: var(--ksg-panel-surface);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-lv-3);
+    transform: translateX(calc(-100% - var(--gutter)));
+    visibility: hidden;
+    transition:
+      transform var(--dur-slow) var(--ease-out),
+      visibility 0s linear var(--dur-slow);
+  }
+  .nova-rail:not(.nova-rail-context).open {
+    transform: translateX(0);
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .nova-drawer-btn-left {
+    display: inline-flex;
+  }
+  /* The composer's selectors take a row each; the prompts become one scroller
+     so they never eat the log. */
+  .nova-composer-selects {
+    flex-direction: column;
+  }
+  .nova-composer-selects .ds-dropdown {
+    width: 100%;
+  }
+  .nova-prompts {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+}
+@container page (--bp-compact) {
+  .nova-topbar {
+    padding: var(--gutter-xs) var(--gutter-sm);
+  }
+  .nova-pop {
+    width: calc(var(--viewport-w) - var(--gutter) * 2);
+  }
+  .nova-rail {
+    --nv-rail-w: min(300px, calc(var(--viewport-w) - var(--gutter) * 2));
+  }
+}
+.nova-rail:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent-color);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nova-rail {
+    transition: none;
+  }
+}
+
+/* ── 2026-10-20: prompts on an empty log; selectors in the context rail ───
+   The empty state's prompts wrap under its note, centred, whatever the width
+   (the panel's one-line scroller rule is for a composer row, not this). */
+.nova-log-empty-prompts {
+  --nv-empty-prompts-w: 520px;
+  justify-content: center;
+  max-width: var(--nv-empty-prompts-w);
+  margin-top: var(--gutter-sm);
+  padding: 0;
+}
+.nova-panel .nova-log-empty-prompts,
+.nova-log-empty-prompts {
+  flex-wrap: wrap;
+  overflow: visible;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+/* In the rail the two selectors stack, each the rail's width. */
+.nova-ctx-selects {
+  flex-direction: column;
+}
+.nova-ctx-selects .ds-dropdown {
+  width: 100%;
+}
+
+/* ── Show/hide the rails at full width (2026-10-20) ────────────────────────
+   Hidden, a rail leaves the grid and the log takes its width. Only where the
+   rail is a column — below its drawer width the same button opens the drawer
+   and these classes do nothing. */
+@container page (--bp-expanded-up) {
+  .nova-chat.hide-left {
+    grid-template-columns: minmax(0, 1fr) var(--nv-rail-w);
+  }
+  .nova-chat.hide-right {
+    grid-template-columns: var(--nv-rail-w) minmax(0, 1fr);
+  }
+  .nova-chat.hide-left.hide-right {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nova-chat.hide-right > .nova-rail-context,
+  .nova-chat.hide-left > .nova-rail:not(.nova-rail-context) {
+    display: none;
+  }
+}
+
+
+/* A rail's sections keep their own height; the RAIL scrolls (it is
+   overflow-y: auto). They were flex items free to shrink, so once "Talking to"
+   joined the context rail (2026-10-20) every section shrank to fit and clipped
+   its own content — a picker cut in half, the device list cut off. */
+.nova-rail > * {
+  flex-shrink: 0;
+}

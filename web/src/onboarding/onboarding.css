@@ -26,8 +26,8 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-lv-4, 0 24px 60px rgba(0, 0, 0, 0.5));
-  padding: clamp(20px, 4vw, 34px);
-  min-height: min(560px, 88vh);
+  padding: clamp(20px, calc(4 * var(--vw)), 34px);
+  min-height: min(560px, calc(88 * var(--vh)));
 }
 
 /* top bar */
@@ -102,7 +102,7 @@
 
 .onb-h1 {
   font-family: var(--font-display);
-  font-size: clamp(26px, 5vw, 36px);
+  font-size: clamp(26px, calc(5 * var(--vw)), 36px);
   font-weight: var(--font-bold);
   color: var(--text-primary);
   margin: 0;
@@ -111,7 +111,7 @@
 }
 .onb-h2 {
   font-family: var(--font-display);
-  font-size: clamp(20px, 3.4vw, 26px);
+  font-size: clamp(20px, calc(3.4 * var(--vw)), 26px);
   font-weight: var(--font-bold);
   color: var(--text-primary);
   margin: 0;

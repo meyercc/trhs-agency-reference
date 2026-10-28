@@ -67,6 +67,13 @@
   padding-bottom: calc(var(--gutter) * 2);
   overflow-y: auto;
 }
+/* The "Presets" label row. */
+.pdm-presets-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
 .pdm-preset {
   position: relative;
   display: flex;
@@ -215,210 +222,198 @@
   transform: scale(0.96);
 }
 
-/* ── Preset editor overlay ── */
+/* ── Preset editor (`PresetEditor`) ── the controls of Figma Lights "Presets
+   Overlay Panel" (3859:251953 gradient, 32:34411 single color), in the list's
+   place with the macro editor's head (macro-panel.css .mp-head / .mp-back):
+   "‹ Presets" back, the edit's state right, Cancel / Save at the foot. Both
+   halves are Ng3Sections; the controls are DS components. Only the layout and
+   the frame's measures live here. */
 .pdm-editor {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: flex;
-}
-.ds-ng3-section.pdm-editor-card {
+  /* Figma measures: the Effects rail, the parameter column, the color tracks. */
+  --pe-rail-w: 184px;
+  --pe-param-w: 164px;
+  --pe-tracks-w: 270px;
   flex: 1;
-  /* Structure, border, radius and padding are the section's — this card used to
-     hand-roll all four (a color-mix of --bg-elevated, --border-med, --radius),
-     the same fork its own two halves were carrying.
-
-     The surface is the one thing it cannot take from .ds-ng3-section. A section
-     is a card *inside* an opaque panel, so its 2%-white ground is enough; this
-     card IS the panel — it covers the presets grid — and at 2% the swatches
-     underneath read straight through the backdrop blur as colored blobs. So it
-     takes the system's panel surface, which is what a floating panel uses
-     elsewhere (.modal-shell, the keyboard quick-select rail) and matches how
-     Figma models this node: an "Overlay Panel" on Panel/Dark, not a Section. */
-  background: var(--ksg-panel-surface);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   gap: var(--gutter-xs);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-lv-3);
 }
+.pdm-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+}
+.pdm-editor-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0;
+}
+.pdm-editor-back:hover {
+  color: var(--text-primary);
+}
+.pdm-editor-state {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+/* The panel keeps the canvas's height (--lights-h), so on a shorter canvas
+   (the mic's) each section scrolls between the head and the foot. */
 .pdm-editor-body {
   flex: 1;
   min-height: 0;
   display: flex;
-  /* 8px between the two sections, measured off the Figma frame. */
   gap: var(--gutter-xs);
 }
-/* Both halves are .ds-ng3-section now (Figma builds them from the Section
-   component), so the surface, border, radius and padding come from the system.
-   The copy that used to live here had drifted off it exactly as Keys & Macros
-   had — a heavier border, a wider surface tint, and 24px side padding against
-   the system's 16. Only the rail's fixed measure is local. */
-.pdm-editor-effects {
-  flex: 0 0 184px;
+.pdm-editor-body > * {
+  min-height: 0;
+  overflow-y: auto;
 }
-.pdm-fx-list {
+.pdm-editor-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gutter-xs);
+}
+.pdm-editor-effects {
+  flex: 0 0 var(--pe-rail-w);
+}
+.pdm-fx-list,
+.pdm-fx-layers {
   display: flex;
   flex-direction: column;
-  gap: var(--gutter-xxxs);
+  gap: 1px;
 }
+/* A layer's remove button shows on the row it belongs to. */
+.pdm-fx-layer .ds-btn-icon {
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.pdm-fx-layer:hover .ds-btn-icon,
+.pdm-fx-layer:focus-within .ds-btn-icon,
+.pdm-fx-layer.selected .ds-btn-icon {
+  opacity: 1;
+}
+.pdm-fx-menu,
+.pdm-stop-pop {
+  position: fixed;
+  z-index: 80;
+}
+.pdm-stop-pop {
+  transform: translate(-50%, var(--gutter-xs));
+  padding: var(--gutter-sm);
+  gap: var(--gutter-sm);
+}
+
 .pdm-editor-params {
   flex: 1;
+  min-width: 0;
 }
 .pdm-editor-cols {
   flex: 1;
   min-height: 0;
   display: flex;
-  gap: var(--gutter);
+  gap: var(--gutter-sm);
 }
 .pdm-editor-vrule,
 .pdm-color-vrule {
   flex-shrink: 0;
   align-self: stretch;
   width: 1px;
+  border-radius: var(--radius-full);
   background: var(--border);
 }
 
+/* Color column */
 .pdm-color {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--gutter);
+  /* Figma spaces these 24 / 16; the tab body is shorter than the frame's
+     266, so the column takes the tighter steps to keep the hex row inside. */
+  gap: var(--gutter-sm);
 }
 .pdm-color-pills {
   display: flex;
   align-items: center;
-  gap: var(--gutter);
+  max-width: var(--pe-tracks-w);
 }
-.pdm-color-rand {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--gutter-sm);
-  height: 32px;
-  padding: 0 var(--gutter);
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius-card);
-  background: var(--bg-base);
-  color: var(--text-primary);
-  font-family: var(--font-display);
-  font-size: var(--text-body);
-  cursor: pointer;
-}
-.pdm-color-rand:hover {
-  border-color: var(--text-dim);
-}
-.pdm-color-rand svg {
-  width: 16px;
-  height: 16px;
-  color: var(--text-dim);
-}
-.pdm-color-body {
+.pdm-color-body,
+.pdm-stop-body {
   flex: 1;
   min-height: 0;
   display: flex;
-  gap: var(--gutter);
+  gap: var(--gutter-sm);
 }
 .pdm-color-main {
-  flex: 1;
+  flex: 0 1 var(--pe-tracks-w);
   min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: var(--gutter);
+  justify-content: space-between;
+  gap: var(--gutter-xs);
 }
 .pdm-color-sliders {
   display: flex;
   flex-direction: column;
-  gap: var(--gutter-tablet);
+  gap: var(--gutter-xs);
 }
-/* Hex field + eyedropper — Figma sets them side by side under the sliders. */
 .pdm-hex-row {
   display: flex;
   align-items: center;
   gap: var(--gutter-xs);
 }
-.pdm-hex-row .pdm-hex {
-  flex: 1;
-  min-width: 0;
-}
-
-/* hex field */
 .pdm-hex {
-  display: flex;
-  align-items: center;
-  gap: var(--gutter-xs);
-  max-width: 168px;
-  height: 32px;
-  padding: 0 var(--gutter-sm);
-  background: var(--bg-base);
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius-sm);
+  flex: 0 1 auto;
 }
-.pdm-hex:focus-within {
-  border-color: var(--accent-dim);
-}
-.pdm-hex-sign {
-  font-family: var(--font-mono);
-  font-size: var(--text-body);
-  font-weight: var(--font-semibold);
-  color: var(--text-dim);
-}
-.pdm-hex-input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  outline: none;
-  font-family: var(--font-mono);
-  font-size: var(--text-body);
-  color: var(--text-primary);
-  text-transform: uppercase;
-}
-.pdm-hex-copy {
-  display: flex;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-.pdm-hex-copy:hover {
-  color: var(--text-dim);
-}
-
-/* swatch palette */
 .pdm-swatches {
   flex-shrink: 0;
   display: grid;
-  grid-template-columns: repeat(5, 24px);
-  gap: var(--gutter-xs);
-  align-content: flex-start;
+  grid-template-columns: repeat(5, var(--control-height));
+  grid-auto-rows: var(--control-height);
+  gap: 1px;
+  place-items: center;
+  align-content: start;
 }
 .pdm-sw-add {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 1px solid var(--border-med);
-  border-radius: 50%;
-  background: var(--surface);
-  color: var(--text-dim);
-  cursor: pointer;
-}
-.pdm-sw-add:hover {
-  border-color: var(--text-dim);
+  background: var(--ksg-w5);
 }
 
-/* direction / speed / opacity */
+/* Gradient: the stop bar, then the presets three to a row. */
+.pdm-gradient {
+  display: flex;
+  align-items: center;
+  height: var(--control-height);
+}
+.pdm-gradient-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: center;
+  gap: var(--gutter-sm);
+}
+.pdm-gradient-presets > .ds-swatch {
+  width: 100%;
+}
+.pdm-gradient-presets > .ds-swatch:nth-child(3n + 4) {
+  grid-column: 1;
+}
+.pdm-stop-foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Direction / speed / opacity */
 .pdm-fx-params {
-  flex: 0 0 168px;
+  flex: 0 0 var(--pe-param-w);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: var(--gutter-sm);
+  gap: var(--gutter);
 }
 .pdm-fx-group {
   display: flex;
@@ -435,79 +430,8 @@
   font-size: var(--text-caption);
   color: var(--text-muted);
 }
-
-/* angle dial */
 .pdm-angle {
   display: flex;
   align-items: center;
-  gap: var(--gutter-sm);
-}
-.pdm-angle-dial {
-  position: relative;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bg-base);
-  border: 1px solid var(--border-med);
-  cursor: grab;
-  touch-action: none;
-}
-.pdm-angle-dial:active {
-  cursor: grabbing;
-}
-.pdm-angle-needle {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 11px;
-  height: 2px;
-  margin-top: -1px;
-  border-radius: 1px;
-  background: var(--text-primary);
-  transform-origin: 0 50%;
-  transform: rotate(var(--angle, 0deg));
-}
-.pdm-angle-input {
-  width: 52px;
-  height: 32px;
-  border: 1px solid var(--border-med);
-  border-radius: var(--radius-sm);
-  background: var(--bg-base);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--text-body);
-  text-align: center;
-  outline: none;
-}
-.pdm-angle-input:focus {
-  border-color: var(--accent-dim);
-}
-.pdm-angle-steppers {
-  display: flex;
-  flex-direction: column;
-}
-.pdm-angle-steppers button {
-  display: flex;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text-dim);
-  cursor: pointer;
-}
-.pdm-angle-steppers button:hover {
-  color: var(--text-primary);
-}
-
-/* CTA */
-.pdm-editor-cta {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--gutter-sm);
-}
-.pdm-editor-cta .ds-btn {
-  padding: 7px 14px;
+  gap: var(--gutter-xs);
 }

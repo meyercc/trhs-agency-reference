@@ -89,12 +89,12 @@
   letter-spacing: 0.04em;
 }
 
-/* ── Fan curve mini chart ── */
-.fan-curve-svg {
-  width: 100%;
-  height: 44px;
-  display: block;
+/* ── Fan curve mini chart — the system's .ds-fan-curve, compact (TH-436) ── */
+.fan-curve-mini {
   margin-top: var(--gutter-xs);
+}
+.fan-curve-mini .ds-fan-curve-svg {
+  height: 44px;
 }
 .fan-rpm-row {
   display: flex;

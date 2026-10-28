@@ -1,7 +1,9 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { ModalShell, Icon, Button, ContextMenu, ContextMenuLabel, ListItem, Separator, Dropdown } from '../components';
+import { ModalShell, Icon, Button, ContextMenu, ContextMenuLabel, ListItem, Separator, Dropdown, Toggle, ToggleButtonGroup } from '../components';
 import { useNavigate } from 'react-router-dom';
-import { useSettings, LEVEL_FOR_ROOM, ROOM_LABEL, type RoomLight } from '../state/Settings';
+import { useSettings, LEVEL_FOR_ROOM, ROOM_LABEL, type RoomLight, type AdPlacement, type PlayLayout, type NovaEntry } from '../state/Settings';
+import { AD_OPTIONS, AD_OPTION_BY_VALUE } from '../ads/ads';
+import { useKonami } from '../ads/konami';
 import { DESK_SCENARIOS, DESK_SCENARIO_GROUPS, scenarioOf, type DeskScenario } from '../devices/deskScenarios';
 import type { DeskDevice } from '../devices/arrangement';
 import { useDeviceSim, SIM_DEVICE_IDS } from '../state/DeviceSim';
@@ -39,7 +41,11 @@ export function AdminModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const { persona, onboarded, setPersona, setOnboarded,
           monitorFirstHour, setMonitorFirstHour, kvm, setKvm,
-          deskDevices, setDeskDevices, roomLight, setRoomLight } = useSettings();
+          deskDevices, setDeskDevices, roomLight, setRoomLight,
+          pzSuggestions, setPzSuggestions,
+          playLayout, setPlayLayout, novaEntry, setNovaEntry,
+          adPlacement, setAdPlacement, adObscure, setAdObscure,
+          adUnlocked, setAdUnlocked, setBoardLayout } = useSettings();
   // The desk is set by scenario only (2026-09-21, Cindy). The toggle chips that
   // used to sit here are read-only tags now: one control per state, so a desk
   // nobody can name cannot be made by accident and the buttons never claim a
@@ -88,6 +94,19 @@ export function AdminModal({ onClose }: { onClose: () => void }) {
     if (!scenario) pick(DESK_SCENARIOS[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scenario]);
+  // ↑↑↓↓←→←→ B A Enter, while this modal is open, reveals the Advertising row
+  // (Chris, 2026-09-29). Typing it again hides the row AND turns the ad off, so
+  // nothing is ever left showing with its control hidden. Live only while the
+  // modal is mounted — the hook's listener goes with it.
+  useKonami(() => {
+    if (adUnlocked) {
+      setAdUnlocked(false);
+      setAdPlacement('none');
+      setAdObscure(false);
+    } else {
+      setAdUnlocked(true);
+    }
+  });
   const { hudOpen, setHudOpen, simState } = useDeviceSim();
   const awayCount = SIM_DEVICE_IDS.filter((id) => !simState(id).connected).length;
 
@@ -99,9 +118,9 @@ export function AdminModal({ onClose }: { onClose: () => void }) {
     setPersona('');
     setOnboarded(false);
     // Drop the onboarding-seeded dashboard so a re-run starts from scratch.
-    try {
-      localStorage.removeItem('board-layout');
-    } catch { /* ignore */ }
+    // `null` is "nothing stored" — which restores the shipped default — and is
+    // deliberately NOT `[]`, which would mean an empty board on purpose.
+    setBoardLayout(null);
   };
 
   return (
@@ -129,6 +148,63 @@ export function AdminModal({ onClose }: { onClose: () => void }) {
             {onboarded && (
               <Button size="sm" variant="ghost" onClick={reset}>Reset</Button>
             )}
+          </div>
+        </div>
+
+        {/* ── Play layout ────────────────────────────────────────────────
+            Two tops for the Play page, held side by side so they can be
+            compared on the real page rather than in a deck. Hero is what the
+            page has always been and stays the default; the alternate replaces
+            the full-bleed slideshow with four recently-played covers. The
+            choice persists per browser like the rest of this panel. */}
+        <div className="admin-tool">
+          <span className="admin-tool-ic"><Icon name="play" size={18} /></span>
+          <div className="admin-tool-meta">
+            <div className="admin-tool-name">Play layout</div>
+            <div className="admin-tool-desc">
+              What the Play page leads with. <b>Hero</b> is the full-bleed slideshow with the
+              recently-played rail. <b>Jump Back In</b> replaces it with four large covers of the
+              games you were last in, in the normal content flow. <b>Featured</b> leads with the
+              most recent game as one wide tile, then the next three as covers.
+            </div>
+          </div>
+          <div className="admin-tool-actions">
+            <ToggleButtonGroup
+              aria-label="Play layout"
+              value={playLayout}
+              onChange={(v) => setPlayLayout(v as PlayLayout)}
+              options={[
+                { label: 'Hero', value: 'hero' },
+                { label: 'Jump Back In', value: 'jumpback' },
+                { label: 'Featured', value: 'featured' },
+              ]}
+            />
+          </div>
+        </div>
+
+        {/* ── Nova entry (TH-507) ─────────────────────────────────────────
+            Two doors to the same chat, held side by side like the Play
+            layouts. Both open the one conversation; only the surface differs. */}
+        <div className="admin-tool">
+          <span className="admin-tool-ic"><Icon name="twinkle" size={18} /></span>
+          <div className="admin-tool-meta">
+            <div className="admin-tool-name">Nova entry</div>
+            <div className="admin-tool-desc">
+              Where Nova opens from. <b>Floating</b> (the default) puts a button in the bottom-right
+              corner that opens Nova as a chat window over the page, and shows when Nova is thinking.
+              <b>Top bar</b> is the chat button beside your account, docking Nova to the right rail.
+            </div>
+          </div>
+          <div className="admin-tool-actions">
+            <ToggleButtonGroup
+              aria-label="Nova entry"
+              value={novaEntry}
+              onChange={(v) => setNovaEntry(v as NovaEntry)}
+              options={[
+                { label: 'Floating', value: 'fab' },
+                { label: 'Top bar', value: 'topbar' },
+              ]}
+            />
           </div>
         </div>
 
@@ -162,6 +238,70 @@ export function AdminModal({ onClose }: { onClose: () => void }) {
             )}
           </div>
         </div>
+
+        {/* Personalize's suggestion row moved here (2026-10-01, Kristy): the
+            profile band at the top of the page is its one voice about
+            switching, so the "Meeting at 7:00 PM — switch to Work then?" row
+            under it is off unless a demo asks for it. Show / Hide the same
+            way the Device simulator row above does. */}
+        <div className="admin-tool">
+          <span className="admin-tool-ic"><Icon name="sparks" size={18} /></span>
+          <div className="admin-tool-meta">
+            <div className="admin-tool-name">Personalize suggestions</div>
+            <div className="admin-tool-desc">
+              Show the suggestion row under the profile band, such as switching to Work before a meeting.
+            </div>
+            <div className="admin-tool-status">{pzSuggestions ? 'Shown on Personalize' : 'Hidden'}</div>
+          </div>
+          <div className="admin-tool-actions">
+            {pzSuggestions ? (
+              <Button size="sm" variant="ghost" onClick={() => setPzSuggestions(false)}>Hide</Button>
+            ) : (
+              <Button size="sm" variant="accent" onClick={() => setPzSuggestions(true)}>Show</Button>
+            )}
+          </div>
+        </div>
+        {/* ── Advertising ────────────────────────────────────────────────
+            Concepts to compare against the partner layouts (2026-09-29, Chris),
+            not a product decision: everything here is OFF unless this dropdown
+            says otherwise, so a shared link never opens with an ad unless the
+            sharer put one there. The placeholder is a plain fill captioned with
+            the unit's size — no creative exists yet. "Obscure background"
+            belongs to the Bottom Banner alone (the strip is that banner's
+            height, pinned to the edge the banner is pinned to), so the toggle
+            only appears under that choice. The whole row is hidden until the
+            Konami code is typed (`useKonami` above). */}
+        {adUnlocked && (
+        <div className="admin-tool">
+          <span className="admin-tool-ic"><Icon name="image" size={18} /></span>
+          <div className="admin-tool-meta">
+            <div className="admin-tool-name">Advertising</div>
+            <div className="admin-tool-desc">
+              Show a concept ad placement. Fixed placements follow every page; the banner below
+              the carousel belongs to Home.
+            </div>
+            <div className="admin-tool-status">
+              {adPlacement === 'none' ? 'No ads' : <>Showing <b>{AD_OPTION_BY_VALUE[adPlacement].label}</b></>}
+            </div>
+          </div>
+          {/* Stacked at the right like the Display row's controls — the same
+              column shape, so the two rows read as siblings. */}
+          <div className="admin-tool-actions admin-desk-actions">
+            <Dropdown
+              options={AD_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              value={adPlacement}
+              onChange={(v) => setAdPlacement(v as AdPlacement)}
+              aria-label="Ad placement"
+            />
+            {adPlacement === 'bottom-banner' && (
+              <label className="admin-desk-room">
+                <span className="admin-desk-room-label">Obscure background</span>
+                <Toggle checked={adObscure} onChange={setAdObscure} aria-label="Obscure background" />
+              </label>
+            )}
+          </div>
+        </div>
+        )}
 
         {/* ── Display scenario ───────────────────────────────────────────
             Ours, so LAST (2026-09-21, Cindy: "우리 거를 제일 밑으로 … 다른

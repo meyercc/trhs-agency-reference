@@ -347,7 +347,7 @@
    room. Three rows do NOT fit and are out of scope — the roster is three
    displays, so the only way to reach three rows is to stack all of them. */
 .mc-canvas {
-  --mc-hero-h: clamp(240px, calc(100vh - 652px), 356px);
+  --mc-hero-h: clamp(240px, calc(var(--viewport-h) - 652px), 356px);
   /* The canvas is `.dc-canvas`: fixed, full-viewport, `overflow: hidden` —
      the same as every other device canvas (2026-09-24, Chris). It used to
      carry a scoped `overflow-y: auto` so a heavy tab could scroll the whole

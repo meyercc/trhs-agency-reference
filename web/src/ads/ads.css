@@ -1,0 +1,132 @@
+/* ── Advertising concepts (.ad-*) ─────────────────────────────────────────────
+   App furniture, not the design system: a fixed overlay with shell-level
+   padding and a place in the z-index ladder does not port to Avalonia, so it
+   lives here beside AdHost/AdSlot the way module-browser.css and
+   device-sim-hud.css do, and only consumes tokens from shared/tokens.css.
+
+   The dimensions are the one deliberate exception to "every visual value is a
+   token". 300×250 and 728×90 are IAB standard ad units and the 12px edge
+   offset is the placement spec Chris gave; an ad network dictates these, the
+   design scale does not. They are declared ONCE, here, so changing a spec is
+   one line — and so nothing else in the app ever writes `728px`. Declared at
+   the root because shell.css reads `--ad-banner-h` to reserve space under the
+   page content; AdHost is always mounted, so this file is always loaded.
+
+   Z-index: ads sit above page content and BELOW everything that must cover
+   them — the device panel (40), the modal backdrop (50), the nav (55). A modal
+   over an ad is right; an ad over a modal never is. */
+:root {
+  --ad-tile-w: 300px;
+  --ad-tile-h: 250px;
+  --ad-banner-w: 728px;
+  --ad-banner-h: 90px;
+  --ad-edge: 12px;
+}
+
+/* ── The unit ── */
+.ad-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  /* A SOLID fill. It has to be opaque: the point of a placement concept is
+     seeing what the ad covers, and `--accent-dim` (the accent at 30% opacity)
+     let the card text underneath read straight through the tile, which
+     misrepresents every placement. The accent at full strength is the one
+     color nothing else on the page uses at this size, so it reads as a slot
+     and never as content. Swap this for real creative and nothing else has to
+     move.
+
+     The caption is WCAG *large* text on purpose. The obvious token,
+     `--text-on-accent`, resolves to near-black in the live dark theme, which
+     is 3.87:1 on the HP blue — a body-text AA fail — and even white is 4.497:1
+     there, a hair under 4.5. At 20px bold the bar is 3:1, and white
+     (`--text-on-fill`, the token for text on a solid fill) clears it with room
+     in every theme. The token problem itself is a separate ticket. */
+  background: var(--accent-color);
+  color: var(--text-on-fill);
+  font-family: var(--font-mono);
+  font-size: var(--text-section-lg);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.08em;
+  user-select: none;
+}
+.ad-slot--tile {
+  width: var(--ad-tile-w);
+  height: var(--ad-tile-h);
+  border-radius: var(--radius);
+}
+.ad-slot--banner {
+  width: var(--ad-banner-w);
+  height: var(--ad-banner-h);
+}
+
+/* ── Fixed placements (AdHost) ── */
+.ad-host {
+  position: fixed;
+  z-index: 39;
+  pointer-events: none; /* the placeholder has nothing to click; real creative would restore this */
+}
+.ad-host > .ad-slot {
+  pointer-events: auto;
+}
+/* Bottom Left Tile: the corner, 12px from each edge. */
+.ad-host--bottom-left-tile {
+  left: var(--ad-edge);
+  bottom: var(--ad-edge);
+}
+/* Bottom Banner: flush with the bottom edge, centered. The unit itself has no
+   radius here — it is pinned to the edge, so a rounded bottom would read as a
+   gap. */
+.ad-host--bottom-banner {
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+}
+.ad-host--bottom-banner .ad-slot--banner {
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+/* ── "Obscure background" (Bottom Banner only) ──
+   Full width, the banner's height, behind the ad and above the content.
+   Blurs what scrolls under the banner. This rule is the whole look — to make
+   it a solid fill instead, replace the two backdrop-filter lines with a
+   `background` and nothing else changes. The blur amount matches the modal
+   backdrop (`.ds-backdrop`, 16px) so the two treatments read as one family. */
+.ad-obscure {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--ad-banner-h);
+  z-index: 38;
+  pointer-events: none;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ── Inline placement (Home) ──
+   Banner Below Carousel: in flow, centered, with the page gutter above and
+   below so it sits between the carousel and the board rather than touching
+   either. */
+.ad-inline {
+  display: flex;
+  justify-content: center;
+  margin: var(--gutter) 0;
+}
+.ad-inline .ad-slot--banner {
+  border-radius: var(--radius);
+}
+
+/* A viewport narrower than the leaderboard: the unit keeps its height and
+   yields its width, so it never forces a horizontal scroll. */
+@media (max-width: 760px) {
+  .ad-slot--banner {
+    width: min(var(--ad-banner-w), calc(var(--viewport-w) - var(--gutter) * 2));
+  }
+  .ad-host--bottom-banner .ad-slot--banner {
+    width: var(--viewport-w);
+    border-radius: 0;
+  }
+}

@@ -1,9 +1,52 @@
 .wb-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
+  /* The count is the board's to set from the page's width (WidgetBoard,
+     2026-10-21): two on a compact page, eight where eight of the 1100 grid's
+     tracks fit, ten where ten do — the same named widths shell.css grows the
+     cap by, so a track is always the width it was drawn at. A class rather
+     than a container query here so the CSS can never disagree with the
+     packing: with a query, a dev server started before postcss.config.js
+     existed served it unexpanded (never matching) and drew six tracks under
+     an eight-column packing — the keyboard card landed in a 50px implicit
+     column (Chris, 2026-10-21; gotcha 62). */
+  &.cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  &.cols-8 {
+    grid-template-columns: repeat(8, 1fr);
+  }
+  &.cols-10 {
+    grid-template-columns: repeat(10, 1fr);
+  }
   grid-auto-rows: var(--widget-row);
-  grid-auto-flow: row dense;
+  /* Cells carry explicit grid lines (pack.ts) — first-fit packing lives there, not
+     in `dense`, so the add button is never backfilled into a hole mid-board. */
+  grid-auto-flow: row;
   gap: var(--gutter);
+}
+/* The hero: the carousel as the grid's first cell, six columns by two rows
+   (WidgetBoard places it; the packer flows the widgets around it — beside it
+   where a wider page has columns to spare, Chris 2026-10-21). The cell is NOT
+   positioned: the carousel aura anchors to `.shell` through a static wrap
+   (pages.css) and spans the window from `.shell`'s centre, so it stays
+   full-bleed wherever this cell sits. The carousel fills the cell, so its
+   height is the board's two rows (344px), not a number of its own. */
+.wb-hero {
+  min-width: 0;
+}
+.wb-hero > .home-carousel {
+  height: 100%;
+  margin-bottom: 0;
+  min-width: 0;
+}
+/* The inline ad's row under the hero (Home's `between`): one board row, the
+   banner centred in it as it was between the carousel and the grid. */
+.wb-between {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
 }
 .wb-cell {
   position: relative;
@@ -44,6 +87,41 @@ body.wb-dragging .w-label {
   height: 100%;
   box-sizing: border-box;
 }
+/* A custom card's body (TH-443): the HUD's own flex-wrap row of tiles, but
+   inside a widget shell. `.w` is a flex column with a fixed cell height, so the
+   row takes the leftover space (`flex: 1`) instead of hugging the header, and
+   `min-height: 0` lets it shrink rather than overflow a 1-row card.
+   2-up by default; a bound control takes the full width, as it does in the HUD
+   (.ds-hud-body > .ds-live-control). */
+.wb-card-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  /* The cell is a fixed 160px row and a two-reading card fills ~45px of it, so
+     the tiles are centered in the leftover rather than hugging the header with a
+     void underneath. */
+  align-content: center;
+  gap: var(--gutter-xs);
+  flex: 1;
+  min-height: 0;
+}
+.wb-card-items > * {
+  flex: 1 1 calc(50% - var(--gutter-xs));
+  /* `.ds-stat-tile` is content-box, so without this the 16px of horizontal
+     padding is added OUTSIDE the 50% basis — two tiles then measure wider than
+     the row and every one of them wraps onto a line of its own. The symptom is
+     a card that renders perfectly and simply ignores the 2-up layout. */
+  box-sizing: border-box;
+  min-width: 0;
+}
+.wb-card-items > .ds-live-control,
+/* A meter and a sparkline read across the row, like a control (TH-454);
+   `narrowUnits` already counts them wide — the CSS has to agree. */
+.wb-card-items > .ds-meter,
+.wb-card-items > .ds-spark-cell.graph {
+  flex-basis: 100%;
+}
+
 /* drag handle = the widget header (.w-label); inner controls stay clickable */
 .wb-cell .w-label {
   cursor: grab;
@@ -59,7 +137,7 @@ body.wb-dragging .w-label {
   top: 50%;
   left: 50%;
   padding: var(--gutter-xxs) var(--gutter-sm);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--accent-color);
   color: var(--text-on-accent);
   font-family: var(--font-mono);
@@ -95,40 +173,6 @@ body.wb-dragging .w-label {
 .wb-cell:hover .wb-resize,
 .wb-cell.resizing .wb-resize {
   opacity: 1;
-}
-
-/* remove (×) — hidden until the widget is hovered */
-.wb-remove {
-  position: absolute;
-  top: var(--gutter-sm);
-  right: var(--gutter-sm);
-  width: 20px;
-  height: 20px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: var(--surface);
-  color: var(--text-dim);
-  cursor: pointer;
-  opacity: 0;
-  transition:
-    opacity var(--dur-fast) ease,
-    color var(--dur-fast) ease,
-    border-color var(--dur-fast) ease;
-  z-index: 4;
-}
-.wb-remove svg {
-  width: 9px;
-  height: 9px;
-}
-.wb-cell:hover .wb-remove {
-  opacity: 1;
-}
-.wb-remove:hover {
-  color: var(--red);
-  border-color: var(--red);
 }
 
 /* add-a-widget cell */
@@ -167,8 +211,8 @@ body.wb-dragging .w-label {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(440px, calc(100vw - 2 * var(--gutter)));
-  max-height: 80vh;
+  width: min(440px, calc(var(--viewport-w) - 2 * var(--gutter)));
+  max-height: calc(80 * var(--vh));
   display: flex;
   flex-direction: column;
   background: var(--surface);
@@ -208,6 +252,22 @@ body.wb-dragging .w-label {
 .wb-pick-row + .wb-pick-row {
   border-top: 1px solid var(--border);
 }
+/* The Custom group's two affordances share the right-hand side of the row
+   (TH-443) — one flex child, so `justify-content: space-between` still puts the
+   name hard left. */
+.wb-pick-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+/* `.modal-close` is sized for a dialog corner, so beside a `sm` Button it
+   overhangs the column every other row's Add button ends at. Shrink it to the
+   row rather than add a third size to the component. */
+.wb-pick-forget {
+  width: var(--gutter);
+  height: var(--gutter);
+  flex: 0 0 auto;
+}
 .wb-pick-name {
   font-size: var(--text-body);
   color: var(--text-primary);
@@ -215,4 +275,92 @@ body.wb-dragging .w-label {
 .wb-pick-added {
   margin: 0;
   color: var(--green);
+}
+
+/* ── Nova's proposed board, as an arrangement diagram (TH-442) ──────────────
+   Standalone, following `.wb-grid` above rather than composing
+   `.ds-stat-grid`. The first draft DID compose it — and that was wrong twice.
+   `.ds-stat-grid` is documented as a "2-column bordered grid for key-value stat
+   pairs", so `grid-template-columns: 1fr 1fr` is its contract, not an
+   incidental value; overriding exactly that keeps only its border treatment
+   while discarding what makes it that component. Worse, both selectors are a
+   single class, so the override won on SOURCE ORDER alone — it held only
+   because this file happens to bundle after shared/components.css, and a
+   future import reorder would have flipped it silently, with no type error and
+   nothing visible until someone looked. That is the house failure mode exactly.
+   A feature grid owns its own grid here; `.wb-grid` is the precedent. */
+.wb-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+}
+.wb-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--wb-preview-cols), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  /* 1px gap over a border-colored background draws the hairlines between
+     cells — the same trick .ds-stat-grid uses, which is the part worth having. */
+  gap: 1px;
+  background: var(--border-light);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.wb-preview-cell {
+  /* One step ABOVE the bubble, not level with it. `.ds-chat-msg-bubble` is
+     itself `--surface`, so a cell painted `--surface` is the same color as its
+     own container — the first draft rendered the diagram as a flat block with
+     only the hairlines visible. `--surface-hover` is the next step in the ramp
+     and the cells read as cells in both themes. */
+  background: var(--surface-hover);
+  padding: var(--gutter-xxs);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+}
+/* The widget's name at diagram scale. `--text-dim`, not `--text-muted`: this is
+   the smallest size in the ramp sitting on the chat bubble's `--surface`, and
+   `--text-muted` on `--surface` is already recorded at 4.53:1 dark — AA by 0.03.
+   `.ds-chat-msg-meta`, the secondary caption in this very bubble, reaches for
+   `--text-dim` for the same reason. In the 380px pinned panel a cell is ~40px
+   and this ellipses to almost nothing, which is why the reply also speaks the
+   names in prose: the diagram carries shape, the sentence carries content. */
+.wb-preview-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-preview-state {
+  font-size: var(--text-nano);
+  color: var(--text-dim);
+}
+
+/* A composed card previewed inside a Nova reply (TH-443).
+   The card is the REAL widget, so it is shown at the REAL size it will take on
+   the board — `cardMeta` gives every card `span: 2`, and a board column is
+   within 2% of `--widget-row` square (see LayoutPreview), so two columns plus
+   the gutter between them is the width and one row is the height. A `.w` left
+   in normal flow would instead be as wide as the bubble and as short as its
+   content, which is a picture of a different card. `max-width` is for the
+   pinned panel, where the bubble is narrower than the board cell. */
+.wb-card-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxs);
+}
+.wb-card-preview > .w {
+  /* `.w` is content-box — the same trap `.wb-cell > .w` already guards against.
+     Without this the 24px of padding is added outside both, so the "real size"
+     preview renders 50px wider and 50px taller than the cell it is promising. */
+  box-sizing: border-box;
+  /* N columns and the N−1 gaps — two unless the card asks for more (TH-478). */
+  width: calc(var(--widget-row) * var(--wb-card-span, 2) + var(--gutter) * (var(--wb-card-span, 2) - 1));
+  max-width: 100%;
+  /* The board footprint: N rows and the N−1 gaps between them (TH-450). */
+  height: calc(var(--widget-row) * var(--wb-card-rows, 1) + var(--gutter) * (var(--wb-card-rows, 1) - 1));
 }

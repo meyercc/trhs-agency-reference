@@ -10,12 +10,14 @@
 //        -o ../Assets/modules/$f.webp; done
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const CDP_PORT = process.env.CDP_PORT || 9222;
 const APP_PORT = process.env.APP_PORT || 5175;
 
 const BASE = `http://localhost:${APP_PORT}/`;
-const OUT = process.argv[2] || '/tmp/mod-shots';
+const OUT = process.argv[2] || join(tmpdir(), 'mod-shots');
 const ONLY = process.argv.slice(3); // optional list of ids to (re)capture
 const VW = 1440, VH = 900, DSF = 2;
 

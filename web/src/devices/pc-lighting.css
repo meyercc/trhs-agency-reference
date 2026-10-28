@@ -1,0 +1,8 @@
+/* The laptop lighting lab (PcLightingLab.tsx, Modal Lab): the machine switches and the stage. */
+.pcl-lab { display: flex; flex-direction: column; gap: var(--gutter-sm); }
+.pcl-lab-pick { display: flex; flex-wrap: wrap; gap: var(--gutter); align-items: flex-end; }
+.pcl-lab-field { display: flex; flex-direction: column; gap: var(--gutter-xxs); font-size: var(--text-caption); color: var(--text-dim); }
+.pcl-lab-field select { font: inherit; padding: var(--gutter-xxs) var(--gutter-xs); border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); }
+.pcl-lab-stage { position: relative; display: flex; flex-direction: column; gap: var(--gutter-sm); }
+.pcl-lab-hero { position: relative; height: 380px; display: flex; align-items: center; justify-content: center; }
+.pcl-lab-panel { padding: var(--gutter-sm); }

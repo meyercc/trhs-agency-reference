@@ -21,6 +21,8 @@
 // This is the concrete definition of the reading form the card spec carries as
 // "Trend — reserved".
 
+import './trend-graph.css';
+
 export interface TrendGraphProps {
   data: number[];
   /** Top of the y domain, in the metric's own unit. */

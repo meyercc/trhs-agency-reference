@@ -1,55 +1,18 @@
-import { useRef, useState } from 'react';
-import { Button, Checkbox, Separator, ToggleButtonGroup } from '../../components';
+import { useState } from 'react';
+import { Button, Checkbox, FanCurve, Separator, ToggleButtonGroup } from '../../components';
+import { useSettings } from '../../state/Settings';
+import { DEFAULT_FAN_CURVE } from '../../state/fanCurve';
 import { Collapse, SliderRow } from './shared';
 
-// Fan-curve geometry (spec) — rendered in the existing `.fan-curve-svg` visual
-// language from PowerThermal: cyan stroke, soft area fill, hairline grid.
-const W = 340, H = 210;
-const PAD = { l: 40, r: 16, t: 18, b: 30 };
-const T_MIN = 50, T_MAX = 90;
+// The curve itself is the design system's FanCurve, bound to Settings — the
+// same eight points the Performance card draws and a Nova reply can carry
+// (TH-436). This file keeps the chrome around it: the dynamic toggle, the
+// reference-temperature choice, the live readout, the note and Reset.
 const CURR = 43;
-const DEFAULT_CURVE = [
-  { t: 50, r: 20 }, { t: 55, r: 25 }, { t: 60, r: 32 }, { t: 65, r: 42 },
-  { t: 70, r: 55 }, { t: 75, r: 68 }, { t: 80, r: 80 }, { t: 90, r: 95 },
-];
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-const tToX = (t: number) => PAD.l + ((t - T_MIN) / (T_MAX - T_MIN)) * (W - PAD.l - PAD.r);
-const rToY = (r: number) => PAD.t + ((100 - r) / 100) * (H - PAD.t - PAD.b);
-const yToR = (y: number) => clamp(Math.round(100 - ((y - PAD.t) / (H - PAD.t - PAD.b)) * 100), 0, 100);
 
 function FanCurveEditor({ refTemp, onRefTempChange }: { refTemp: string; onRefTempChange: (t: string) => void }) {
-  const [points, setPoints] = useState(DEFAULT_CURVE);
+  const { fanCurve, setFanCurve } = useSettings();
   const [dynamic, setDynamic] = useState(true);
-  const svgRef = useRef<SVGSVGElement>(null);
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    const svg = svgRef.current;
-    if (!svg) return;
-    const rect = svg.getBoundingClientRect();
-    const sx = W / rect.width, sy = H / rect.height;
-    const mx = (e.clientX - rect.left) * sx, my = (e.clientY - rect.top) * sy;
-    let ci = -1, md = 18;
-    points.forEach((p, i) => {
-      const d = Math.hypot(tToX(p.t) - mx, rToY(p.r) - my);
-      if (d < md) { md = d; ci = i; }
-    });
-    if (ci === -1) return;
-    const move = (ev: PointerEvent) => {
-      const r2 = svg.getBoundingClientRect();
-      const y = (ev.clientY - r2.top) * sy;
-      setPoints((prev) => prev.map((p, i) => (i === ci ? { ...p, r: yToR(y) } : p)));
-    };
-    const up = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  };
-
-  const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${tToX(p.t)} ${rToY(p.r)}`).join(' ');
-  const area = `${line} L ${tToX(points[points.length - 1].t)} ${H - PAD.b} L ${tToX(points[0].t)} ${H - PAD.b} Z`;
-  const cx = tToX(CURR > T_MIN ? CURR : T_MIN);
 
   return (
     <div className="ut-fc">
@@ -70,32 +33,10 @@ function FanCurveEditor({ refTemp, onRefTempChange }: { refTemp: string; onRefTe
         <span className="ut-fc-live-val">{refTemp}: {CURR}°C</span>
         <span className="ut-row-meta">Live reference temperature</span>
       </div>
-      <div className="ut-fc-plot">
-        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="ut-fc-svg" onPointerDown={onPointerDown}>
-          {[0, 25, 50, 75, 100].map((r) => (
-            <line key={r} x1={PAD.l} y1={rToY(r)} x2={W - PAD.r} y2={rToY(r)} className="ut-fc-grid" />
-          ))}
-          {Array.from({ length: 5 }, (_, i) => T_MIN + i * 10).map((t) => (
-            <line key={t} x1={tToX(t)} y1={PAD.t} x2={tToX(t)} y2={H - PAD.b} className="ut-fc-grid" />
-          ))}
-          {['Min', '25%', '50%', '75%', 'Max'].map((l, i) => (
-            <text key={l} x={PAD.l - 6} y={rToY(i * 25) + 3} textAnchor="end" className="ut-fc-tick">{l}</text>
-          ))}
-          {Array.from({ length: 5 }, (_, i) => T_MIN + i * 10).map((t) => (
-            <text key={t} x={tToX(t)} y={H - PAD.b + 13} textAnchor="middle" className="ut-fc-tick">{t}°</text>
-          ))}
-          <text x={PAD.l + (W - PAD.l - PAD.r) / 2} y={H - 4} textAnchor="middle" className="ut-fc-axis">Temperature (°C)</text>
-          <text x={10} y={PAD.t + (H - PAD.t - PAD.b) / 2} textAnchor="middle" className="ut-fc-axis" transform={`rotate(-90 10 ${PAD.t + (H - PAD.t - PAD.b) / 2})`}>Fan Speed</text>
-          <path d={area} className="ut-fc-area" />
-          <path d={line} className="ut-fc-line" />
-          {points.map((p, i) => (
-            <circle key={i} cx={tToX(p.t)} cy={rToY(p.r)} r={5.5} className="ut-fc-point" />
-          ))}
-        </svg>
-      </div>
+      <FanCurve points={fanCurve} onChange={setFanCurve} liveTemp={CURR} aria-label="Fan curve" />
       <div className="ut-fc-foot">
         <span className="ut-srow-note">System retains absolute thermal protection limits. Fan speed may exceed manual settings when required.</span>
-        <Button size="sm" onClick={() => setPoints(DEFAULT_CURVE)}>Reset to Default</Button>
+        <Button size="sm" onClick={() => setFanCurve(DEFAULT_FAN_CURVE)}>Reset to Default</Button>
       </div>
     </div>
   );

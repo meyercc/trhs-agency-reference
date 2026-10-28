@@ -52,7 +52,23 @@ reference** block (written once, kept at the bottom — never duplicated per ses
 - For every bug, record the **root cause**, not just the fix, so it is not re-hit.
 - Newest session goes **on top**.
 
-### Stable reference (keep once, at the bottom)
-Architecture reminders, the services/ports table, and known gotchas live in
-a single reference block at the end of `HANDOFF.md`. Maintain it when something
-changes — do not restate it inside each session section.
+### Rotate, so the file cannot grow without bound
+A handoff that only ever grows stops being readable. After prepending your section,
+**rotate every time** — while the file holds more than **5** sessions, or exceeds
+**60,000 bytes**, move its oldest section into an archive file for that section's own
+quarter (`handoff-archive/<YYYY>-Q<n>.md`), newest first.
+
+Move sections **verbatim, byte for byte** — never summarize, never re-wrap. The archive's
+value is the original text with the root causes still in it, and `git blame` can only
+follow a block that stays byte-identical. Make sure your formatter ignores these files;
+one `prettier --write` over them throws that attribution away.
+
+Rotate as a step of writing the handoff, not when someone notices. The project this
+format came from let it slide and reached 586KB and 65 sessions before it had to be
+split by hand.
+
+### Durable knowledge does not go in a session section
+A fact that will still be true in six months will age out to the archive with the
+session that recorded it. Put it where it will be found instead — a gotchas file, your
+operating contract, your README. **Never write an inventory**: a count or a roster of
+what exists on disk rots the moment the disk changes. Say how to discover it.

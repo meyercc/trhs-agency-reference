@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 
 export type IconButtonVariant = 'default' | 'accent' | 'ghost';
 
@@ -29,13 +29,19 @@ const VARIANT_CLASS: Record<IconButtonVariant, string> = {
  * Pair with `Tooltip` when the icon alone may not be self-evident — the
  * tooltip copy should match `label` so sighted and AT users hear the same name.
  *
+ * Forwards its ref: a popover trigger needs to take focus back when the
+ * panel closes.
+ *
  * Avalonia: a Button ControlTheme with a PathIcon content, Width/Height 32.
  */
-export function IconButton({ label, variant = 'default', className, children, ...rest }: IconButtonProps) {
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
+  { label, variant = 'default', className, children, ...rest },
+  ref,
+) {
   const classes = ['ds-btn-icon', VARIANT_CLASS[variant], className].filter(Boolean).join(' ');
   return (
-    <button type="button" aria-label={label} className={classes} {...rest}>
+    <button ref={ref} type="button" aria-label={label} className={classes} {...rest}>
       {children}
     </button>
   );
-}
+});

@@ -28,7 +28,7 @@
 
 /* ── V5 simulator comfort (scoped to .pv5-rig; shared .pv3-rig / V4 untouched) ── */
 .pv5-rig {
-  width: min(560px, calc(100vw - 2 * var(--gutter)));
+  width: min(560px, calc(var(--viewport-w) - 2 * var(--gutter)));
   padding: var(--gutter-sm) var(--gutter);   /* 16 24 — was 8 24 */
   gap: var(--gutter-sm);                       /* 16 — was 8 */
 }
@@ -110,7 +110,7 @@
   color: var(--text-muted);
 }
 .pv5-rig-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter-xs) var(--gutter); }
-@media (max-width: 520px) { .pv5-rig-toggles { grid-template-columns: 1fr; } }
+@container page (--bp-compact) { .pv5-rig-toggles { grid-template-columns: 1fr; } }
 .pv5-ctrl-row { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
 .pv5-ctrl-text { display: flex; flex-direction: column; gap: 1px; }
 .pv5-ctrl-label { font-size: var(--text-caption); color: var(--text-dim); }
@@ -154,7 +154,7 @@
 .pv5-perf-row2 { display: flex; gap: var(--gutter); align-items: stretch; }
 .pv5-perf-row2 > div { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .pv5-perf-row2 > div > .ds-feature-card { flex: 1; }
-@media (max-width: 900px) { .pv5-perf-row2 { flex-direction: column; } }
+@container page (--bp-medium-down) { .pv5-perf-row2 { flex-direction: column; } }
 
 /* Sub status = Facts rows (the ONE sanctioned reading form, all cards):
    label left · mono value right. */
@@ -173,7 +173,7 @@
 .pv5-nbm-sect { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-nano); color: var(--text-muted); margin: var(--gutter) 0 var(--gutter-xs); }
 .pv5-nbm-sect:first-child { margin-top: 0; }
 .pv5-nbm-ifaces { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); }
-@media (max-width: 640px) { .pv5-nbm-ifaces { grid-template-columns: 1fr; } }
+@container page (--bp-compact) { .pv5-nbm-ifaces { grid-template-columns: 1fr; } }
 .pv5-nbm-iface { background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: var(--gutter-sm); }
 .pv5-nbm-iface-head { display: flex; align-items: center; gap: 8px; margin-bottom: var(--gutter-xs); }
 .pv5-nbm-iface-kind { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border: 1px solid var(--border-light); border-radius: 4px; padding: 1px 5px; flex: none; }
@@ -247,7 +247,11 @@
 /* spotlight (G12 frame signal; arbitration order Q-11). Also used as the
    ARRIVAL CUE when the governance chip navigates to the OMEN AI card — the
    class is applied transiently and fades via the wrapper transition below. */
-.pv5-spotlight { border-radius: var(--radius); box-shadow: 0 0 0 2px var(--accent-color), 0 0 26px 2px color-mix(in srgb, var(--accent-color), transparent 55%); }
+/* The second selector is for a card that IS a .ds-feature-card (System Vitals):
+   components.css clears that card's shadow with `html:root .ds-feature-card`,
+   which outranks a single class, so the ring never showed there. */
+.pv5-spotlight,
+html:root .ds-feature-card.pv5-spotlight { border-radius: var(--radius); box-shadow: 0 0 0 2px var(--accent-color), 0 0 26px 2px color-mix(in srgb, var(--accent-color), transparent 55%); }
 .pv5-perf-row2 > .pv5-tagged { border-radius: var(--radius); transition: box-shadow 0.35s ease; }
 
 /* ── OMEN AI per-game modal (Control-and-Status, no image) ── */
@@ -318,7 +322,11 @@
 
 /* ── Maintenance L2: cleaner cards ── */
 .pv5-maint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); }
+@container page (--bp-compact) { .pv5-maint-grid { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .pv5-maint-grid { grid-template-columns: 1fr; } }
+/* One cleaner alone (June 2027 leaves out the Fan Cleaner) takes the whole row
+   rather than half of it; two cleaners never match :only-child. */
+.pv5-maint-grid > :only-child { grid-column: 1 / -1; }
 /* Equal heights + aligned Clean buttons across the two cleaners. */
 .pv5-maint-grid > .pv5-tagged { display: flex; flex-direction: column; }
 .pv5-maint-grid .pv5-cleaner-card { flex: 1; display: flex; flex-direction: column; }
@@ -335,7 +343,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 51;
-  width: min(360px, calc(100vw - 2 * var(--gutter)));
+  width: min(360px, calc(var(--viewport-w) - 2 * var(--gutter)));
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -408,7 +416,7 @@
    EQUAL HEIGHTS by construction: the grid stretches both items to the row
    height; the tagged wrapper passes that height down to its card. */
 .pv5-monitor { display: grid; grid-template-columns: 2fr 1fr; gap: var(--gutter); }
-@media (max-width: 900px) { .pv5-monitor { grid-template-columns: 1fr; } }
+@container page (--bp-medium-down) { .pv5-monitor { grid-template-columns: 1fr; } }
 .pv5-monitor > .pv5-tagged { display: flex; flex-direction: column; }
 .pv5-monitor > .pv5-tagged > .ds-feature-card { flex: 1; }
 
@@ -459,7 +467,14 @@
 .pv5-si-bar-meta { font-size: var(--text-micro); color: var(--text-muted); }
 .pv5-si-actions { display: flex; gap: 6px; }
 .pv5-si-specs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); }
-@media (max-width: 640px) { .pv5-si-specs { grid-template-columns: 1fr; } }
+@container page (--bp-compact) { .pv5-si-specs { grid-template-columns: 1fr; } }
 .pv5-si-spec-label { font-family: var(--font-mono); font-size: var(--text-nano); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
 .pv5-si-spec-value { font-size: var(--text-caption); color: var(--text-primary); margin-top: 2px; }
 .pv5-si-spec-row { font-size: var(--text-micro); color: var(--text-muted); margin-top: 2px; }
+
+/* A compact page (2026-10-20): the three vitals stack, and the row grids that
+   name fixed tracks fall to two. */
+@container page (--bp-compact) {
+  .pv5-vitals-grid { grid-template-columns: 1fr; }
+  .pv5-nbm-row { grid-template-columns: 1fr auto; }
+}

@@ -34,7 +34,7 @@ import { deviceTabs } from './deviceTabs';
 import { DeviceSettingsCard } from './DeviceSettingsCard';
 import { ProfileBar, ProfileActions, ProfileScopeBody, useDeviceProfileBar, useProfileValue, type ProfileBarState } from './ProfileBar';
 import { SurroundStage } from './SurroundStage';
-import { MIC_EFFECT_LABEL, MIC_PRESET_LABEL } from './audioLabels';
+import { MIC_EFFECT_LABEL, MIC_PRESET_LABEL, POWER_OFF_LABEL, NOTIFY_LABEL } from './audioLabels';
 
 /**
  * Full-canvas headset modal — the NGENUITY "Audio" design (Audio file, node
@@ -309,14 +309,6 @@ function SpatialTab({ features, profile }: { features: Features; profile: Profil
 }
 
 // ── Settings tab ─────────────────────────────────────────────────────────────
-const POWER_OFF_LABEL: Record<string, string> = {
-  '5min': '5 minutes',
-  '10min': '10 minutes',
-  '20min': '20 minutes',
-  '30min': '30 minutes',
-  never: 'Never',
-};
-const NOTIFY_LABEL: Record<string, string> = { voice: 'Voice', tone: 'Tone', none: 'None' };
 
 /**
  * Settings tab — Figma "Cloud III S Control Panel" (Device Settings

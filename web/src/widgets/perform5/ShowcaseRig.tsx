@@ -55,71 +55,20 @@ export interface ShowcaseRigProps {
   onSpotlight: (b: boolean) => void;
 }
 
-export function ShowcaseRig(props: ShowcaseRigProps) {
+/**
+ * The rig's rows on their own — the body of the stand-alone rig below, which
+ * the V5 and V6 explorations still draw. V7 draws none: its switches are the
+ * app-wide Simulator's (app/SimulatorRig), which also holds the product scope.
+ */
+export function ShowcaseRigRows(props: ShowcaseRigProps) {
   const { laptop, era, onLaptop, onEra, lastEvent } = props;
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  const [folded, setFolded] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
   const cell = matrixCell(laptop, era);
-
-  const onDragStart = (e: React.PointerEvent) => {
-    const panel = panelRef.current;
-    if (!panel) return;
-    e.preventDefault();
-    const rect = panel.getBoundingClientRect();
-    const dx = e.clientX - rect.left;
-    const dy = e.clientY - rect.top;
-    const move = (ev: PointerEvent) => {
-      setPos({
-        x: Math.min(Math.max(ev.clientX - dx, 0), window.innerWidth - rect.width),
-        y: Math.min(Math.max(ev.clientY - dy, 0), window.innerHeight - rect.height),
-      });
-    };
-    const up = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  };
-
   const toggles: { label: string; status: 'draft' | 'open'; meta: string; checked: boolean; onChange: (b: boolean) => void }[] = [
     { label: 'Annotate', status: 'draft', meta: 'Teaching overlay', checked: props.annotate, onChange: props.onAnnotate },
     { label: 'Spotlight anchor', status: 'draft', meta: 'G12 · frame signal', checked: props.spotlight, onChange: props.onSpotlight },
   ];
-
   return (
-    <div
-      ref={panelRef}
-      className={'pv3-rig pv5-rig' + (folded ? ' pv5-rig-folded' : '')}
-      style={pos ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' } : undefined}
-    >
-      {/* the whole title bar is the drag handle */}
-      <div className="pv3-rig-head" onPointerDown={onDragStart}>
-        <span className="pv5-rig-grip" aria-hidden="true">⠿</span>
-        <span className="pv3-rig-tag">Simulator</span>
-        <span className="pv4-rig-state" data-state={cell.state}>
-          <i aria-hidden="true" />
-          {STATE_LABEL[cell.state]}
-        </span>
-        <button
-          type="button"
-          className="pv5-rig-fold"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => setFolded((f) => !f)}
-          aria-label={folded ? 'Expand simulator' : 'Collapse simulator'}
-        >
-          {folded ? '▸' : '▾'}
-        </button>
-      </div>
-
-      {!folded && (
-        <>
-      <div className="pv5-rig-proposal">
-        <strong>PROPOSAL · not ratified</strong> — ratified pieces built directly, the draft typology (G9–G14) demonstrated.
-        The toggles below are open decisions, not decided here.
-      </div>
-
+    <>
       <div className="pv3-rig-row">
         <span className="pv3-rig-label">Laptop</span>
         <ToggleButtonGroup
@@ -191,15 +140,8 @@ export function ShowcaseRig(props: ShowcaseRigProps) {
         />
       </div>
 
-      {/* V7 (scope present): the framework-showcase apparatus is retired — no
-          legend, no annotate; spotlight survives as a plain row. V5/V6 keep
-          the original section untouched. */}
-      {props.scope ? (
-        <div className="pv3-rig-row">
-          <span className="pv3-rig-label">Spotlight</span>
-          <Toggle checked={props.spotlight} onChange={props.onSpotlight} aria-label="Spotlight anchor" />
-        </div>
-      ) : (
+      {/* V5/V6's framework showcase section. */}
+      {!props.scope && (
         <div className="pv5-rig-div">
           <span className="pv5-rig-sectlabel">Framework showcase</span>
           <TypologyLegend />
@@ -227,8 +169,64 @@ export function ShowcaseRig(props: ShowcaseRigProps) {
             : 'attribution → (no mode change yet)'}
         </span>
       </div>
-        </>
-      )}
+    </>
+  );
+}
+
+export function ShowcaseRig(props: ShowcaseRigProps) {
+  const { laptop, era } = props;
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [folded, setFolded] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const cell = matrixCell(laptop, era);
+
+  const onDragStart = (e: React.PointerEvent) => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    e.preventDefault();
+    const rect = panel.getBoundingClientRect();
+    const dx = e.clientX - rect.left;
+    const dy = e.clientY - rect.top;
+    const move = (ev: PointerEvent) => {
+      setPos({
+        x: Math.min(Math.max(ev.clientX - dx, 0), window.innerWidth - rect.width),
+        y: Math.min(Math.max(ev.clientY - dy, 0), window.innerHeight - rect.height),
+      });
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <div
+      ref={panelRef}
+      className={'pv3-rig pv5-rig' + (folded ? ' pv5-rig-folded' : '')}
+      style={pos ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' } : undefined}
+    >
+      {/* the whole title bar is the drag handle */}
+      <div className="pv3-rig-head" onPointerDown={onDragStart}>
+        <span className="pv5-rig-grip" aria-hidden="true">⠿</span>
+        <span className="pv3-rig-tag">Simulator</span>
+        <span className="pv4-rig-state" data-state={cell.state}>
+          <i aria-hidden="true" />
+          {STATE_LABEL[cell.state]}
+        </span>
+        <button
+          type="button"
+          className="pv5-rig-fold"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => setFolded((f) => !f)}
+          aria-label={folded ? 'Expand simulator' : 'Collapse simulator'}
+        >
+          {folded ? '▸' : '▾'}
+        </button>
+      </div>
+
+      {!folded && <ShowcaseRigRows {...props} />}
     </div>
   );
 }

@@ -460,8 +460,11 @@
   font-size: var(--text-body);
   color: rgba(255, 255, 255, 0.72);
 }
-.wg-lp-play {
-  align-self: flex-start;
+/* Play, and Nova's "Catch me up" beside it when Nova is installed (TH-478). */
+.wg-lp-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-sm);
   margin-top: var(--gutter-sm);
 }
 /* Optical centering for the play triangle (was on the .ds-btn-icon base rule,

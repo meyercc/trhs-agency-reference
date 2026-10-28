@@ -13,6 +13,12 @@ export interface NetworkBoosterCardProps {
   mode: NbMode; // armed state; the control lives in the Manage modal
   gameRunning: boolean; // the trigger — prioritization works during a session
   onManage: () => void;
+  /**
+   * Who set the mode, when it was not the player: signed beside the mode
+   * (network-booster.6). Touching the mode in Manage makes the player the last
+   * writer, and the signature goes (network-booster.7).
+   */
+  setBy?: string | null;
 }
 
 // Three states (resting-state principle): Optimizing = a session is being
@@ -24,7 +30,7 @@ export interface NetworkBoosterCardProps {
 //   inactive:   "Off — turn it on in Manage to prioritize game traffic."
 //               INVITE CANDIDATE: the inactive card could carry a light
 //               re-engage nudge (flow deferred — see decision log).
-export function NetworkBoosterCard({ mode, gameRunning, onManage }: NetworkBoosterCardProps) {
+export function NetworkBoosterCard({ mode, gameRunning, onManage, setBy }: NetworkBoosterCardProps) {
   const armed = mode !== 'off';
   const optimizing = armed && gameRunning;
 
@@ -46,7 +52,10 @@ export function NetworkBoosterCard({ mode, gameRunning, onManage }: NetworkBoost
               ]
             : [
                 { label: 'Starts', value: armed ? 'When a game launches' : '—' },
-                { label: 'Mode', value: armed ? (mode === 'auto' ? 'Auto' : 'Custom') : 'Off' },
+                {
+                  label: 'Mode',
+                  value: (armed ? (mode === 'auto' ? 'Auto' : 'Custom') : 'Off') + (setBy ? ` · Set by ${setBy}` : ''),
+                },
               ]
         }
       />

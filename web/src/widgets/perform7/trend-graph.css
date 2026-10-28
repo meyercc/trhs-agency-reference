@@ -1,0 +1,81 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   TrendGraph (.pv7-trend*) — the widget's own stylesheet, imported by
+   TrendGraph.tsx so every host gets it: the Perform V7 vitals modal, Nova's
+   Agents dashboard, a story. It lived in perform-v7.css until a second host
+   had to reach into a page's stylesheet to style a widget (TH-432). The class
+   prefix is kept — renaming it would ripple through the suites for nothing.
+   ══════════════════════════════════════════════════════════════════════════ */
+/* ── Trend: a line plus the references that make it readable ──
+   The trace is the only thing inside the stretched SVG. Markers and labels are
+   HTML on top, because non-uniform scaling distorts text and turns circles into
+   ellipses. The plot sits in the same container treatment as the reading tiles
+   above it, so the block reads as one unit rather than a line floating on the
+   modal background. */
+.pv7-trend-plot {
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.pv7-trend-svg { display: block; width: 100%; height: 100%; }
+.pv7-trend-line { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.pv7-trend-rule { stroke-width: 1; stroke-dasharray: 3 3; }
+.pv7-trend-rule-warn { stroke: color-mix(in srgb, var(--orange), transparent 55%); }
+.pv7-trend-rule-danger { stroke: color-mix(in srgb, var(--red), transparent 45%); }
+
+.pv7-trend-peak,
+.pv7-trend-now {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.pv7-trend-peak { border: 1.5px solid var(--text-dim); background: var(--bg-base); }
+.pv7-trend-now { box-shadow: 0 0 0 3px color-mix(in srgb, var(--bg-base), transparent 40%); }
+.pv7-trend-peak-label {
+  position: absolute;
+  transform: translate(-50%, -175%);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.pv7-trend-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+/* Range picker — the chart's own control, so it sits on the chart. */
+.pv7-trend-ranges { display: inline-flex; gap: 2px; }
+.pv7-trend-range {
+  appearance: none;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.pv7-trend-range:hover { color: var(--text-dim); border-color: var(--border-light); }
+.pv7-trend-range.active {
+  color: var(--cyan);
+  border-color: color-mix(in srgb, var(--cyan), transparent 60%);
+  background: color-mix(in srgb, var(--cyan), transparent 92%);
+}
+/* The chart's content, for anyone who cannot see it, uses the shared
+   `.ds-sr-only` (components.css) — promoted there when Nova became the second
+   surface to need one (TH-428). */

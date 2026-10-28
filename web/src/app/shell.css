@@ -1,23 +1,103 @@
 .shell {
   position: relative; /* anchor for the home carousel aura (bleeds to app top) */
-  min-height: 100vh;
+  min-height: var(--viewport-h);
   /* Let the full-bleed carousel aura (100vw) extend to the window edges without
      adding a horizontal scrollbar. `clip` (not `hidden`) keeps the sticky nav and
      window scroll intact. */
   overflow-x: clip;
-  /* Width of the persistent Devices flyout (shared by the panel + the reserved
-     space below). */
+  /* Widths of the two right-rail panels (shared by each panel + the reserved
+     space below). Nova is the wider of the two: it holds a conversation, and
+     below ~360px the bubbles stop being readable lines. `--nova-panel-w` is
+     the person's own width, set inline by AppShell; the default is what a
+     fresh install gets, and what the page reserves at most (below). */
   --devices-panel-w: 340px;
+  /* The game detail panel (TH-504): one game's hub — Devices' width (Chris
+     widened it from the mockup's 232, 2026-10-26), so the two rails match. */
+  --game-panel-w: 340px;
+  --nova-panel-default-w: 380px;
+  --nova-panel-w: var(--nova-panel-default-w);
+  /* What the open panel reserves. One variable rather than a rule per panel:
+     until TH-434 the reservation was a flat `.shell.devices-open` rule that
+     assumed Devices was the only occupant, so a second panel's rule would have
+     REPLACED it rather than added to it (equal specificity, later wins). The
+     two panels are mutually exclusive in AppShell, so this is only ever one
+     width — but it is now a width the panels name, not a rule each. */
+  --rail-reserve-w: 0px;
+  /* The menus that hang off the nav — profile switcher, account, More. */
+  --nav-menu-w: 232px;
 }
-/* When the Devices panel is open, only the content region reserves room on the
+.shell.devices-open {
+  --rail-reserve-w: var(--devices-panel-w);
+}
+.shell.game-open {
+  --rail-reserve-w: var(--game-panel-w);
+}
+/* Nova reserves its DEFAULT width and no more (Chris, 2026-10-20). Dragged
+   wider, the extra floats over the page: the page keeps the layout it had, it
+   does not reflow under every pointer move, and covering content is the
+   person's own choice, made for a wider conversation. The panel marks itself
+   `floating` and takes a shadow so the overlap reads as a surface over the
+   page, not a page cut short. */
+.shell.nova-open {
+  --rail-reserve-w: min(var(--nova-panel-w), var(--nova-panel-default-w));
+}
+/* When a right-rail panel is open, only the content region reserves room on the
    right — the nav stays full-width across the top (its centering + right-edge
    account button don't move). The wallpaper is fixed to the viewport
-   (z-index:-1), so it stays full-bleed. */
+   (z-index:-1), so it stays full-bleed.
+
+   `.shell-scroll` is also the PAGE CONTAINER (`@container page`, tokens.css
+   Breakpoints): its content box is the window less this reservation, so a
+   page's layout answers to the room it actually has. Inline-size containment
+   does not capture `position: fixed` or `absolute` descendants (Chrome 155,
+   measured 2026-10-20), so the Play hero and the modals keep the viewport. */
 .shell-scroll {
+  container: page / inline-size;
   transition: padding-right 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
-.shell.devices-open .shell-scroll {
-  padding-right: calc(var(--devices-panel-w) + var(--gutter) * 2);
+.shell.devices-open .shell-scroll,
+.shell.game-open .shell-scroll,
+.shell.nova-open .shell-scroll {
+  padding-right: calc(var(--rail-reserve-w) + var(--gutter) * 2);
+}
+/* The content floor. A rail reserves room only while the page beside it keeps
+   at least its `medium` layout; narrower than that the page is not a layout
+   anyone drew, so the rail stops being a rail and floats over the page, which
+   keeps its full width underneath. AppShell sets `rail-overlay` from the
+   window width and the reservation (it needs both, which a media query cannot
+   read), for Devices and Nova alike — Devices used to squeeze at any width. */
+.shell.rail-overlay .shell-scroll {
+  padding-right: 0;
+}
+/* Nova behind a floating button (TH-507). The FAB's geometry, declared once
+   for everything that clears it: the chat window stands above it, the toast
+   stack lifts over it (`--ds-toast-stack-bottom`), and on a phone it rides
+   above the bottom nav. The size is `.ds-fab`'s own token, `--control-height-fab`. The
+   window reserves no room beside the page — it floats over it. */
+.shell.nova-fab {
+  --nova-fab-size: var(--control-height-fab);
+  --nova-fab-lift: 0px;
+  --nova-fab-clear: calc(var(--gutter) + var(--nova-fab-lift) + var(--nova-fab-size) + var(--gutter-sm));
+  --ds-toast-stack-bottom: var(--nova-fab-clear);
+}
+@media (--bp-compact) {
+  .shell.nova-fab {
+    --nova-fab-lift: calc(var(--nav-bottom-h) + env(safe-area-inset-bottom, 0px));
+  }
+}
+/* The right-hand rails stop above the FAB rather than run under it — the
+   button sat on the game panel's last action (Chris, October 27). The
+   clearance carries the bottom nav's lift, so this holds for the sheets too. */
+.shell.nova-fab .game-panel,
+.shell.nova-fab .device-panel {
+  bottom: var(--nova-fab-clear);
+}
+/* A Bottom Banner ad (ads.css) is pinned to the bottom edge, so the content
+   reserves the banner's height under its own bottom padding — otherwise the
+   last row of every page ends up behind the ad. Same shape as devices-open
+   above; the height is the ad spec's, declared once in ads.css. */
+.shell.ad-bottom-banner .shell-content {
+  padding-bottom: calc(var(--gutter) * 3 + var(--ad-banner-h));
 }
 .shell-nav {
   position: sticky;
@@ -44,16 +124,41 @@
   justify-self: start;
   padding-left: var(--gutter-xs);
 }
-.shell-brand .hyperx-logo {
-  display: block;
-  height: 26px;
-  width: auto;
-}
 .shell-util {
   justify-self: end;
   display: flex;
   align-items: center;
   gap: var(--gutter-sm);
+}
+/* ── Compact: the nav at the bottom edge (Chris, 2026-10-20) ──────────────
+   The same pill, as a tab bar (`.ds-menu.bar`) docked where a thumb reaches,
+   inside the phone's safe area. AppShell swaps the top bar's centre for it
+   below `compact`, and marks the shell `has-bottom-nav` so the page reserves
+   the bar's height under its content — the same shape as the ad banner's
+   reservation above. */
+.shell-bottom-nav {
+  position: fixed;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--gutter-sm) + env(safe-area-inset-bottom, 0px));
+  z-index: 55;
+  display: flex;
+  justify-content: center;
+}
+.shell.has-bottom-nav .shell-content {
+  padding-bottom: calc(var(--gutter) * 3 + var(--nav-bottom-h) + env(safe-area-inset-bottom, 0px));
+}
+.shell.page-full.has-bottom-nav .shell-content {
+  padding-bottom: calc(var(--nav-bottom-h) + env(safe-area-inset-bottom, 0px));
+}
+/* The tabs that did not fit: a menu above the bar, off its right end where the
+   More tab is. The AccountMenu's width, so the two menus match. */
+.shell-nav-more {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--gutter-xs));
+  width: var(--nav-menu-w);
+  z-index: 56;
 }
 /* ── Software-profile switcher (ProfileSwitcher) ── */
 /* Sits left of the account avatar. Reads as a status chip you can act on, not
@@ -111,8 +216,9 @@
 .profile-switcher-menu {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
-  width: 232px;
+  /* Opens rightward from the nav's left edge (the brand slot). */
+  left: 0;
+  width: var(--nav-menu-w);
   z-index: 50;
 }
 .ps-note {
@@ -147,16 +253,69 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 232px;
+  width: var(--nav-menu-w);
   z-index: 50;
 }
+/* The header is a button (it opens Account › Profile), so it has to be told
+   not to look like one — without this it renders on the browser default button
+   face and the name goes invisible on it. */
 .account-menu .am-header {
   display: flex;
   align-items: center;
   gap: var(--gutter-xs);
+  width: 100%;
   padding: var(--gutter-xs);
+  appearance: none;
+  background: none;
+  border: 0;
   border-bottom: 1px solid var(--border);
-  margin-bottom: var(--gutter-xxs);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--gutter-xs);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-default);
+}
+/* Same answer to the pointer as the rows under it. */
+.account-menu .am-header:hover {
+  background: var(--surface-hover);
+}
+.account-menu .am-header:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -2px;
+}
+/* Menu rhythm: rows at control height, and the same 8px on either side of
+   every divider and between groups, so no row sits tight against its
+   neighbours. */
+.profile-menu .ds-list-item {
+  min-height: var(--control-height);
+}
+.profile-menu .ds-list-item + .ds-context-menu-group {
+  margin-top: var(--gutter-xs);
+}
+.profile-menu .ds-separator {
+  margin: var(--gutter-xs) 0;
+}
+/* The header is the way into Profile — a full-width button, not a label. */
+button.pm-header {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-default);
+}
+button.pm-header:hover {
+  background: var(--surface-hover);
+}
+button.pm-header:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -2px;
 }
 .account-menu .am-name {
   font-size: var(--text-caption);
@@ -171,9 +330,9 @@
 .account-menu .am-appearance {
   padding: var(--gutter-xxs) var(--gutter-sm) var(--gutter-xs);
 }
-.account-menu .am-appearance .ds-toggle-group {
+/* .account-menu .am-appearance .ds-toggle-group {
   width: 100%;
-}
+} */
 /* accent / danger menu rows (icon + label follow currentColor) */
 .account-menu .am-accent {
   color: var(--accent-color);
@@ -212,10 +371,87 @@
   width: var(--gutter-xs);
   height: 100%;
 }
+/* The page's content width — a CONTENT-box cap (the padding sits outside it),
+   so this is exactly the width a full-width child like the home carousel gets.
+   Declared once; board.css reads it for the carousel's box. */
+.shell {
+  --page-max-w: 1100px;
+  /* One track of the Home board at that width, and what one more standard
+     widget (span 2) costs with the gap before it. The board grows by whole
+     widgets (below), so every card keeps the size it was drawn at. */
+  --board-track: calc((var(--page-max-w) - var(--gutter) * 5) / 6);
+  --board-step: calc(var(--board-track) * 2 + var(--gutter) * 2);
+}
 .shell-content {
-  max-width: 1100px;
+  max-width: var(--page-max-w);
   margin: 0 auto;
   padding: var(--gutter) var(--gutter) calc(var(--gutter) * 3);
+}
+/* A wide page (Home, Chris 2026-10-21): the cap grows by one standard widget
+   where eight board tracks fit, and by two where ten do (the named widths in
+   shared/breakpoints.json, derived from the numbers above). The carousel keeps
+   its 1100px box, left-aligned (board.css `.wb-hero`); the board below packs
+   the extra columns (WidgetBoard reads the same widths). Queried on the page
+   container, not the window: with Nova reserving 380px of a 1920 window the
+   page is 1477 and stays at six. This replaces TH-440's side slots, which
+   rendered as 10px slivers between 1600 and 1700. */
+@container page (--w-board-8) {
+  .shell.page-wide .shell-content {
+    max-width: calc(var(--page-max-w) + var(--board-step));
+  }
+}
+@container page (--w-board-10) {
+  .shell.page-wide .shell-content {
+    max-width: calc(var(--page-max-w) + var(--board-step) * 2);
+  }
+}
+@container page (--bp-wide-up) {
+  /* Every other page grows a step rather than sitting as a 1100px island in
+     a 1920 window; at `ultra` the interface-size zoom (tokens.css) carries the
+     rest, so the cap is not chased any further. On `.shell-content`, not on
+     `.shell`: a container query reaches the container's descendants only, and
+     `.shell` is its parent. */
+  .shell:not(.page-wide) .shell-content {
+    --page-max-w: 1440px;
+  }
+}
+/* A full-bleed page (Nova) owns the viewport below the nav: the window stops
+   scrolling and the page's own region does. A flex height chain rather than a
+   nav number — nothing in the app measures --nav-full-h, and the nav's real
+   height is content-driven. Scoped to .page-full (set by AppShell from the
+   route) so every other page is untouched; the devices-open reservation on
+   .shell-scroll still applies to the flex child, so the page narrows beside
+   the Devices panel instead of sliding under it. */
+.shell.page-full {
+  display: flex;
+  flex-direction: column;
+  height: var(--viewport-h);
+  height: var(--viewport-dh);
+  min-height: 0;
+  overflow: hidden;
+}
+.shell.page-full .shell-nav {
+  flex: none;
+}
+.shell.page-full .shell-scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.shell.page-full .shell-content {
+  flex: 1;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* The banner reservation re-stated at higher specificity, since the rule above
+   zeroes the padding the plain .ad-bottom-banner rule relies on. */
+.shell.page-full.ad-bottom-banner .shell-content {
+  padding-bottom: var(--ad-banner-h);
 }
 
 /* shared page chrome (type comes from .ds-text-* utilities) */

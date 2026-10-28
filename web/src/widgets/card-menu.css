@@ -1,0 +1,178 @@
+/* ── Card ⋮ «More options» (CardMenu.tsx) ─────────────────────────────────
+   Every widget card on Home, top-right at every size. The button, tooltip and
+   menu are all library parts; this file only places them. */
+
+.card-menu {
+  position: absolute;
+  /* One spot on every card, measured from the card's own content box:
+     · right — the ⋮'s box ends where the card's content ends (`--gutter`), the
+       same line the toggles and chips below end on, and where the header link
+       used to end; Chris's own header controls sit in the content column the
+       same way (Perform `.ds-feature-card-header`, `perform-v5.css`).
+     · top — a step above the content (`--gutter` − `--gutter-xs`), which puts
+       the dots on the header title's LETTERS, not on its line box: uppercase
+       has no descenders, so the letters sit high in their line and a ⋮
+       centred on the line box read low (Cindy 2026-10-08, Light Studio · CPU).
+       A header-less card gets the same corner. */
+  top: calc(var(--gutter) - var(--gutter-xs));
+  right: var(--gutter);
+  z-index: 4;
+  display: inline-flex;
+}
+/* Shown on intent, not at rest (Chris 2026-10-19: «visually redundant when
+   they're always visible»). A ⋮ on every card is a column of identical marks
+   down the board; it appears when the card is the one you are on:
+   · the pointer is over the card (the board's cell, or a device card drawn
+     outside the board);
+   · focus is anywhere in the card — Tab still reaches the ⋮, because only its
+     opacity changes: never `visibility`/`display`, which would drop it from
+     the tab order and from the suites' "is it there" checks;
+   · its menu is open (the menu is portalled, so `:focus-within` does not see
+     it — `aria-expanded` on the button does);
+   · the first-visit hint is pointing at it.
+   No hover to reveal it on a touch screen, so there it stays visible. */
+@media (hover: hover) {
+  .card-menu {
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-default);
+  }
+  :is(.wb-cell, .ds-devcard):hover .card-menu,
+  :is(.wb-cell, .ds-devcard):focus-within .card-menu,
+  .card-menu:has([aria-expanded='true'], .card-menu-hint) {
+    opacity: 1;
+  }
+}
+
+/* The board's copy sits in the cell, outside the card's 1px border — it moves
+   in by that pixel so it lands on the same spot as a card's own ⋮ (the
+   Treehouse 32 card's sat 1px off every other card's until 10-08). */
+.wb-card-menu {
+  top: calc(var(--gutter) - var(--gutter-xs) + 1px);
+  right: calc(var(--gutter) + 1px);
+}
+/* A card that carries its own ⋮ (more rows than Remove — the monitor card's
+   Customize) draws it inside the card; the board's copy on that cell steps
+   aside so there is one ⋮, not two. */
+.wb-cell:has(.card-menu:not(.wb-card-menu)) > .wb-card-menu {
+  display: none;
+}
+/* A card with a header (`WidgetShell`): its link moved into the ⋮ (first row),
+   so the header is the title alone, kept clear of the ⋮ — a long title ends
+   one `--gutter-xxs` before the ⋮'s box. A shell drawn outside the board still
+   shows its link there. */
+.wb-cell:has(> .wb-card-menu) .w-label {
+  padding-right: calc(32px + var(--gutter-xxs));
+}
+
+/* A device card's product photo starts below the ⋮, so the ⋮ never sits on
+   the product (a tower is as tall as the card). The photo is bottom-aligned and
+   `contain`, so only a photo as tall as the card gives anything up. */
+.wb-cell .ds-devcard .devw-photo {
+  margin-top: calc(32px + var(--gutter-xxs) - var(--gutter-xs));
+}
+
+/* The Processor / Graphics cards keep their gauge in the top-right corner too —
+   it steps left of the ⋮'s box by the same `--gutter-xxs`. Their padding grows
+   from `--gutter` to 20px at 2+ rows while the ⋮ stays on the board's line, so
+   the step is measured from the padding each time. */
+.wb-cell:has(> .wb-card-menu) .cs-gauge {
+  margin-right: calc(32px + var(--gutter-xxs));
+}
+@container cscard (min-height: 232px) {
+  .wb-cell:has(> .wb-card-menu) .cs-gauge {
+    margin-right: calc(var(--gutter) + 32px + var(--gutter-xxs) - var(--gutter-lg, 20px));
+  }
+}
+
+/* The one-time hint must not read as an ⓘ tooltip (Cindy 10-01 «그냥 information
+   툴팁 같아서»). Same library Tooltip, two differences: the accent wash and
+   border of a selected chip (`.ds-chip.selected`) — this app's «yours / look
+   here» colour — and a tutorial's bounce (Cindy 10-01 «말풍선이 통통 튀어야»).
+   Speeds Cindy saw and kept: the bubble arrives over 1.2s (her floor is 1s,
+   2026-09-25) on the library's spring curve (`--ease-spring`), then hops
+   toward the ⋮ twice and rests, over and over until the ⋮ is pressed (Cindy
+   10-01 «지금은 멈춰있어서»), while the ⋮ breathes in step — one gesture,
+   «press here». The rest is the app's own nudge shape (`w-link-nudge`: move,
+   then a pause before the next). Pressing the ⋮ hides the hint, which is the
+   way to stop it that WCAG 2.2.2 asks of motion lasting past 5s.
+   `translate`, not `transform` — the left placement already owns the
+   transform. */
+.card-menu-hint > .ds-tooltip-popup.show,
+.card-menu-hint > .ds-tooltip-popup.show::after {
+  background: color-mix(in srgb, var(--accent-color) 30%, var(--bg-mid));
+  border-color: var(--accent-color);
+}
+.card-menu-hint > .ds-tooltip-popup.show {
+  animation:
+    card-menu-hint-in 1.2s var(--ease-spring) both,
+    card-menu-hint-hop 4s var(--ease-spring) 1.2s infinite;
+}
+.card-menu-hint .ds-btn-icon {
+  animation: card-menu-hint-breathe 4s ease-in-out 1.2s infinite;
+}
+@keyframes card-menu-hint-in {
+  from {
+    opacity: 0;
+    translate: -8px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+/* One 4s beat: two hops toward the ⋮ in the first 2s, then 2s of rest. */
+@keyframes card-menu-hint-hop {
+  0%,
+  25%,
+  50%,
+  100% {
+    translate: 0 0;
+  }
+  12.5%,
+  37.5% {
+    translate: 6px 0;
+  }
+}
+@keyframes card-menu-hint-breathe {
+  0%,
+  50%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-color), transparent 100%);
+  }
+  25% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-color), transparent 55%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-menu-hint > .ds-tooltip-popup.show,
+  .card-menu-hint .ds-btn-icon {
+    animation: none;
+  }
+}
+
+/* While its menu is open the ⋮ says nothing — the menu is the answer. */
+.card-menu-quiet > .ds-tooltip-popup {
+  display: none;
+}
+
+/* The menu and any panel a row swaps in are Chris's `ContextMenu` (surface,
+   rows, toggles all his); this only places them under the ⋮ in the viewport,
+   since they are portalled to <body> out of a transformed board cell. */
+.card-menu-pop {
+  position: fixed;
+  z-index: 60;
+  width: 236px;
+}
+
+/* A header-less card (the device cards) has no title for the dots to line up
+   with, so the step above the content just reads as an off-centre corner. It
+   takes the same inset top and right instead — snug in the corner, on the
+   card's own 24px padding (Chris, 2026-10-12). Both copies: the card's own ⋮
+   measures from the card's padding box, the board's from the cell, which is
+   the 1px the base rule above already accounts for. */
+.ds-devcard > .card-menu {
+  top: var(--gutter);
+}
+.wb-cell:has(.ds-devcard) > .wb-card-menu {
+  top: calc(var(--gutter) + 1px);
+}

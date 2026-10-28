@@ -125,6 +125,21 @@ export const MODULES: ModuleDef[] = [
       'The full System Vitals modal is disabled',
     ],
   },
+  {
+    id: 'nova',
+    name: 'Nova',
+    category: 'performance',
+    icon: 'twinkle',
+    tagline: 'Ask about the machine, the desk and the profile \u2014 and have it done.',
+    description:
+      'Nova is the hub\u2019s assistant: a chat that knows this machine, the devices on the desk and the profile you are in, and can act \u2014 open the page, switch the profile, start the tool. It answers from a script table first and, when you turn one on, from a local model on this machine; nothing leaves it. The Agents view shows what your agents have done and holds the catalog; Tokenomics shows what each reply would have cost in the cloud.',
+    features: ['Nova tab in the main nav \u2014 Chat and Agents views', 'Quick prompts that explain and act', 'Optional local model (OpenAI-compatible, localhost only)', 'Tokenomics and settings popovers'],
+    removeEffects: ['The Nova tab is hidden from the main navigation', 'Conversations and usage stay in this browser until Nova\u2019s own Reset demo state'],
+    isNew: true,
+    // Ships uninstalled: Nova is opt-in from the Module Browser — a preview
+    // you choose, not a tab that appears.
+    defaultInstalled: false,
+  },
   // Personalization
   {
     id: 'lightstudio',
@@ -203,6 +218,7 @@ export const WIDGET_MODULE: Record<string, string> = {
 /** Nav tab id → module id (tabs gated behind a module). */
 export const NAV_MODULE: Record<string, string> = {
   shop: 'shop',
+  nova: 'nova',
 };
 /** Feature-modal id (?modal=) → module id (modals gated behind a module). */
 export const MODAL_MODULE: Record<string, string> = {

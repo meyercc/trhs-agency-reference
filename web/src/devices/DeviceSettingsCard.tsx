@@ -16,6 +16,8 @@ export interface DeviceSettingsCardProps {
   deviceManager?: boolean;
   /** Show the Get Support button (default yes). */
   getSupport?: boolean;
+  /** Where Get Support goes; without it the button is the prototype's stand-in. */
+  onGetSupport?: () => void;
   /** Partner wordmark credit — "Audio powered by …". The text names it for anyone who can't see the mark. */
   audioCredit?: string | null;
   /** A hand-off to the OS on the card's floor, e.g. Windows Sound Devices. */
@@ -30,6 +32,7 @@ export function DeviceSettingsCard({
   firmware,
   deviceManager = true,
   getSupport = true,
+  onGetSupport,
   audioCredit,
   handoff,
   children,
@@ -48,7 +51,7 @@ export function DeviceSettingsCard({
             </Button>
           )}
           {getSupport && (
-            <Button>
+            <Button onClick={onGetSupport}>
               <Icon name="question" size={16} />
               Get Support
             </Button>

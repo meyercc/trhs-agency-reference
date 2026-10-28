@@ -80,7 +80,7 @@ export const Wide: Story = {
 export const Palette: Story = {
   parameters: { controls: { disable: true } },
   render: () => {
-    const palette = ['red', 'orange', 'yellow', 'green', 'cyan', 'indigo', 'purple'];
+    const palette = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple'];
     const [active, setActive] = useState('green');
     return (
       <div style={{ display: 'flex', gap: 8 }}>

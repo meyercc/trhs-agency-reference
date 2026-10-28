@@ -1,0 +1,130 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ZONE LIGHTS (.pcz) — a PC's lighting in the peripherals' Lights tab layout
+   (ZoneLightsTab.tsx): the rail, then the zones, then the presets. The grid,
+   the rail and the presets are the Lights tab's own (lighting-tab.css); this
+   file only places the zone column between them and draws its rows.
+   ══════════════════════════════════════════════════════════════════════════ */
+.pcz {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.pcz > .pdm-lights {
+  flex: 1;
+  min-height: 0;
+}
+/* The grid's children: rail (0), zones (1), presets (2). */
+.pcz .pdm-lights-body > .ds-sw-only {
+  order: 2;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pcz .pdm-lights-body > .ds-sw-only > .ds-sw-only-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pcz-zones {
+  order: 1;
+  flex: 0 0 auto;
+  width: 220px;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* The list keeps room for a few rows before the column scrolls. */
+.pcz-list {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+}
+.pcz-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xxxs);
+}
+.pcz-zone {
+  cursor: pointer;
+}
+.pcz-child {
+  margin-left: var(--gutter);
+}
+.pcz-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: transparent;
+}
+.pcz-other {
+  margin-top: var(--gutter-xs);
+  padding-top: var(--gutter-xs);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.pcz-note {
+  margin: 0 0 var(--gutter-xs);
+  color: var(--text-dim);
+  font-size: var(--text-caption);
+}
+
+/* ── The notebook's other settings, in the gear's popover (LaptopLights.tsx) ── */
+.pcl-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+.pcl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+  color: var(--text-dim);
+  font-size: var(--text-caption);
+}
+.pcl-hotkeys {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+  flex-wrap: wrap;
+}
+.pcl-none {
+  padding: var(--gutter-sm);
+}
+
+/* ── The gear in a lighting panel's header, and its popover (LightingGear.tsx) ──
+   The wrapper is the popover's containing block; the panel hangs from the
+   gear's right edge, as Nova's popovers hang from theirs (nova.css .nova-pop). */
+.lg-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.lg-wrap > .ds-ng3-action.active {
+  color: var(--text-primary);
+}
+.lg-pop {
+  position: absolute;
+  top: calc(100% + var(--gutter-xs));
+  right: 0;
+  width: 300px;
+  max-width: calc(100vw - 2 * var(--gutter));
+  z-index: 50;
+}
+.lg-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  padding: var(--gutter-xs);
+}
+.lg-settings .ds-btn {
+  align-self: flex-start;
+}

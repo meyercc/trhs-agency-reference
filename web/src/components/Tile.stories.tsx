@@ -76,6 +76,10 @@ export const WithControl: Story = {
     children: <Slider defaultValue={40} aria-label="Sidetone level" />,
   },
 };
+/** The device a control belongs to, as a plain marker: no tooltip, not a tab stop. */
+export const DeviceMarker: Story = {
+  args: { icon: 'volume-up', title: 'Volume', reason: 'Cloud III', reasonIcon: 'audio-headset', reasonTooltip: false },
+};
 /** Text reason — for tiles whose reason is the content itself (a time, a device). */
 export const TextReason: Story = { args: { reason: 'Now · Tuesday 9:12 PM' } };
 

@@ -1,0 +1,39 @@
+/* The machine's picture (.lp), beside the keyboard board. Shown only where the
+   hero is wide enough to hold it next to the board. */
+.lp {
+  position: absolute;
+  left: 3%;
+  top: 16%;
+  width: min(22%, 320px);
+  margin: 0;
+  display: none;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+  z-index: 1;
+  pointer-events: none;
+}
+@container (min-width: 1100px) {
+  .lp { display: flex; }
+}
+.lp-frame { position: relative; }
+.lp .lp-img { display: block; width: 100%; max-width: none; max-height: none; height: auto; filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.5)); }
+.lp-deck {
+  position: absolute;
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  filter: blur(5px);
+  border-radius: var(--radius-sm);
+}
+.lp-parts { display: flex; gap: var(--gutter-sm); flex-wrap: wrap; font-size: var(--text-caption); color: var(--text-dim); }
+.lp-part { display: inline-flex; align-items: center; gap: var(--gutter-xxs); }
+.lp-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--border-med); }
+.lp-dot.lit { border-color: transparent; box-shadow: 0 0 8px 1px currentColor; }
+
+/* The dots alone, with the 3D machine as the hero: they sit at the hero's
+   bottom left, clear of the zone rail at its foot (laptop-canvas.css). */
+.lp.lp-dots-only {
+  top: auto;
+  bottom: var(--gutter-sm);
+  left: var(--gutter);
+  width: auto;
+}

@@ -4,6 +4,31 @@
    specific to profiles lives here: the list rail, the override affordance, and
    the read-only device manifest. */
 
+/* The narrowest column a card is laid out for (see .pfm-grid). Ten control
+   heights: 320px at the 32px control size. */
+.profiles-modal {
+  --pfm-col-min: calc(var(--control-height) * 10);
+  /* The narrowest a Profile Details group card gets before it wraps: the
+     same column as the cards above (seven control heights read cramped,
+     Kristy 2026-10-07). */
+  --pfm-group-min: var(--pfm-col-min);
+}
+
+/* The standard modal frame, like the Module Browser (Chris 2026-10-20: «it
+   should behave like other standard modals»). Kristy's TH-459 (2026-10-12)
+   had it hug its content, because on a tall screen the cards stretched to fill
+   a 1300px pane; the frame is the shell's own `inset` again. The profile rail
+   still fills the body's height and scrolls its own list, so fourteen profiles
+   never stretch the modal. */
+.profiles-modal .modal-body {
+  min-height: 0;
+}
+.profiles-modal .modal-left {
+  box-sizing: border-box; /* its padding stays inside the row it fills */
+  height: 0;
+  min-height: 100%;
+}
+
 .profiles-modal .pfm-lede {
   margin: 0 0 var(--gutter);
   color: var(--text-dim);
@@ -127,40 +152,194 @@ html:root .pfm-nav .pfm-new {
   justify-content: space-between;
 }
 
-.pfm-hint,
-.pfm-empty {
-  margin: 0 0 var(--gutter-sm);
+.pfm-empty,
+.pfm-games-empty {
+  margin: 0;
   color: var(--text-muted);
   font-size: var(--text-caption);
   line-height: 1.5;
 }
 
-/* ── Game Link ── */
-.pfm-tiles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gutter-xs);
+/* ── The two-column body (NGENUITY's Beta layout, 2026-10-01) ──
+   Who the profile is and how it looks on the left; what turns it on stacked
+   on the right. Each card is a settings group with its padding drawn in, so
+   the content sits in one tight block instead of a full-width list of rows. */
+/* Two columns only when each gets a card wide enough for a week of day
+   chips and two time fields (320px); the modal is narrower than the window
+   (its rail takes a share), so this follows the modal, not the viewport. */
+.pfm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--pfm-col-min)), 1fr));
+  gap: var(--gutter-sm);
+  /* Cards side by side end on one line (the card rule, CLAUDE.md): the row
+     stretches, and the last card of a stacked column takes up the slack. */
+  align-items: stretch;
+  /* Its own height, not the pane's. In the standard frame (2026-10-20) a tall
+     window would otherwise stretch every card into a mostly empty column.
+     Profile Details follows the cards directly, so there is still no hole
+     above it (Kristy 2026-10-06); the spare height falls below everything,
+     as in the Module Browser. */
+  flex: 0 0 auto;
   margin-bottom: var(--gutter-sm);
 }
-.pfm-gamelist {
-  max-height: 260px;
-  overflow-y: auto;
-  margin-top: var(--gutter-xs);
+/* Game Link keeps its own height; Schedule, the last card, takes the slack
+   (Kristy 2026-10-06). */
+.pfm-col > .pfm-card:last-child {
+  flex: 1 0 auto;
+}
+.pfm-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  min-width: 0;
+}
+.profiles-modal .ds-settings-group.pfm-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-sm);
+  min-width: 0;
+  margin: 0;
+  padding: var(--gutter-sm) var(--gutter);
+}
+/* The group's header inside a card: the card already pads it. */
+.profiles-modal .pfm-card > .ds-settings-group-header.stx-static {
+  padding: 0;
+}
+/* Photo + name on one line, as NGENUITY opens its profile card. */
+.pfm-name {
+  display: flex;
+  align-items: center;
+  gap: var(--gutter-xs);
+}
+.pfm-name > :last-child {
+  flex: 1;
+  min-width: 0;
+}
+.pfm-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-xs);
+}
+/* The field's caps label, and its one action (Upload, Use app setting) at the far end. */
+.pfm-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-xs);
+  min-height: var(--control-height-sm);
+}
+.profiles-modal .pfm-swatches {
+  flex-wrap: wrap;
+  margin-top: 0;
+}
+/* Wallpapers as a grid of square pictures — the picture is the choice. */
+.pfm-wallpapers {
+  display: flex;
+  flex-wrap: wrap;
+  /* Room between thumbnails so the selected ring never crowds a neighbor
+     (Kristy 2026-10-06; 8px read as cramped). */
+  gap: var(--gutter-tablet);
+}
+.pfm-card .wp-effect-row {
+  margin: 0;
+}
+
+/* A trigger that is switched off says so at a glance: its contents fade
+   (NGENUITY greys the card), the toggle in its header stays at full strength.
+   Still editable — you can line up games or hours before turning it on.
+   Without this, flipping the toggle changed one small knob and nothing else,
+   which read as a click that did not land (Kristy, 2026-10-01). The fade is
+   the DS's own disabled strength (`.ds-chip[disabled]`). */
+.pfm-card.is-off > :not(.ds-settings-group-header) {
+  opacity: 0.4;
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+.pfm-card > :not(.ds-settings-group-header) {
+  transition: opacity var(--dur-fast) var(--ease-default);
+}
+
+/* ── Game Link: linked games as one row of equal square covers ── */
+/* Covers on a fixed grid (Kristy 2026-10-06: "排列整齊一點", a little bigger
+   than the old 48px but not card-wide: that read too big). Every cover is the
+   same square, starting on the card's text edge; more games wrap in step. */
+.pfm-games {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, calc(var(--control-height) * 2));
+  gap: var(--gutter-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pfm-games > li,
+.pfm-games .ds-tooltip-wrap {
+  display: block;
+  min-width: 0;
+}
+.pfm-game {
+  display: block;
+  box-sizing: border-box; /* the border inside the column, so edges line up */
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
   border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.pfm-game:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* ── Schedule: Start → End on one line ── */
+.pfm-window {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gutter-xs);
+}
+.pfm-time {
+  /* Label-to-field spacing comes from Ng3Field (the library's stacked field). */
+  flex: 1;
+  min-width: 0;
+}
+/* Centered on the inputs, not on the labels above them. */
+.pfm-window-arrow {
+  display: flex;
+  align-items: center;
+  height: var(--control-height);
+  color: var(--text-muted);
+}
+/* The game picker floats under its button, over the cards (the dropdown's
+   own popover look), so opening it never resizes the row. */
+.pfm-gamepick {
+  position: relative;
+  /* The card's action sits on its floor; the covers stay at the top. */
+  margin-top: auto;
+}
+.pfm-gamelist {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + var(--gutter-xxs));
+  left: 0;
+  right: 0;
+  max-height: calc(var(--control-height) * 8);
+  overflow-y: auto;
+  border: 1px solid var(--border-med);
   border-radius: var(--radius);
-  background: var(--surface-sunken);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-lv-3);
 }
 .pfm-game-platform {
   color: var(--text-muted);
   font-size: var(--text-caption);
 }
 
-/* ── Schedule days ── */
+/* ── Schedule days: seven equal cells, one row, like NGENUITY's day buttons ── */
 .pfm-days {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gutter-xs);
-  padding: var(--gutter-xs) 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--gutter-xxs);
+}
+.pfm-days .ds-chip {
+  padding: 0;
 }
 
 /* ── Disclosures ──
@@ -192,17 +371,96 @@ html:root .pfm-nav .pfm-new {
   outline-offset: 2px;
 }
 
+/* The editor pane is a column so Profile Details can sit on its floor: with
+   room to spare, the heading lines up with Import Profiles at the bottom of
+   the rail (Kristy 2026-10-06). Children keep their height; the pane scrolls. */
+.profiles-modal .modal-right {
+  display: flex;
+  flex-direction: column;
+}
+.profiles-modal .modal-right > * {
+  flex-shrink: 0;
+}
+/* ── Profile Details heading ──
+   An openable section heading: the card-title type on the left, Show/Hide
+   plus chevron on the right. No border, no divider above it. It follows the
+   cards directly rather than pinning to the pane's foot (`margin-top: auto`
+   until 2026-10-20): in the standard frame the cards keep their own height, so
+   a pinned heading opened a hole above it on a tall window. */
+.pfm-details-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-sm);
+  width: 100%;
+  min-height: var(--control-height);
+  padding: var(--gutter-xs) var(--gutter);
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-default);
+}
+.pfm-details-toggle:hover {
+  background: var(--surface-hover);
+}
+.pfm-details-toggle:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+.pfm-details-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gutter-xxs);
+  text-align: left;
+}
+.pfm-details-sub {
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+}
+.pfm-details-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gutter-xxs);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+}
+.pfm-details-toggle:hover .pfm-details-action {
+  color: var(--text-primary);
+}
+/* The empty note under it starts on the heading's text edge. */
+#pfm-details > .pfm-empty {
+  padding: 0 var(--gutter);
+}
+
 /* ── Manifest ──
    One device card per device (the Ng3 section surface, via Ng3Section), a
    sunken sub-card per tab inside it, and 32px name/value rows. Titles are the
    Ng3 caps label, so the manifest speaks the device panels' own vocabulary. */
+/* Two columns, filled densely: one-group devices pair up side by side, and a
+   device with several groups (`.wide`) takes the whole row for them. */
+/* Devices sit side by side whenever they fit (Kristy 2026-10-07): each asks
+   for one group-width per group it shows (`--groups`, set inline), shares the
+   spare width in that proportion, and wraps when the row is full. A row's
+   cards stretch to one height (the card rule). */
 .pfm-manifest {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--gutter-xs);
+  align-items: stretch;
   margin-top: var(--gutter-sm);
 }
 .pfm-device {
+  flex: var(--groups, 1) 1 calc(var(--groups, 1) * var(--pfm-group-min));
   gap: var(--gutter-tablet);
+}
+/* Its groups fill the card's height too, so a short group ends with its row. */
+.pfm-device > .pfm-device-groups {
+  flex: 1;
 }
 .pfm-device-head {
   display: flex;
@@ -211,17 +469,25 @@ html:root .pfm-nav .pfm-new {
   margin: 0;
   color: var(--text-primary);
 }
+/* A preset's swatch or a captured color, beside its row (NGENUITY's dots). */
+.pfm-dot {
+  flex: none;
+  width: var(--gutter-sm);
+  height: var(--gutter-sm);
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 0 0 1px var(--border-med);
+}
 .pfm-device-groups {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--pfm-group-min)), 1fr));
   gap: var(--gutter-xs);
-  align-items: start;
+  align-items: stretch; /* the card rule */
 }
 .pfm-group {
   display: flex;
   flex-direction: column;
   gap: var(--gutter-xs);
-  padding: var(--gutter-tablet) var(--gutter-tablet) var(--gutter-xxs);
+  padding: var(--gutter-sm) var(--gutter-sm) var(--gutter-xs);
   min-width: 0;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
@@ -231,14 +497,77 @@ html:root .pfm-nav .pfm-new {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--gutter-xs);
+  /* Holds the copy button without growing the title row. */
+  min-height: var(--control-height);
 }
-/* The tab's own icon beside its title — the same pairing the device panel's
-   tab strip uses, so a group here is recognizably that tab. */
-.pfm-group-title {
+/* Copy this group to another profile (NGENUITY's card button). The menu
+   floats under the button, over the cards, right-aligned to it. */
+.pfm-copy {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: var(--gutter-xxs);
-  color: var(--text-muted);
+  gap: var(--gutter-xs);
+}
+.pfm-copy-menu {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + var(--gutter-xxs));
+  right: 0;
+}
+/* Remapped keys as keycaps (NGENUITY's Keys card): accent-edged squares in
+   step, a disabled one red. Same 64px step as the Game Link covers. */
+.pfm-binds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, calc(var(--control-height) * 2));
+  gap: var(--gutter-xs);
+  margin: 0;
+  padding: var(--gutter-xxs) 0;
+  list-style: none;
+}
+.pfm-bind {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: var(--gutter-xxs);
+  border: 1px solid var(--accent-color);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+  font-family: var(--font-cond);
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+}
+.pfm-bind-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* Whole words only: a cap never splits "Discord" mid-word. */
+  overflow-wrap: normal;
+  word-break: normal;
+}
+/* A cap whose longest word would not fit steps down a size instead of
+   splitting the word ("Discord"). */
+.pfm-bind.long {
+  font-size: var(--text-nano);
+}
+.pfm-bind.off {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red), transparent 75%);
+}
+/* The Fn layer's binding, marked in the cap's corner. */
+.pfm-bind-fn {
+  position: absolute;
+  top: var(--gutter-xxxs);
+  right: var(--gutter-xxs);
+  color: var(--text-dim);
+  font-size: var(--text-nano);
 }
 .pfm-rows {
   margin: 0;
@@ -255,6 +584,8 @@ html:root .pfm-nav .pfm-new {
   padding: 0 var(--gutter-xs);
   border-radius: var(--radius-sm);
   font-size: var(--text-body);
+  /* A record reads quietly: regular weight (Kristy 2026-10-06). */
+  font-weight: var(--font-regular);
 }
 .pfm-row dt {
   flex: 1;
@@ -289,11 +620,7 @@ html:root .pfm-nav .pfm-new {
   font-size: var(--text-body);
 }
 
-@media (max-width: 1024px) {
-  .pfm-device-groups {
-    grid-template-columns: 1fr;
-  }
-}
+
 
 @media (max-width: 600px) {
   /* Stacked above the content, the rail is part of the page flow: it grows

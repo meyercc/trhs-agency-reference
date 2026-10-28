@@ -1,8 +1,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { EqBandParam } from '../devices/eqParametric';
-import { LIGHT_PRESETS, type LightPreset } from '../devices/lightingData';
-import { useProfilesOptional } from './Profiles';
+import { LIGHT_PRESETS, type LightPreset, withOmenPresets } from '../devices/lightingData';
+import { useActiveOverrides } from './Profiles';
 import { DESK_DEFAULT, DESK_OPTIONAL, type DeskDevice } from '../devices/arrangement';
+import { normalizeFanCurve, type FanCurvePoint } from './fanCurve';
+import { normalizeCards, normalizeOverlays, type CardSpec, type OverlaySpec } from './overlays';
+import { normalizeLayout } from '../widgets/layout';
+import { cardMeta, cardMetas } from '../widgets/cardMeta';
+import { DEFAULT_LAYOUT, type BoardItem } from '../widgets/catalog';
 
 /** `deskDevices` as stored (null / junk → the full desk), narrowed to known ids. */
 function deskDevicesOf(v: unknown): DeskDevice[] {
@@ -19,8 +24,20 @@ function deskPcsOf(v: unknown): number[] {
 }
 
 export type Theme = 'dark' | 'light' | 'system';
+/**
+ * The two themes a user picks OUTRIGHT — `system` is "follow the OS", a
+ * different kind of answer. The UI asks the two questions separately ("Use
+ * system theme" first, Dark/Light under it), so it needs the narrow type.
+ */
+export type ThemeChoice = Exclude<Theme, 'system'>;
 /** Spacing density. `comfortable` is the design-system default. */
 export type Density = 'comfortable' | 'compact';
+/**
+ * Interface size (2026-10-20): the root zoom, as a percent. `auto` is the
+ * token default — 100, or 150 on a 4K-class screen at native scale (tokens.css,
+ * INTERFACE SIZE). The others override it.
+ */
+export type UiScale = 'auto' | '100' | '125' | '150';
 export type TempUnit = 'C' | 'F';
 export interface DisplayArrange {
   mode: 'extend' | 'mirror';
@@ -80,7 +97,7 @@ export const normalizeEqPresets = (raw: unknown): CustomEqPreset[] =>
  * profile value (`lighting.preset`), not part of this.
  */
 export const normalizeLightPresets = (raw: unknown): LightPreset[] =>
-  Array.isArray(raw) ? (raw as LightPreset[]).filter((p) => p && typeof p.id === 'string' && typeof p.name === 'string') : LIGHT_PRESETS;
+  Array.isArray(raw) ? withOmenPresets((raw as LightPreset[]).filter((p) => p && typeof p.id === 'string' && typeof p.name === 'string')) : LIGHT_PRESETS;
 
 // KVM routing for a KVM-capable monitor. Shared so the monitor's KVM tab and the
 // peripheral device cards agree on which PC currently owns the keyboard + mouse.
@@ -92,6 +109,18 @@ export interface KvmState {
 }
 export const DEFAULT_KVM: KvmState = { configured: false, activePc: 'pc1', moveKbm: true };
 
+/** Which avatar is shown: a preset image, your upload, or the current wallpaper. */
+export type AvatarChoice = { kind: 'preset'; id: string } | { kind: 'upload' } | { kind: 'wallpaper' };
+export const DEFAULT_AVATAR: AvatarChoice = { kind: 'preset', id: 'purple' };
+/** A linked gaming account. Prototype-only: nothing leaves the browser. */
+export interface LinkedAccount {
+  handle: string;
+}
+export interface FocusPoint {
+  x: number;
+  y: number;
+}
+export const DEFAULT_FOCUS: FocusPoint = { x: 50, y: 50 };
 // Under-glow: the LED strip on the back of the monitor, not a UI colour. Shared
 // (rather than local to the Under-Glow section) because the light is supposed to
 // be visible on the product itself — the modal hero's desk map and the Perform
@@ -275,6 +304,28 @@ type SettingType = 'string' | 'bool' | 'json' | 'number';
 
 /** How bright the room is, as the monitor's own sensor would report it. */
 export type RoomLight = 'off' | 'bright' | 'dim' | 'dark';
+/** Which product scope the prototype shows. `full` is full feature parity,
+ *  what the design is for and the default. `june27` is the June 2027 MVP
+ *  ("Treehouse MVP Modules June 2027", slide 7), which leaves out OMEN
+ *  hardware control (power modes, fan curves) and lighting. The hardware code
+ *  stays; this only decides whether it shows. Switched from the Simulator's MVP
+ *  row on /perform-v7, or by a link (`?scope=june27`). `full` was called `27c2` until 2026-10-19. */
+export type MvpScope = 'full' | 'june27';
+/** OMEN AI as the prototype shows it: off, the 1.0 era (side by side with the
+ *  player's controls) or 2.0 (OMEN AI leads the page). The Simulator's
+ *  OMEN AI row; app-wide since 2026-10-21. */
+export type OmenAiLevel = 'off' | 'v1' | 'v2';
+/** How the desktop PC's page lays out its 3D tower and panel. `stacked` is the
+ *  page as it has been (the tower above the panel) and the default; `full` is
+ *  the trial from the 2026-10-22 design review: the tower fills the window and
+ *  the panel and the cap's preview float over it. The Simulator's PC layout row. */
+export type PcLayout = 'stacked' | 'full';
+/** Which top the Play page shows: the full-bleed hero, or the "Jump Back In" grid. */
+export type PlayLayout = 'hero' | 'jumpback' | 'featured';
+/** Where Nova's door is (TH-507): the chat button in the top bar opening the right rail, or a floating button opening a chat window over the page. */
+export type NovaEntry = 'topbar' | 'fab';
+/** Advertising placements. `none` is the default and the only one a fresh install has. */
+export type AdPlacement = 'none' | 'bottom-left-tile' | 'bottom-banner' | 'banner-below-carousel';
 
 /**
  * The level Auto-Brightness settles on for each room (2026-09-23, Cindy: the
@@ -303,15 +354,67 @@ interface Spec {
 }
 const SCHEMA = {
   theme: { key: 'theme', type: 'string', default: 'dark' },
-  accent: { key: 'accent', type: 'string', default: 'cyan' },
+  // The last theme picked outright, so turning "Use system theme" back off
+  // returns to the user's own choice instead of to whatever the OS happens to
+  // be saying. Trails `theme` from the provider (see the effect below), which
+  // is why no caller ever writes it: a Look, a profile, Nova and both theme
+  // controls all record their pick for free.
+  themeChoice: { key: 'themeChoice', type: 'string', default: 'dark' },
+  accent: { key: 'accent', type: 'string', default: 'blue' },
   // Spacing density — re-points --gutter (24px → the 12px tablet step) for the
   // whole app. See the density block in shared/tokens.css.
   density: { key: 'density', type: 'string', default: 'comfortable' },
+  // Interface size — the root zoom (tokens.css, INTERFACE SIZE). `auto` lets
+  // the stylesheet decide from the screen; a percent pins it.
+  uiScale: { key: 'uiScale', type: 'string', default: 'auto' },
   tempUnit: { key: 'tempUnit', type: 'string', default: 'C' },
+  // What the desk is lit like: every device's colour, effect, brightness and
+  // speed. A real setting, so a profile can own it the way it owns an accent —
+  // null means "nothing saved yet", and Personalize falls back to the lighting
+  // the active profile shipped with.
+  deskLighting: { key: 'deskLighting', type: 'json', default: null },
+  // Modes the user made (Personalize › Mode › New mode). Built-in modes live in
+  // state/profiles.ts; these are appended after them everywhere modes are listed.
+  // Profile (identity) — Profile modal. An uploaded avatar/wallpaper image lives
+  // in IndexedDB (state/imageStore.ts); these rows only say which one is chosen.
+  displayName: { key: 'displayName', type: 'string', default: 'UserName' },
+  avatar: { key: 'avatar', type: 'json', default: null },
+  linkedAccounts: { key: 'linkedAccounts', type: 'json', default: {} },
+  // A user-picked accent (#rrggbb) — used when `accent` is 'custom'.
+  accentHex: { key: 'accentHex', type: 'string', default: '' },
+  // Focal point (percent) of an uploaded wallpaper, so the crop keeps the subject.
+  wpFocus: { key: 'wpFocus', type: 'json', default: null },
   // `activeProfileId` used to live here, when a profile was just a label.
   // Profiles are records now and own their own active state — see
   // state/Profiles.tsx, which reads the old key once to migrate an install.
   powerMode: { key: 'powerMode', type: 'string', default: 'balanced' },
+  // The fan curve (TH-436). Resolved through the active profile like `accent`
+  // and `wallpaper`, because a profile is allowed to carry its own curve —
+  // "OMEN AI tunes power mode and fan curve together", and the Thermal Warden
+  // runs fan learning per profile. Null = the default curve.
+  fanCurve: { key: 'fanCurve', type: 'json', default: null },
+  // Overlays (TH-438): the HUD cards placed on screen, with their positions.
+  // Not profile-resolved — where you put a readout is not a scene.
+  overlays: { key: 'overlays', type: 'json', default: null },
+  // The home dashboard's arrangement (TH-442). `key` is DELIBERATELY the raw
+  // `board-layout` the board has written since TH-423: `SCHEMA[name].key` IS the
+  // localStorage key and `type:'json'` is parse/stringify, so the stored bytes
+  // are byte-identical and nothing migrates. Renaming it would silently break
+  // the six suites that seed `localStorage['board-layout']` directly, plus
+  // onboarding's seed — in the "looks fine, seeds nothing" way.
+  //
+  // It lives here because the board used to own the ONLY copy in component
+  // state, so nothing outside it could set a layout: a write landed in storage
+  // and was then overwritten by the board's own write-back. Nova needs to be
+  // able to propose one.
+  boardLayout: { key: 'board-layout', type: 'json', default: null },
+  // The custom cards Nova built (TH-443) — the specs, NOT their placement. A
+  // card on the board is one `boardLayout` entry like any other; this is the
+  // vocabulary that entry's id refers to. Two keys rather than one because a
+  // card survives being taken off the board: `.wb-pick`'s "Custom" group is how
+  // it comes back, and a layout a drag rewrites forty times a second is no place
+  // to keep a spec.
+  cards: { key: 'cards', type: 'json', default: null },
   displayArrange: { key: 'displayArrange', type: 'json', default: null },
   kvm: { key: 'kvm', type: 'json', default: null },
   underGlow: { key: 'underGlow', type: 'json', default: null },
@@ -435,6 +538,11 @@ const SCHEMA = {
   // room here, so whoever opens the link sees what the person demoing sees.
   // `off` = the prototype makes no claim about the room, which is the default.
   roomLight: { key: 'roomLight', type: 'string', default: 'off' },
+  // Which top the Play page shows. `hero` is what the page has always been, so
+  // it stays the default — the alternate is opt-in from Admin.
+  playLayout: { key: 'playLayout', type: 'string', default: 'hero' },
+  // Floating is the default (Chris, 2026-10-28); Top bar stays in Admin for comparison.
+  novaEntry: { key: 'novaEntry', type: 'string', default: 'fab' },
   // OLED burn-in protections, by detection name. Shared rather than local
   // because the switches are folded away inside the Display tab's OLED Care card
   // (2026-08-08) and the summary row is the only thing reporting them. Held in a
@@ -464,6 +572,24 @@ const SCHEMA = {
   // and everything else in the display area depends on it. Off by default; the
   // Admin modal turns it on the same way it launches first-boot onboarding.
   monitorFirstHour: { key: 'monitorFirstHour', type: 'bool', default: false },
+  // Advertising concepts (2026-09-29, Chris). OFF by default — `none` — and
+  // only ever set from Admin's Testing tools, so a shared link never opens
+  // with an ad in it unless the person sharing put one there. The values are
+  // the placement names the concepts go by; see web/src/ads/ads.ts.
+  adPlacement: { key: 'adPlacement', type: 'string', default: 'none' },
+  // The Bottom Banner's "Obscure background" strip. Kept as its own key rather
+  // than folded into the placement so it survives switching the placement off
+  // and back on while a concept is being compared.
+  adObscure: { key: 'adObscure', type: 'bool', default: false },
+  // The Advertising row in Admin is hidden until the Konami code is typed
+  // (Chris, 2026-09-29). Persisted per browser so the code is typed once, not
+  // on every open; typing it again re-locks and resets the two keys above.
+  adUnlocked: { key: 'adUnlocked', type: 'bool', default: false },
+  // Personalize's suggestion row ("Meeting at 7:00 PM — switch to Work then?").
+  // Off by default and switched from Admin (2026-10-01, Kristy): the profile
+  // band is the page's one voice about switching, and a second question under
+  // it competed with it. Kept as a demo tool, not deleted.
+  pzSuggestions: { key: 'pzSuggestions', type: 'bool', default: false },
   // What is on the desk, as HARDWARE (2026-09-08, Cindy): the optional devices
   // present — `pulse-27` (OMEN OLED 27), `macbook` (a laptop = computer AND its
   // screen), `tower` (OMEN 35L). The Treehouse 32 is never listed; it is the
@@ -478,6 +604,35 @@ const SCHEMA = {
   // provider below — so the Gear Switch lock, Viewing Mode's second source and
   // the All displays card did not have to change.
   deskDevices: { key: 'deskDevices', type: 'json', default: null },
+  // The computer the app is running on — the one My Devices lists first, as a
+  // directory of its features rather than a device window. A SKU id from
+  // configurator/skus.json: the MVP desktop by default, the laptop to review
+  // the notebook case. Set from the Simulator's Machine row.
+  thisPc: { key: 'thisPc', type: 'string', default: 'forge-45l' },
+  // Which product scope the prototype shows — see `MvpScope`. Full feature
+  // parity by default; the June 2027 MVP is the Simulator's MVP row.
+  mvpScope: { key: 'mvpScope', type: 'string', default: 'full' },
+  // The Simulator's product-state rows, app-wide (2026-10-21): the machine as
+  // a PC not made by HP (the laptop without the power envelope), OMEN AI's
+  // level, and whether a game session is on (the optimizer family's trigger;
+  // off at rest, Juntao 2026-07-23).
+  nonHpPc: { key: 'nonHpPc', type: 'bool', default: false },
+  omenAi: { key: 'omenAi', type: 'string', default: 'v1' },
+  gameSession: { key: 'gameSession', type: 'bool', default: false },
+  // The desktop PC page's layout trial (JY, 2026-10-22, after JW's design
+  // review found the lit tower too noisy beside the part being edited): the
+  // old layout stays the default until Chris and Kristy have seen the trial.
+  // Set from the Simulator's PC layout row — see `PcLayout`.
+  pcLayout: { key: 'pcLayout', type: 'string', default: 'stacked' },
+  // Full-screen only: on a tab about one part, every light of the tower but
+  // that part's dims (JW's review: the rest of the glow competed with the part
+  // being edited). On by default; the pill over the 3D turns it off. Kept like
+  // the other switches of the trial, so closing the page does not undo it.
+  pcDimRest: { key: 'pcDimRest', type: 'bool', default: true },
+  // Whether the Simulator shows at all (Chris, 2026-10-26): hidden until asked,
+  // so a first look at the prototype is the product, not the review's switches.
+  // Turned on from Admin Panel › Simulator, or by a link (`?sim=1`).
+  showSimulator: { key: 'showSimulator', type: 'bool', default: false },
   // Wallpaper preset id + the blur (px, 0–60) / opacity (%, 0–100) of the
   // background layer. Ported from vanilla js/theme.js.
   wallpaper: { key: 'wallpaper', type: 'string', default: 'blue' },
@@ -488,6 +643,15 @@ const SCHEMA = {
   // that element, so both on would leave nothing — the Settings UI is the guard.
   hideNavLabels: { key: 'hideNavLabels', type: 'bool', default: true },
   hideNavIcons: { key: 'hideNavIcons', type: 'bool', default: false },
+  // Nova docked to the right rail, following you across the app (TH-434). A
+  // preference, not session state: pinning it is a decision about how you work,
+  // so it survives a reload the way the nav flags do. Off by default, and inert
+  // while the Nova module is not installed.
+  novaPinned: { key: 'novaPinned', type: 'bool', default: false },
+  // The card ⋮'s one-time hint (Todd 09-24 «did you know you could customize
+  // this card» · Cindy 09-28 · 10-01). Seen once any card's ⋮ has been pressed;
+  // Admin's First-time setup clears it with the rest of the first hour.
+  cardMenuHintSeen: { key: 'cardMenuHintSeen', type: 'bool', default: false },
 } satisfies Record<string, Spec>;
 export type SettingName = keyof typeof SCHEMA;
 
@@ -521,6 +685,45 @@ function encode(value: unknown, spec: Spec): string {
       return value == null ? '' : String(value);
   }
 }
+/**
+ * A link can carry the scope: `?scope=june27` (or `full`), before the hash or
+ * inside it (`#/perform?scope=june27`). The old `27c2` still means `full`. It does what the Simulator's MVP row does —
+ * stores the scope, so the app stays there after a reload — and then leaves the
+ * address, so switching back in Admin is not undone by the next reload. Other
+ * parameters stay where they were. Runs once, before the first read and before
+ * the router reads the address. Anything but the scopes is left alone.
+ */
+const SCOPES: readonly MvpScope[] = ['full', 'june27'];
+function takeScopeFromAddress() {
+  if (typeof window === 'undefined') return;
+  const { pathname, search, hash } = window.location;
+  const outer = new URLSearchParams(search);
+  const [route, hashQuery = ''] = hash.split('?');
+  const inner = new URLSearchParams(hashQuery);
+  // `?sim=1` (or `0`) shows or hides the Simulator the same way.
+  const sim = inner.get('sim') ?? outer.get('sim');
+  const raw = (inner.get('scope') ?? outer.get('scope'))?.toLowerCase();
+  const scope = raw === '27c2' ? 'full' : raw;
+  const hasScope = SCOPES.includes(scope as MvpScope);
+  if (!hasScope && sim == null) return;
+  try {
+    if (hasScope) localStorage.setItem(SCHEMA.mvpScope.key, scope as MvpScope);
+    if (sim != null) localStorage.setItem(SCHEMA.showSimulator.key, sim === '0' ? '0' : '1');
+  } catch {
+    /* storage unavailable — the link applies to nothing */
+  }
+  outer.delete('scope');
+  inner.delete('scope');
+  outer.delete('sim');
+  inner.delete('sim');
+  replaceAddress(outer, inner, pathname, route);
+}
+function replaceAddress(outer: URLSearchParams, inner: URLSearchParams, pathname: string, route: string) {
+  const q = (p: URLSearchParams) => (p.toString() ? `?${p}` : '');
+  window.history.replaceState(window.history.state, '', `${pathname}${q(outer)}${route}${route ? q(inner) : ''}`);
+}
+takeScopeFromAddress();
+
 function readAll(): Record<SettingName, unknown> {
   const out = {} as Record<SettingName, unknown>;
   (Object.keys(SCHEMA) as SettingName[]).forEach((name) => {
@@ -532,6 +735,8 @@ function readAll(): Record<SettingName, unknown> {
     }
     out[name] = decode(raw, SCHEMA[name]);
   });
+  // The default accent was called `cyan` before it was renamed `blue`.
+  if (out.accent === 'cyan') out.accent = 'blue';
   return out;
 }
 
@@ -555,14 +760,83 @@ interface SettingsValue {
   // convenience accessors
   theme: Theme;
   setTheme: (t: Theme) => void;
+  /**
+   * The theme question split in two, the way both theme controls ask it.
+   * `useSystemTheme` is "follow the OS"; `themeChoice` is the Dark/Light pick
+   * that is hidden while it is on and restored when it goes off.
+   */
+  useSystemTheme: boolean;
+  setUseSystemTheme: (on: boolean) => void;
+  themeChoice: ThemeChoice;
   accent: string;
   setAccent: (a: string) => void;
   density: Density;
   setDensity: (d: Density) => void;
+  uiScale: UiScale;
+  setUiScale: (s: UiScale) => void;
   tempUnit: TempUnit;
   setTempUnit: (u: TempUnit) => void;
+  /** The desk's lighting, resolved through the active profile. */
+  deskLighting: unknown;
+  setDeskLighting: (states: unknown) => void;
+  displayName: string;
+  setDisplayName: (name: string) => void;
+  avatar: AvatarChoice;
+  setAvatar: (a: AvatarChoice) => void;
+  linkedAccounts: Record<string, LinkedAccount>;
+  setLinkedAccounts: (a: Record<string, LinkedAccount>) => void;
+  accentHex: string;
+  setAccentHex: (hex: string) => void;
+  wpFocus: FocusPoint;
+  setWpFocus: (f: FocusPoint) => void;
   powerMode: string;
   setPowerMode: (m: string) => void;
+  /** Eight points, speed against temperature (state/fanCurve.ts). */
+  fanCurve: FanCurvePoint[];
+  setFanCurve: (points: readonly FanCurvePoint[]) => void;
+  /** The overlays on screen or hidden (state/overlays.ts). */
+  overlays: OverlaySpec[];
+  /** Add or replace by id. */
+  upsertOverlay: (o: OverlaySpec) => void;
+  removeOverlay: (id: string) => void;
+  /** Partial update by id — position, visibility, title. */
+  patchOverlay: (id: string, patch: Partial<Omit<OverlaySpec, 'id'>>) => void;
+  /**
+   * The home dashboard's arrangement (widgets/layout.ts). Normalized on read,
+   * so a layout stored by an older build — or proposed by Nova — can never hand
+   * the packer a size that freezes it.
+   */
+  boardLayout: BoardItem[] | null;
+  /**
+   * null restores the shipped default; `[]` is a deliberately empty board.
+   * Those are different answers and the type has to keep them apart — reading
+   * an absent layout as `[]` would turn "I cleared my dashboard" into "give me
+   * the default" on the next reload.
+   */
+  setBoardLayout: (items: readonly BoardItem[] | null) => void;
+  /** The custom cards that exist, on the board or not (state/overlays.ts). */
+  cards: CardSpec[];
+  /**
+   * Store the spec AND put it on the end of the board, as one write.
+   *
+   * It has to be one call rather than `upsertCard` + `setBoardLayout` from
+   * outside, because `setBoardLayout` normalizes against the cards THIS RENDER
+   * can see: a brand-new `card-*` id is unknown to that snapshot and would be
+   * dropped on the way in, leaving the spec stored and the board unchanged.
+   * (It was, until it was measured — the quiet kind, since the reply still said
+   * it had been added.)
+   *
+   * Idempotent: the spec is minted once, in the reply, so pressing the chip
+   * twice re-adds the same card rather than making two.
+   */
+  addCard: (c: CardSpec) => void;
+  /**
+   * Forgets the spec — or several, in one write (the Catch Me Up reset clears
+   * every rehearsal's card at once; one call each would read the same stale
+   * list and only the last would stick). Taking it OFF the board is a plain
+   * `setBoardLayout`.
+   */
+  removeCard: (id: string | readonly string[]) => void;
   displayArrange: DisplayArrange | null;
   /** null clears the stored layout — that's what "Reset to default" does. */
   setDisplayArrange: (d: DisplayArrange | null) => void;
@@ -602,6 +876,10 @@ interface SettingsValue {
   setSmartActionsWatch: (on: boolean) => void;
   roomLight: RoomLight;
   setRoomLight: (v: RoomLight) => void;
+  playLayout: PlayLayout;
+  setPlayLayout: (v: PlayLayout) => void;
+  novaEntry: NovaEntry;
+  setNovaEntry: (v: NovaEntry) => void;
   /** Names of the OLED protections that are OFF. Absent = on (see SCHEMA). */
   oledProtectionsOff: string[];
   setOledProtectionOff: (name: string, off: boolean) => void;
@@ -615,12 +893,48 @@ interface SettingsValue {
   setOnboarded: (v: boolean) => void;
   monitorFirstHour: boolean;
   setMonitorFirstHour: (v: boolean) => void;
+  /** Which advertising concept is showing — see web/src/ads/ads.ts. */
+  adPlacement: AdPlacement;
+  setAdPlacement: (v: AdPlacement) => void;
+  /** Bottom Banner only: the blurred strip behind the ad. */
+  adObscure: boolean;
+  setAdObscure: (v: boolean) => void;
+  /** Whether the Konami code has revealed the Advertising row. Ads render only when true. */
+  adUnlocked: boolean;
+  setAdUnlocked: (v: boolean) => void;
+  /** Personalize shows its suggestion row (Admin only). */
+  pzSuggestions: boolean;
+  setPzSuggestions: (v: boolean) => void;
   /** Optional hardware on the desk — see SCHEMA.deskDevices. */
   deskDevices: DeskDevice[];
   setDeskDevices: (d: DeskDevice[]) => void;
   /** Derived from `deskDevices` (read-only): computers / screens on the desk. */
   pcCount: number;
   displayCount: number;
+  /** The SKU id of the computer the app runs on — see SCHEMA.thisPc. */
+  thisPc: string;
+  setThisPc: (id: string) => void;
+  /** Which product scope the prototype shows — see `MvpScope`. */
+  mvpScope: MvpScope;
+  setMvpScope: (v: MvpScope) => void;
+  /** This PC is not a HyperX machine: no power envelope, OMEN AI still there. */
+  nonHpPc: boolean;
+  setNonHpPc: (v: boolean) => void;
+  /** OMEN AI's level — see `OmenAiLevel`. */
+  omenAi: OmenAiLevel;
+  setOmenAi: (v: OmenAiLevel) => void;
+  /** A game session is on: the optimizer family's trigger. */
+  gameSession: boolean;
+  setGameSession: (v: boolean) => void;
+  /** The desktop PC page's layout — see `PcLayout`. */
+  pcLayout: PcLayout;
+  setPcLayout: (v: PcLayout) => void;
+  /** Full-screen layout: dim the tower's lights but the tab's part — see SCHEMA.pcDimRest. */
+  pcDimRest: boolean;
+  setPcDimRest: (v: boolean) => void;
+  /** The Simulator shows on every page — see SCHEMA.showSimulator. */
+  showSimulator: boolean;
+  setShowSimulator: (v: boolean) => void;
   wallpaper: string;
   setWallpaper: (id: string) => void;
   wpBlur: number;
@@ -631,6 +945,11 @@ interface SettingsValue {
   setHideNavLabels: (on: boolean) => void;
   hideNavIcons: boolean;
   setHideNavIcons: (on: boolean) => void;
+  /** Nova pinned to the right rail (TH-434). */
+  novaPinned: boolean;
+  cardMenuHintSeen: boolean;
+  setCardMenuHintSeen: (v: boolean) => void;
+  setNovaPinned: (on: boolean) => void;
   /** Resolved light/dark (follows the system pref when theme is `system`). */
   isLight: boolean;
 }
@@ -666,16 +985,27 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   //
   // Outside a ProfilesProvider (stories, isolated renders) there are no
   // overrides and every read is the plain baseline.
-  const profiles = useProfilesOptional();
-  const overrides = (profiles?.activeProfile.overrides ?? {}) as Partial<Record<SettingName, unknown>>;
+  // Only the active profile's overrides, not the whole profiles value: a profile
+  // edit that changes nothing Settings resolves must not re-render the app.
+  const overrides = (useActiveOverrides() ?? {}) as Partial<Record<SettingName, unknown>>;
   const resolve = (name: SettingName) => (name in overrides ? overrides[name] : values[name]);
   const isOverridden = (name: SettingName) => name in overrides;
 
   const get = <T,>(name: SettingName) => resolve(name) as T;
 
   const theme = values.theme as Theme;
+  const themeChoice = values.themeChoice as ThemeChoice;
   const accent = resolve('accent') as string;
   const density = values.density as Density;
+  const uiScale = values.uiScale as UiScale;
+
+  // `themeChoice` trails `theme`: one writer here instead of a rule every
+  // caller has to remember. Whoever sets an outright dark or light — either
+  // theme control, a Look, a profile override, Nova — has recorded the pick by
+  // the time the user turns "Use system theme" off again.
+  useEffect(() => {
+    if (theme !== 'system' && theme !== themeChoice) set('themeChoice', theme);
+  }, [theme, themeChoice]);
 
   // Resolved light/dark — re-resolves on theme change and (for `system`) when
   // the OS preference flips, so theme-aware UI like the wallpaper layer updates.
@@ -693,11 +1023,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener('change', apply);
   }, [theme]);
 
+  const accentHex = values.accentHex as string;
   useEffect(() => {
-    // `cyan` is the design-system default — clear the override so the token wins.
-    if (accent === 'cyan') document.documentElement.style.removeProperty('--accent-color');
-    else document.documentElement.style.setProperty('--accent-color', `var(--accent-${accent})`);
-  }, [accent]);
+    // `blue` is the design-system default — clear the override so the token wins.
+    // `custom` is the user's own colour: a value, not a token, so it is applied
+    // as-is (the Appearance panel only lets through colours that pass contrast).
+    const root = document.documentElement.style;
+    if (accent === 'blue') root.removeProperty('--accent-color');
+    else if (accent === 'custom' && /^#[0-9a-f]{6}$/i.test(accentHex)) root.setProperty('--accent-color', accentHex);
+    else root.setProperty('--accent-color', `var(--accent-${accent})`);
+  }, [accent, accentHex]);
 
   useEffect(() => {
     // Comfortable is the token default, so it carries no attribute at all —
@@ -706,10 +1041,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     else delete document.documentElement.dataset.density;
   }, [density]);
 
+  useEffect(() => {
+    // Auto is the absence of the attribute: the stylesheet's own media rule
+    // then decides, and a pinned percent out-ranks it (tokens.css).
+    if (uiScale === 'auto') delete document.documentElement.dataset.uiScale;
+    else document.documentElement.dataset.uiScale = uiScale;
+  }, [uiScale]);
+
   // `byMode` is spread over the default so a payload saved before it existed
   // (2026-08-05) loads as "every mode still on its default" instead of crashing
   // the swatch writes on an undefined map.
   const underGlow = { ...DEFAULT_UNDER_GLOW, ...((values.underGlow as UnderGlowState | null) ?? {}) };
+  // Read once per render and shared by both `boardLayout` directions: the cards
+  // ARE the extra half of the layout vocabulary (widgets/layout.ts).
+  const cards = normalizeCards(values.cards);
+  const cardCtx = { cards: cardMetas(cards) };
   // Same spread, same reason: a browser that stored a mode before this key
   // existed loads as "no layout remembered anywhere" rather than undefined.
   const viewingMode = {
@@ -764,14 +1110,61 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     isOverridden,
     theme,
     setTheme: (t) => set('theme', t),
+    useSystemTheme: theme === 'system',
+    setUseSystemTheme: (on) => set('theme', on ? 'system' : themeChoice),
+    themeChoice,
     accent,
     setAccent: (a) => set('accent', a),
     density,
     setDensity: (d) => set('density', d),
+    uiScale,
+    setUiScale: (s) => set('uiScale', s),
     tempUnit: values.tempUnit as TempUnit,
+    deskLighting: resolve('deskLighting'),
+    setDeskLighting: (states) => set('deskLighting', states),
     setTempUnit: (u) => set('tempUnit', u),
+    displayName: values.displayName as string,
+    setDisplayName: (name) => set('displayName', name),
+    avatar: (values.avatar as AvatarChoice | null) ?? DEFAULT_AVATAR,
+    setAvatar: (a) => set('avatar', a),
+    linkedAccounts: (values.linkedAccounts as Record<string, LinkedAccount> | null) ?? {},
+    setLinkedAccounts: (a) => set('linkedAccounts', a),
+    accentHex: values.accentHex as string,
+    setAccentHex: (hex) => set('accentHex', hex),
+    wpFocus: (values.wpFocus as FocusPoint | null) ?? DEFAULT_FOCUS,
+    setWpFocus: (f) => set('wpFocus', f),
     powerMode: values.powerMode as string,
     setPowerMode: (m) => set('powerMode', m),
+    fanCurve: normalizeFanCurve(resolve('fanCurve')),
+    setFanCurve: (points) => set('fanCurve', [...points]),
+    overlays: normalizeOverlays(values.overlays),
+    cards,
+    addCard: (c) => {
+      const next = cards.some((x) => x.id === c.id) ? cards.map((x) => (x.id === c.id ? c : x)) : [...cards, c];
+      set('cards', next);
+      const board = values.boardLayout === null || values.boardLayout === undefined ? DEFAULT_LAYOUT : normalizeLayout(values.boardLayout, cardCtx);
+      if (board.some((i) => i.id === c.id)) return;
+      const meta = cardMeta(c);
+      // Normalized against `next`, not against this render's `cards` — see the
+      // note on `addCard` in the context type.
+      set('boardLayout', normalizeLayout([...board, { id: c.id, span: meta.span, rows: meta.rows }], { cards: cardMetas(next) }));
+    },
+    removeCard: (id) => {
+      const ids: readonly string[] = typeof id === 'string' ? [id] : id;
+      set('cards', cards.filter((x) => !ids.includes(x.id)));
+    },
+    // Both directions carry the card vocabulary, or `normalizeLayout` would not
+    // recognise a `card-*` id and would drop every custom card — on read, which
+    // is every mount. Ungated on purpose: an unavailable widget is kept here and
+    // hidden by the board (see `LayoutContext`).
+    boardLayout: values.boardLayout === null || values.boardLayout === undefined ? null : normalizeLayout(values.boardLayout, cardCtx),
+    setBoardLayout: (items) => set('boardLayout', items === null ? null : normalizeLayout(items, cardCtx)),
+    upsertOverlay: (o) => {
+      const cur = normalizeOverlays(values.overlays);
+      set('overlays', cur.some((x) => x.id === o.id) ? cur.map((x) => (x.id === o.id ? o : x)) : [...cur, o]);
+    },
+    removeOverlay: (id) => set('overlays', normalizeOverlays(values.overlays).filter((x) => x.id !== id)),
+    patchOverlay: (id, patch) => set('overlays', normalizeOverlays(values.overlays).map((x) => (x.id === id ? { ...x, ...patch } : x))),
     displayArrange: values.displayArrange as DisplayArrange | null,
     setDisplayArrange: (d) => set('displayArrange', d),
     kvm: (values.kvm as KvmState | null) ?? DEFAULT_KVM,
@@ -822,6 +1215,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSmartActions: (on) => set('smartActions', on),
     roomLight: values.roomLight as RoomLight,
     setRoomLight: (v) => set('roomLight', v),
+    playLayout: values.playLayout as PlayLayout,
+    setPlayLayout: (v) => set('playLayout', v),
+    novaEntry: values.novaEntry as NovaEntry,
+    setNovaEntry: (v) => set('novaEntry', v),
     smartActionsWatch: values.smartActionsWatch as boolean,
     setSmartActionsWatch: (on) => set('smartActionsWatch', on),
     eqPresets: normalizeEqPresets(values.eqPresets),
@@ -834,6 +1231,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setOnboarded: (v) => set('onboarded', v),
     monitorFirstHour: values.monitorFirstHour as boolean,
     setMonitorFirstHour: (v) => set('monitorFirstHour', v),
+    adPlacement: values.adPlacement as AdPlacement,
+    setAdPlacement: (v) => set('adPlacement', v),
+    adObscure: values.adObscure as boolean,
+    setAdObscure: (v) => set('adObscure', v),
+    adUnlocked: values.adUnlocked as boolean,
+    setAdUnlocked: (v) => set('adUnlocked', v),
+    pzSuggestions: values.pzSuggestions as boolean,
+    setPzSuggestions: (v) => set('pzSuggestions', v),
     deskDevices: deskDevicesOf(values.deskDevices),
     setDeskDevices: (d) => {
       set('deskDevices', d);
@@ -844,6 +1249,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     },
     pcCount: deskPcsOf(values.deskDevices).length,
     displayCount: 1 + Number(deskDevicesOf(values.deskDevices).includes('pulse-27')) + Number(deskDevicesOf(values.deskDevices).includes('macbook')),
+    thisPc: values.thisPc as string,
+    setThisPc: (id) => set('thisPc', id),
+    // Only `june27` turns the MVP on; anything else, an old stored `27c2` too, is full.
+    mvpScope: values.mvpScope === 'june27' ? 'june27' : 'full',
+    setMvpScope: (v) => set('mvpScope', v),
+    nonHpPc: values.nonHpPc === true,
+    setNonHpPc: (v) => set('nonHpPc', v),
+    omenAi: values.omenAi === 'off' || values.omenAi === 'v2' ? values.omenAi : 'v1',
+    setOmenAi: (v) => set('omenAi', v),
+    gameSession: values.gameSession === true,
+    setGameSession: (v) => set('gameSession', v),
+    // Only `full` turns the trial on; anything else stored is the old layout.
+    pcLayout: values.pcLayout === 'full' ? 'full' : 'stacked',
+    setPcLayout: (v) => set('pcLayout', v),
+    pcDimRest: values.pcDimRest !== false,
+    setPcDimRest: (v) => set('pcDimRest', v),
+    showSimulator: values.showSimulator === true,
+    setShowSimulator: (v) => set('showSimulator', v),
     wallpaper: resolve('wallpaper') as string,
     setWallpaper: (id) => set('wallpaper', id),
     wpBlur: resolve('wpBlur') as number,
@@ -854,6 +1277,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setHideNavLabels: (on) => set('hideNavLabels', on),
     hideNavIcons: values.hideNavIcons as boolean,
     setHideNavIcons: (on) => set('hideNavIcons', on),
+    novaPinned: values.novaPinned as boolean,
+    setNovaPinned: (on) => set('novaPinned', on),
+    cardMenuHintSeen: values.cardMenuHintSeen as boolean,
+    setCardMenuHintSeen: (v) => set('cardMenuHintSeen', v),
     isLight,
   };
 
